@@ -1,0 +1,258 @@
+{% extends 'basic.html' %}
+{% load humanize i18n static %}
+{% block title %}
+Profil
+{% endblock %}
+{% block head %}
+{% endblock %}
+
+{% block content %}
+{% language 'id' %}
+<main class="h-100">
+
+  {% include "header.html" %}
+  <!-- main page content -->
+  <div class="main-container container">
+    <!--card pelayanan-->
+    <div class="row mb-2">
+      {% for x in messages %}
+      <button class="btn btn-primary col-lg-12">{{ x }}</button>
+      {% endfor %}
+    </div>
+
+<div class="container mt-5">
+  <h2>Biodata saya</h2>
+  <form action="" method="POST">
+    {% csrf_token %}
+    <div class="row">
+
+    <!-- Role -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="role" class="form-label">Role</label>
+        <input type="text" class="form-control" id="role" name="role">
+    </div>
+
+    <!-- ID Number -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="id_number" class="form-label">ID Number</label>
+        <input type="text" class="form-control" id="id_number" name="id_number">
+    </div>
+
+    <!-- Nama Depan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="nama_depan" class="form-label">Nama Depan</label>
+        <input type="text" class="form-control" id="nama_depan" name="nama_depan">
+    </div>
+
+    <!-- Nama Belakang -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="nama_belakang" class="form-label">Nama Belakang</label>
+        <input type="text" class="form-control" id="nama_belakang" name="nama_belakang">
+    </div>
+
+    <!-- NIP -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="nip" class="form-label">NIP</label>
+        <input type="text" class="form-control" id="nip" name="nip">
+    </div>
+
+    <!-- Level -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="level" class="form-label">Level</label>
+        <input type="text" class="form-control" id="level" name="level">
+    </div>
+
+    <!-- Jenis Kelamin -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="jenis_kelamin" class="form-label">Jenis Kelamin</label>
+        <select class="form-select" id="jenis_kelamin" name="jenis_kelamin">
+            <option selected>Pilih...</option>
+            <option value="Laki-Laki">Laki-Laki</option>
+            <option value="Perempuan">Perempuan</option>
+        </select>
+    </div>
+
+    <!-- Tanggal Lahir -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
+        <input type="date" class="form-control" id="tanggal_lahir" name="tanggal_lahir">
+    </div>
+
+    <!-- Agama -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="agama" class="form-label">Agama</label>
+        <input type="text" class="form-control" id="agama" name="agama">
+    </div>
+
+    <!-- No Kartu Keluarga -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="no_kartu_keluarga" class="form-label">No Kartu Keluarga</label>
+        <input type="text" class="form-control" id="no_kartu_keluarga" name="no_kartu_keluarga">
+    </div>
+
+    <!-- Posisi di Keluarga -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="posisi_di_keluarga" class="form-label">Posisi di Keluarga</label>
+        <input type="text" class="form-control" id="posisi_di_keluarga" name="posisi_di_keluarga">
+    </div>
+
+    <!-- Pendidikan Terakhir -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="pendidikan_terakhir" class="form-label">Pendidikan Terakhir</label>
+        <input type="text" class="form-control" id="pendidikan_terakhir" name="pendidikan_terakhir">
+    </div>
+
+    <!-- Profesi -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="profesi" class="form-label">Profesi</label>
+        <input type="text" class="form-control" id="profesi" name="profesi">
+    </div>
+
+    <!-- Pekerjaan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="pekerjaan" class="form-label">Pekerjaan</label>
+        <input type="text" class="form-control" id="pekerjaan" name="pekerjaan">
+    </div>
+
+    <!-- No NPWP -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="no_npwp" class="form-label">No NPWP</label>
+        <input type="text" class="form-control" id="no_npwp" name="no_npwp">
+    </div>
+
+    <!-- SIP -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="sip" class="form-label">SIP</label>
+        <input type="text" class="form-control" id="sip" name="sip">
+    </div>
+
+    <!-- Nama Ibu Kandung -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="nama_ibu_kandung" class="form-label">Nama Ibu Kandung</label>
+        <input type="text" class="form-control" id="nama_ibu_kandung" name="nama_ibu_kandung">
+    </div>
+
+    <!-- Golongan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="golongan" class="form-label">Golongan</label>
+        <input type="text" class="form-control" id="golongan" name="golongan">
+    </div>
+
+    <!-- Pangkat -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="pangkat" class="form-label">Pangkat</label>
+        <input type="text" class="form-control" id="pangkat" name="pangkat">
+    </div>
+
+    <!-- Status Karyawan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="status_karyawan" class="form-label">Status Karyawan</label>
+        <input type="text" class="form-control" id="status_karyawan" name="status_karyawan">
+    </div>
+
+    <!-- Unit Kerja -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="unit_kerja" class="form-label">Unit Kerja</label>
+        <input type="text" class="form-control" id="unit_kerja" name="unit_kerja">
+    </div>
+
+    <!-- No SK Pengangkatan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="no_sk_pengangkatan" class="form-label">No SK Pengangkatan</label>
+        <input type="text" class="form-control" id="no_sk_pengangkatan" name="no_sk_pengangkatan">
+    </div>
+
+    <!-- Tanggal SK Pengangkatan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="tanggal_sk_pengangkatan" class="form-label">Tanggal SK Pengangkatan</label>
+        <input type="date" class="form-control" id="tanggal_sk_pengangkatan" name="tanggal_sk_pengangkatan">
+    </div>
+
+    <!-- Tanggal Masuk RS -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="tanggal_masuk_rs" class="form-label">Tanggal Masuk RS</label>
+        <input type="date" class="form-control" id="tanggal_masuk_rs" name="tanggal_masuk_rs">
+    </div>
+
+    <!-- No Telepon -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="no_telepon" class="form-label">No Telepon</label>
+        <input type="text" class="form-control" id="no_telepon" name="no_telepon">
+    </div>
+
+    <!-- Alamat -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="alamat" class="form-label">Alamat</label>
+        <textarea class="form-control" id="alamat" name="alamat"></textarea>
+    </div>
+
+    <!-- Alamat Kelurahan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="alamat_kelurahan" class="form-label">Alamat Kelurahan</label>
+        <input type="text" class="form-control" id="alamat_kelurahan" name="alamat_kelurahan">
+    </div>
+
+    <!-- Alamat Kecamatan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="alamat_kecamatan" class="form-label">Alamat Kecamatan</label>
+        <input type="text" class="form-control" id="alamat_kecamatan" name="alamat_kecamatan">
+    </div>
+
+    <!-- Alamat Kabupaten -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="alamat_kabupaten" class="form-label">Alamat Kabupaten</label>
+        <input type="text" class="form-control" id="alamat_kabupaten" name="alamat_kabupaten">
+    </div>
+
+    <!-- Alamat Provinsi -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="alamat_provinsi" class="form-label">Alamat Provinsi</label>
+        <input type="text" class="form-control" id="alamat_provinsi" name="alamat_provinsi">
+    </div>
+
+    <!-- Pendidikan Ditempuh -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="pendidikan_ditempuh" class="form-label">Pendidikan Ditempuh</label>
+        <input type="text" class="form-control" id="pendidikan_ditempuh" name="pendidikan_ditempuh">
+    </div>
+
+    <!-- Diklat Ditempuh -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="diklat_ditempuh" class="form-label">Diklat Ditempuh</label>
+        <input type="text" class="form-control" id="diklat_ditempuh" name="diklat_ditempuh">
+    </div>
+
+    <!-- Prestasi yang Dimiliki -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="prestasi_yang_dimiliki" class="form-label">Prestasi yang Dimiliki</label>
+        <input type="text" class="form-control" id="prestasi_yang_dimiliki" name="prestasi_yang_dimiliki">
+    </div>
+
+    <!-- Riwayat Penghargaan -->
+    <div class="col-sm-12 col-md-6 col-lg-4 mb-3">
+        <label for="riwayat_penghargaan" class="form-label">Riwayat Penghargaan</label>
+        <input type="text" class="form-control" id="riwayat_penghargaan" name="riwayat_penghargaan">
+    </div>
+
+    <!-- Submit Button -->
+    <div class="row">
+      <div class="col-sm-12">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+    </div>
+
+  </form>
+</div>
+
+
+  </div>
+
+  {% include 'footer.html' %}
+
+
+</main>
+
+
+{% endlanguage %}
+{% endblock %}

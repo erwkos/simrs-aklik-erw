@@ -1,0 +1,78 @@
+<div class="row g-3 mt-2">
+    <hr class="my-1 text-primary">
+    <div class="accordion" id="accordionPlanning">
+        <div class="accordion-item">
+
+            <h2 class="accordion-header" id="headingOnePlanning">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseOnePlanning" aria-expanded="true" aria-controls="collapseOnePlanning">
+                    Planning
+                </button>
+            </h2>
+
+            <form method="POST" action="/soap/planning">
+                {% csrf_token %}
+                <input type="hidden" name="antrian_id" value="{{antrian.id}}">
+                <div id="collapseOnePlanning" class="accordion-collapse collapse show collapse show"
+                    aria-labelledby="headingOnePlanning" data-bs-parent="#accordionPlanning">
+                    <div class="accordion-body">
+                        <h5 class="mt-3 h5">Planning</h5>
+                        <div class="row gy-3">
+                            <div class="col-md-4">
+                                <label for="rencana_rawat" class="form-label mt-3">Rencana Rawat</label>
+                                <div class="input-group">
+                                    <input type="text" name="rencana_rawat" id="rencana_rawat" class="form-control"
+                                        autocomplete="off"
+                                        value="{% if planning.rencana_rawat != None %}{{planning.rencana_rawat}}{% endif %}">
+                                </div>
+                                <small class="text-muted">
+                                    <p class="text-end">Recncana rawat dalam hari.</p>
+                                </small>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="rencana_perawatan_pasca_rawat" class="form-label mt-3">Rencana Perawatan
+                                    Pasca
+                                    Rawat</label>
+                                <div class="input-group">
+                                    <input type="text" name="rencana_perawatan_pasca_rawat"
+                                        id="rencana_perawatan_pasca_rawat" class="form-control" autocomplete="off"
+                                        value="{% if planning.rencana_perawatan_pasca_rawat != None %}{{planning.rencana_perawatan_pasca_rawat}}{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-body">
+                        <h5 class="mt-3 h5">Tata Laksana</h5>
+                        <div class="row gy-3">
+                            <div class="col-md-4">
+                                <label for="rencana_tindakan" class="form-label mt-3">Rencana Tindakan</label>
+                                <div class="input-group">
+                                    <textarea rows="3" type="text" class="form-control" name="rencana_tindakan"
+                                        id="rencana_tindakan">{% if planning.rencana_tindakan != None %}{{planning.rencana_tindakan}}{% endif %}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="terapi_obat_obatan" class="form-label mt-3">Terapi Obat Obatan</label>
+                                <div class="input-group">
+                                    <textarea rows="3" type="text" class="form-control" name="terapi_obat_obatan"
+                                        id="terapi_obat_obatan">{% if planning.terapi_obat_obatan != None %}{{planning.terapi_obat_obatan}}{% endif %}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="rencana_konsultasi" class="form-label mt-3">Rencana Konsultasi</label>
+                                <div class="input-group">
+                                    <textarea rows="3" type="text" class="form-control" name="rencana_konsultasi"
+                                        id="rencana_konsultasi">{% if planning.rencana_konsultasi != None %}{{planning.rencana_konsultasi}}{% endif %}</textarea>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button class="btn btn-primary me-md-2" type="submit">Submit</button>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>    
+            </form>
+        </div>
+    </div>
+</div>

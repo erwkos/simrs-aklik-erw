@@ -1,0 +1,98 @@
+<div class="row g-3 mt-2">
+    <hr class="my-1 text-primary">
+    <div class="accordion" id="accordionLayananTindakan">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOneLayananTindakan">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseOneLayananTindakan" aria-expanded="true"
+                    aria-controls="collapseOneLayananTindakan">
+                    Layanan Tindakan
+                </button>
+            </h2>
+
+            <div id="collapseOneLayananTindakan" class="accordion-collapse collapse show collapse show"
+                aria-labelledby="headingOneLayananTindakan" data-bs-parent="#accordionLayananTindakan">
+                <div class="accordion-body">
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                        data-bs-target="#exampleModalTindakan">
+                        Tambah Layanan Tindakan
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModalTindakan" tabindex="-1"
+                        aria-labelledby="exampleModalLabelTindakan" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabelTindakan">Tambah Layanan Tindakan
+                                    </h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form method="POST" action="/otherlayanan/layanan-tindakan">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="antrian_id" value="{{antrian.id}}" />
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="exampleFormControlInput1" class="form-label">Layanan</label>
+                                            <select class="form-select" aria-label="Default select example"
+                                                name="layanan_id">
+                                                {% for layanan in layanan_tindakan %}
+                                                <option value="{{layanan.id}}">{{layanan.nama}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="exampleFormControlTextarea1"
+                                                class="form-label">Deskripsi</label>
+                                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"
+                                                name="deskripsi"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" style="display: block;">
+                        <table class="table table-bordered table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>Layanan</th>
+                                    <th>Harga</th>
+                                    <th>Kuantitas</th>
+                                    <th>Total Harga</th>
+                                    <th>Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for layanan in layanan_tindakan_pasien %}
+                                <tr>
+                                    <td><input type="text" class="form-control"
+                                            value="{{layanan.layanan_tindakan.nama}}" readonly disabled></td>
+                                    <td><input type="text" class="form-control" value="{{layanan.harga}}" readonly
+                                            disabled></td>
+                                    <td><input type="text" class="form-control" value="{{layanan.kuantitas}}" readonly
+                                            disabled></td>
+                                    <td><input type="text" class="form-control" value="{{layanan.total_harga}}" readonly
+                                            disabled></td>
+                                    <td>
+                                        <form method="POST"
+                                            action="/otherlayanan/layanan-tindakan/{{layanan.id}}/hapus">
+                                            {% csrf_token %}
+                                            <button class="btn btn-warning" type="submit">Hapus</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

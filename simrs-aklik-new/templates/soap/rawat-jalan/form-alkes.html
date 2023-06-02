@@ -1,0 +1,96 @@
+<div class="row g-3 mt-2">
+    <hr class="my-1 text-primary">
+    <div class="accordion" id="accordionLayananAlkes">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOneLayananAlkes">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseOneLayananAlkes" aria-expanded="true"
+                    aria-controls="collapseOneLayananAlkes">
+                    Layanan Alkes
+                </button>
+            </h2>
+
+            <div id="collapseOneLayananAlkes" class="accordion-collapse collapse show collapse show"
+                aria-labelledby="headingOneLayananAlkes" data-bs-parent="#accordionLayananAlkes">
+                <div class="accordion-body">
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                        data-bs-target="#exampleModalAlkes">
+                        Tambah Layanan Alkes
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModalAlkes" tabindex="-1" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabel">Tambah Layanan Alkes</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form method="POST" action="/inventory/tambah-alkes-pasien">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="antrian_id" value="{{antrian.id}}" />
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="exampleFormControlInput1" class="form-label">Alat</label>
+                                            <select class="form-select" aria-label="Default select example"
+                                                name="alat_id">
+                                                {% for alat in alat_kesehatan %}
+                                                <option value="{{alat.id}}">{{alat.nama}}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="exampleFormControlTextarea1"
+                                                class="form-label">Kuantitas</label>
+                                            <input class="form-control" id="exampleFormControlTextarea1" type="number"
+                                                name="kuantitas"></input>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" style="display: block;">
+                        <table class="table table-bordered table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>Layanan</th>
+                                    <th>Harga</th>
+                                    <th>Kuantitas</th>
+                                    <th>Total Harga</th>
+                                    <th>Alkes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alat in alat_kesehatan_pasien %}
+                                <tr>
+                                    <td><input type="text" class="form-control" value="{{alat.alat.nama}}"
+                                            readonly disabled></td>
+                                    <td><input type="text" class="form-control" value="{{alat.harga}}" readonly
+                                            disabled></td>
+                                    <td><input type="text" class="form-control" value="{{alat.kuantitas}}" readonly
+                                            disabled></td>
+                                    <td><input type="text" class="form-control" value="{{alat.total_harga}}" readonly
+                                            disabled></td>
+                                    <td>
+                                        <form method="POST" action="/inventory/hapus-alkes/pasien/{{alat.id}}">
+                                            {% csrf_token %}
+                                            <button class="btn btn-warning" type="submit">Hapus</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

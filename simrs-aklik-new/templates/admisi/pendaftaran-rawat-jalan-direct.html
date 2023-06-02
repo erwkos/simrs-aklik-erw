@@ -1,0 +1,179 @@
+{% extends 'basic.html' %}
+{% load humanize i18n static %}
+{% block title %}
+Pendaftaran Rawat Jalan Umum Direct
+{% endblock %}
+{% block head %}
+{% endblock %}
+
+{% block content %}
+{% language 'id' %}
+<main class="h-100">
+    {% include "header.html" %}
+    <div class="row mb-2">
+        {% for x in messages %}
+        <button class="btn btn-primary col-lg-12">{{ x }}</button>
+        {% endfor %}
+    </div>
+
+    <div class="container-sm" style="max-width: 900px;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Pendaftaran Rawat Jalan</h5>
+                <!-- strta  -->
+                <div class="card-body">
+                    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                          <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">Pasien Baru</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Pasien Lama</button>
+                        </li>
+                      </ul>
+                      <div class="tab-content" id="pills-tabContent">
+                        {% include 'admisi/form-daftar-pasien-existing.html' %}
+                        {% include 'admisi/form-daftar-pasien-baru.html' %}
+                      </div>
+                </div>
+                <!-- end  -->
+            </div>
+            <!-- <div class="card-body">
+                <form method="POST" action="/admisi/pendaftaran/rawat-jalan/{{antrian.id}}">
+                    {% csrf_token %}
+                    <div class="mb-3 row">
+                        <label for="inputNamaPasien" class="col-sm-2 col-form-label">Nama</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="inputNamaPasien" name="nama" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputNomorNIK" class="col-sm-2 col-form-label">Nomor NIK</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="inputNomorNIK" name="nik">
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputNomorNIK" class="col-sm-2 col-form-label">Tanggal lahir</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="inputNomorNIK" name="tanggal_lahir" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputJenisKelamin" class="col-sm-2 col-form-label">Jenis Kelamin</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="jenis_kelamin"
+                                required>
+                                <option value="Pria">Pria</option>
+                                <option value="Wanita">Wanita</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputAgama" class="col-sm-2 col-form-label">Agama</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="agama"
+                                required>
+                                {% for a in agama %}
+                                <option value="{{a.0}}">{{a.1}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputNamaPasien" class="col-sm-2 col-form-label">Provinsi</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="provinsi" required>
+                                {% for p in provinsi %}
+                                <option value="{{p.nama}}">{{p.nama}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputKabupaten" class="col-sm-2 col-form-label">Kabupaten</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="kabupaten" required>
+                                {% for p in kabupaten %}
+                                <option value="{{p.nama}}">{{p.nama}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputKecamatan" class="col-sm-2 col-form-label">Kecamatan</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="inputKecamatan" name="kecamatan" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputAlamat" class="col-sm-2 col-form-label">Alamat</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="inputAlamat" name="alamat" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputAsuransi" class="col-sm-2 col-form-label">Asuransi</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="asuransi"
+                                required>
+                                {% for a in asuransi %}
+                                <option value="{{a.0}}">{{a.1}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputAsuransi" class="col-sm-2 col-form-label">Poli</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="poli"
+                                required>
+                                {% for a in poli %}
+                                <option value="{{a.id}}">{{a.nama}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputAsuransi" class="col-sm-2 col-form-label">Dokter</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="dokter"
+                                required>
+                                {% for a in dokter %}
+                                <option value="{{a.id}}">{{a.get_full_name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputAsuransi" class="col-sm-2 col-form-label">Rujukan</label>
+                        <div class="col-sm-10">
+                            <select class="form-select" aria-label="Default select example" name="rujukan"
+                                required>
+                                {% for a in rujukan %}
+                                <option value="{{a.0}}">{{a.1}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="inputAlamat" class="col-sm-2 col-form-label">No Rujukan</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="inputAlamat" name="no_rujukan">
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button class="btn btn-primary" type="submit">Button</button>
+                      </div>
+
+                </form>
+            </div> -->
+
+
+            
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+</main>
+{% endlanguage %}
+{% endblock content %}

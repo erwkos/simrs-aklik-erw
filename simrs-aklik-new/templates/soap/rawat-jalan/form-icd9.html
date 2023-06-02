@@ -1,0 +1,81 @@
+<div class="row g-3 mt-2">
+    <hr class="my-1 text-primary">
+    <div class="accordion" id="accordionLayananICD9">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOneLayananICD9">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseOneLayananICD9" aria-expanded="true"
+                    aria-controls="collapseOneLayananICD9">
+                    Assessment ICD9
+                </button>
+            </h2>
+            <div id="collapseOneLayananICD9" class="accordion-collapse collapse show collapse show"
+                aria-ICD9elledby="headingOneLayananICD9" data-bs-parent="#accordionLayananICD9">
+                <div class="accordion-body">
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                        data-bs-target="#exampleModalICD9">
+                        Tambah ICD9
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModalICD9" tabindex="-1" aria-labelledby="exampleModalLabelICD9"
+                        aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabelICD9">Tambah ICD9</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form method="POST" action="/soap/assessment-icd9">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="antrian_id" value="{{antrian.id}}" />
+                                    <div class="modal-body">
+                                        <select class="form-select" aria-label="Default select example" name="kode">
+                                            {% for icd9 in icd9_list %}
+                                            <option value="{{icd9.kode}}">{{icd9.nama}} ({{icd9.kode}})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body" style="display: block;">
+                        <table class="table table-bordered table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Kode</th>
+                                    <th>Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for icd9 in assessment_icd9 %}
+                                <tr>
+                                    <td>{{icd9.nama}}</td>
+                                    <td>{{icd9.kode}}</td>
+                                    <td>
+                                        <form method="POST" action="/soap/assessment-icd9/{{icd9.id}}/hapus">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="icd9_id" value="{{icd9.id}}" />
+                                            <button class="btn btn-warning" type="submit"
+                                                href="/ICD9/rawat-jalan/hasil/{{layanan.id}}"
+                                                target="_blank">Hapus</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

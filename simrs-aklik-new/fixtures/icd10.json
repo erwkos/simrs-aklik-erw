@@ -1,0 +1,36 @@
+[
+  {
+  "model": "icd.icd10",
+  "pk": 1,
+  "fields": {
+    "nama": "hgfhygfyu",
+    "kode": "A001"
+    }
+  },
+  {
+  "model": "icd.icd10",
+  "pk": 2,
+  "fields": {
+    "nama": "hgfhygfyu",
+    "kode": "A002"
+    }
+  },
+  {
+  "model": "icd.icd10",
+  "pk": 3,
+  "fields":
+  {
+    "nama": "hgfhygfyu",
+    "kode": "A003"
+    }
+  },
+  {
+  "model": "icd.icd10",
+  "pk": 4,
+  "fields":
+  {
+    "nama": "hgfhygfyu",
+    "kode": "A003"
+    }
+  }
+]

@@ -1,0 +1,116 @@
+[
+  {
+    "model": "user.userrole",
+    "pk": 1,
+    "fields": {
+      "nama": "pasien",
+      "keterangan": "test"
+    }
+  },
+  {
+    "model": "user.userrole",
+    "pk": 2,
+    "fields": {
+      "nama": "dokter",
+      "keterangan": "test"
+    }
+  },
+  {
+    "model": "user.userrole",
+    "pk": 3,
+    "fields": {
+      "nama": "perawat",
+      "keterangan": "test"
+    }
+  },
+  {
+    "model": "user.userrole",
+    "pk": 4,
+    "fields": {
+      "nama": "petugas radiologi",
+      "keterangan": "test"
+    }
+  },
+  {
+    "model": "user.userrole",
+    "pk": 5,
+    "fields": {
+      "nama": "petugas lab",
+      "keterangan": "test"
+    }
+  },
+  {
+    "model": "user.userrole",
+    "pk": 6,
+    "fields": {
+      "nama": "farmasi",
+      "keterangan": "test"
+    }
+  },
+  {
+    "model": "user.userrole",
+    "pk": 7,
+    "fields": {
+      "nama": "admisi",
+      "keterangan": "test"
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 2,
+    "fields": {
+      "username": "doktergigi",
+      "password": "pbkdf2_sha256$260000$Fo0qZjfgZZCSPjoffoQwKu$awfhSFFY9fIwB/cAgqtd8U9RDUUvyFNHazFoRxkLZlU="
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 3,
+    "fields": {
+      "username": "perawatgigi",
+      "password": "pbkdf2_sha256$260000$Fo0qZjfgZZCSPjoffoQwKu$awfhSFFY9fIwB/cAgqtd8U9RDUUvyFNHazFoRxkLZlU=",
+      "is_superuser": true,
+      "is_staff": true
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 4,
+    "fields": {
+      "username": "petugasradiologi",
+      "password": "pbkdf2_sha256$260000$Fo0qZjfgZZCSPjoffoQwKu$awfhSFFY9fIwB/cAgqtd8U9RDUUvyFNHazFoRxkLZlU=",
+      "is_superuser": true,
+      "is_staff": true
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 5,
+    "fields": {
+      "username": "petugaslab",
+      "password": "pbkdf2_sha256$260000$Fo0qZjfgZZCSPjoffoQwKu$awfhSFFY9fIwB/cAgqtd8U9RDUUvyFNHazFoRxkLZlU=",
+      "is_superuser": true,
+      "is_staff": true
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 6,
+    "fields": {
+      "username": "farmasi",
+      "password": "pbkdf2_sha256$260000$Fo0qZjfgZZCSPjoffoQwKu$awfhSFFY9fIwB/cAgqtd8U9RDUUvyFNHazFoRxkLZlU=",
+      "is_superuser": true,
+      "is_staff": true
+    }
+  },
+  {
+    "model": "user.user",
+    "pk": 7,
+    "fields": {
+      "username": "admisi",
+      "password": "pbkdf2_sha256$260000$Fo0qZjfgZZCSPjoffoQwKu$awfhSFFY9fIwB/cAgqtd8U9RDUUvyFNHazFoRxkLZlU=",
+      "is_superuser": true,
+      "is_staff": true
+    }
+  }
+]

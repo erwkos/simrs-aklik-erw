@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="generator" content="">
+    <title>{% block title %}{% endblock title %} | {{ profil.nama }}</title>
+    {% block head %}{% endblock head %}
+    <!-- manifest meta -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/static/desain/manifest.json" />
+
+    <!-- Favicons -->
+
+    <link rel="apple-touch-icon" href="{{ profil.logo.url }}" sizes="180x180">
+    <link rel="icon" href="{{ profil.logo.url }}" sizes="32x32" type="image/png">
+    <link rel="icon" href="{{ profil.logo.url }}" sizes="16x16" type="image/png">
+
+    <!-- Google fonts-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- bootstrap icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+
+    <!-- swiper carousel css -->
+    <link rel="stylesheet" href="/static/desain/assets/vendor/swiperjs-6.6.2/swiper-bundle.min.css">
+
+    <!-- style css for this template -->
+    <link href="/static/desain/assets/css/style.css" rel="stylesheet" id="style">
+    <link rel="stylesheet" href="{% static 'assets/css/new.css' %}">
+</head>
+
+<body class="body-scroll theme-green" data-page="index">
+
+    <!-- Sidebar main menu -->
+    <div class="sidebar-wrap  sidebar-pushcontent">
+        <!-- Add overlay or fullmenu instead overlay -->
+        <div class="closemenu text-muted">Close Menu</div>
+        <div class="sidebar">
+            <!-- user information -->
+            <div class="row my-3">
+                <div class="col-12 ">
+                    <div class="card shadow-sm bg-opac text-white border-0">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-auto">
+                                    <figure class="avatar avatar-44 rounded-15">
+                                        <img src="{{ profil.logo.url }}" alt="">
+                                    </figure>
+                                </div>
+                                <div class="col px-0 align-self-center">
+                                    <p class="size-12 text-light mb-1">{{ request.user.first_name }}</p>
+                                    {% for x in request.user.groups.all %}
+                                    <p class="text-muted size-12">{{ x }}</p>
+                                    {% endfor %}
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-44 btn-light">
+                                        <a href=""><i class="bi bi-box-arrow-right"></i></a>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card bg-opac text-white border-0">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h2 class="display-6 text-start">{{ request.user.username }}</h2>
+                                    </div>
+                                    <div class="col-auto text-start">
+                                        <p class="text-muted">Profil</p>
+                                    </div>
+                                    <div class="col text-end">
+                                        <p class="text-muted"><a href="/user/profil" class="text-light">+ Kunjungi Profil</a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- user emnu navigation -->
+            <div class="row">
+                <div class="col-12">
+                    <ul class="nav nav-pills">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/user/dashboard">
+                                <div class="avatar avatar-40 rounded icon"><i class="bi bi-house-door"></i></div>
+                                <div class="col">Dashboard</div>
+                                <div class="arrow"><i class="bi bi-chevron-right"></i></div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/profil" tabindex="-1">
+                                <div class="avatar avatar-40 rounded icon"><i class="bi bi-person"></i></div>
+                                <div class="col">Profil</div>
+                                <div class="arrow"><i class="bi bi-chevron-right"></i></div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" tabindex="-1">
+                                <div class="avatar avatar-40 rounded icon"><i class="bi bi-chat-text"></i></div>
+                                <div class="col">Chat</div>
+                                <div class="arrow"><i class="bi bi-chevron-right"></i></div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin" tabindex="-1">
+                                <div class="avatar avatar-40 rounded icon"><i class="bi bi-puzzle"></i></div>
+                                <div class="col">Master Data</div>
+                                <div class="arrow"><i class="bi bi-chevron-right"></i></div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ubahpassword" tabindex="-1">
+                                <div class="avatar avatar-40 rounded icon"><i class="bi bi-key"></i></div>
+                                <div class="col">Ubah Password</div>
+                                <div class="arrow"><i class="bi bi-chevron-right"></i></div>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}" tabindex="-1">
+                                <div class="avatar avatar-40 rounded icon"><i class="bi bi-box-arrow-right"></i></div>
+                                <div class="col">Logout</div>
+                                <div class="arrow"><i class="bi bi-chevron-right"></i></div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Sidebar main menu ends -->
+    <!-- Begin page -->
+    <!-- Header ends -->
+    {% block content %}
+    {% endblock content %}
+
+    <!-- Required jquery and libraries -->
+
+
+    {% block scriptakhir %}{% endblock scriptakhir %}
+    <script src="/static/desain/assets/js/jquery-3.3.1.min.js"></script>
+    <script src="/static/desain/assets/js/popper.min.js"></script>
+    <script src="/static/desain/assets/vendor/bootstrap-5/js/bootstrap.bundle.min.js"></script>
+
+    <!-- cookie js -->
+    <script src="/static/desain/assets/js/jquery.cookie.js"></script>
+
+    <!-- Customized jquery file  -->
+    <script src="/static/desain/assets/js/main.js"></script>
+    <script src="/static/desain/assets/js/color-scheme.js"></script>
+
+<!--    &lt;!&ndash; PWA app service registration and works &ndash;&gt;-->
+<!--    <script src="/static/assets/js/pwa-services.js"></script>-->
+
+<!--    &lt;!&ndash; Chart js script &ndash;&gt;-->
+<!--    <script src="/static/assets/vendor/chart-js-3.3.1/chart.min.js"></script>-->
+
+<!--    &lt;!&ndash; Progress circle js script &ndash;&gt;-->
+<!--    <script src="/static/assets/vendor/progressbar-js/progressbar.min.js"></script>-->
+
+<!--    &lt;!&ndash; swiper js script &ndash;&gt;-->
+<!--    <script src="/static/assets/vendor/swiperjs-6.6.2/swiper-bundle.min.js"></script>-->
+
+<!--    &lt;!&ndash; page level custom script &ndash;&gt;-->
+<!--    <script src="/static/assets/js/app.js"></script>-->
+
+</body>
+
+</html>

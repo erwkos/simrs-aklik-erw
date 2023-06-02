@@ -1,0 +1,111 @@
+{% extends 'basic.html' %}
+{% block title %}
+Mesin Antrian
+{% endblock %}
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.4/jspdf.debug.js" ></script>
+
+<script  type="text/javascript">
+    function printDiv(divName) {
+        var printContents = document.getElementById(divName).innerHTML;
+        w=window.open();
+        w.document.write(printContents);
+        w.print();
+        w.close();
+    }
+</script>
+<script>
+    function generatePDF() {
+ var doc = new jsPDF();  //create jsPDF object
+  doc.fromHTML(document.getElementById("test{{ waktusekarang }}"), // page element which you want to print as PDF
+  15,
+  15,
+  {
+    'width': 170  //set width
+  },
+  function(a)
+   {
+    doc.save("antrian{{ waktusekarang }}.pdf"); // save file name as printkma.pdf
+  });
+}
+</script>
+<script>
+function refreshnomor() {
+        setInterval('refreshNomorAntri()', 500);
+}
+function refreshNomorAntri() {
+        $.ajax({
+        url: '{% url 'automengantri' %}',
+        success: function(data) {
+        $('#automengantribois').html(data);
+        }
+    });
+}
+</script>
+    <script>
+    function wakturefresh() {
+            setInterval('refreshWaktu()', 1000);
+    }
+    function refreshWaktu() {
+            $.ajax({
+            url: '{% url 'autowaktusekarang' %}',
+            success: function(data) {
+            $('#autowaktusekarang').html(data + "<br><small>Loket Pendaftaran</small>");
+            }
+        });
+    }
+    </script>
+<script  type="text/javascript">
+    function printDiv(divName) {
+        var printContents = document.getElementById(divName).innerHTML;
+        w=window.open();
+        w.document.write(printContents);
+        w.print();
+        w.close();
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Header ends -->
+
+<main class="h-100">
+<!-- main page content -->
+<div class="main-container container">
+
+<div class="d-flex justify-content-center">
+    <div class="row mb-3 mt-4 ">
+        <div class="col">
+            <h6>Mengantri Pendaftaran</h6>
+        </div>
+    </div>
+</div>
+<div class="d-flex justify-content-center" >
+    <div class="row mt-4">
+        <div class="col-12 mb-2">
+                    <p class="text-color-theme text-center">Nomor Antrian yang akan di dapatkan </p>
+            <div class="card">
+                <div class="card-body">
+    <div id="printableArea">
+    <center><h6><small>{{ profil.nama }}<br>Nomor Antrian</small></h6>
+    <script>refreshnomor()</script>
+    <h2 id="automengantribois"></h2>
+    <script>wakturefresh()</script>
+    <small><p id="autowaktusekarang"></p></small>
+        </center>
+    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="d-flex justify-content-center">
+    <form method="post" action="/antrian/ambil-nomor-antrian" onsubmit="printDiv('printableArea')">
+        {% csrf_token %}
+            <button class="btn btn-primary rounded-15" type="submit">Antri</button>
+        </form>
+    </div>
+
+</div>
+</main>
+{% endblock %}

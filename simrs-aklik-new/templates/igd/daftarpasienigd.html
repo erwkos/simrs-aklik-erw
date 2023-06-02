@@ -1,0 +1,82 @@
+{% extends 'basic.html' %}
+{% load humanize i18n static %}
+
+{% block title %}
+Daftar Pasien IGD
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/js/bootstrap-select.js"></script>
+{% endblock %}
+
+{% block content %}
+{% language 'id' %}
+<main class="h-100">
+
+    {% include "header.html" %}
+    <!-- main page content -->
+    <div class="main-container container">
+        <!--card pelayanan-->
+        <div class="row mb-2">
+            {% for x in messages %}
+            <button class="btn btn-primary col-lg-12">{{ x }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <div class="row mb-3 mt-4 ">
+                <div class="col">
+                    <h4>Daftar Pasien IGD BPJS</h4>
+                </div>
+            </div>
+        </div>
+
+            <div class="row mb-3 mt-4 ">
+                <input type="text" name="pencarian" class="form-control" placeholder="Cari Pasien"><br><button type="submit" class="btn btn-primary mt-2">Cari</button>
+            </div>
+
+        <div class="row mb-3 mt-4 ">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th scope="col">Nomor</th>
+                                <th scope="col">no SEP</th>
+                                <th scope="col">Nama</th>
+                                <th scope="col">Diagnosa Pasien</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for x in daftarpasienigdnya %}
+                            {% if x.poli == 'IGD' %}
+                            <tr>
+                                <td rowspan="2" style="font-size: 50px;"><center><i class="bi bi-person"></i></center>  </td>
+                                <th scope="row">{{ x.noSep }}</th>
+                                <td>{{ x.nama }}</td>
+                                <td>{{ x.diagnosa }}</td>
+                            </tr>
+                            <tr>
+                                <td scope="row" colspan="3"><center>
+                                    <a href="#" class="btn btn-success">Triase / Triage</a>
+                                    <a href="#" class="btn btn-primary">Resume Medis</a>
+                                    <a href="#" class="btn btn-warning">Mutasi ke Ranap</a></center>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "footer.html" %}
+</main>
+{% endlanguage %}
+{% endblock %}
+

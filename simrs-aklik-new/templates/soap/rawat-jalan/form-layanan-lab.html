@@ -1,0 +1,115 @@
+<div class="row g-3 mt-2">
+    <hr class="my-1 text-primary">
+    <div class="accordion" id="accordionLayananLab">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOneLayananLab">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseOneLayananLab" aria-expanded="true" aria-controls="collapseOneLayananLab">
+                    Layanan Lab
+                </button>
+            </h2>
+            <div id="collapseOneLayananLab" class="accordion-collapse collapse show collapse show"
+                aria-labelledby="headingOneLayananLab" data-bs-parent="#accordionLayananLab">
+                <div class="accordion-body">
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" ,
+                        data-bs-target="#exampleModalLab">
+                        Request Layanan Lab
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModalLab" tabindex="-1" aria-labelledby="exampleModalLabelLab"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabelLab">Layanan Lab</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="/lab/request/layanan-lab/rawat-jalan">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="antrian_id" value="{{antrian.id}}" />
+                                        <div class="row row-cols-1 row-cols-sm-4 g-4">
+                                            {% for kategori in kategori_layanan_lab %}
+                                            <div class="col">
+                                                <div class="dropdown">
+                                                    <button type="button"
+                                                        class="btn btn-outline-success dropdown-toggle"
+                                                        data-bs-toggle="dropdown" aria-expanded="false"
+                                                        data-bs-auto-close="outside" style="width: 260px;">
+                                                        {{kategori.nama}}
+                                                    </button>
+                                                    <div class="dropdown-menu p-4">
+                                                        <div class="mb-3" style="width: 240px;">
+                                                            {% for layanan in kategori.layananlab_set.all %}
+                                                            <h6 class="text-start">{{layanan.nama}} (harga
+                                                                {{layanan.harga}})</h6>
+                                                            {% for sub in layanan.sublayananlab_set.all %}
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    value="{{sub.id}}" id="flexCheckDefault"
+                                                                    name="sub_id">
+                                                                <label class="form-check-label" for="flexCheckDefault">
+                                                                    {{sub.nama}}
+                                                                </label>
+                                                            </div>
+                                                            {% endfor %}
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <br>
+                                        <div class="mb-3">
+                                            <label for="exampleFormControlTextarea1" class="form-label">Diagnosa</label>
+                                            <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"
+                                                name="diagnosa"></textarea>
+                                        </div>
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <button class="btn btn-primary" type="submit">Submit</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body" style="display: block;">
+                        <table class="table table-bordered table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>Layanan</th>
+                                    <th>Harga</th>
+                                    <th>Kuantitas</th>
+                                    <th>Total Harga</th>
+                                    <th>Status</th>
+                                    <th>Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for layanan in layanan_lab_pasien %}
+                                <tr>
+                                    <td>{{layanan.layanan_lab.nama}}</td>
+                                    <td>{{layanan.harga}}</td>
+                                    <td>{{layanan.kuantitas}}</td>
+                                    <td>{{layanan.total_harga}}</td>
+                                    <td>{{layanan.status_layanan}}</td>
+                                    <td>
+                                        <a class="btn btn-primary" type="button"
+                                            href="/lab/rawat-jalan/hasil/{{layanan.id}}" target="_blank">Lihat Hasil</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

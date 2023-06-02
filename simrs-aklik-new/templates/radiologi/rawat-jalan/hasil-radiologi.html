@@ -1,0 +1,99 @@
+{% extends 'basic.html' %}
+{% load humanize i18n static %}
+
+{% block title %}
+Pemanggil Antrian
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/js/bootstrap-select.js"></script>
+{% endblock %}
+
+{% block content %}
+{% language 'id' %}
+<main class="h-100">
+
+    {% include "header.html" %}
+    <!-- main page content -->
+    <div class="main-container container">
+        <!--card pelayanan-->
+        <div class="row mb-2">
+            {% for x in messages %}
+            <button class="btn btn-primary col-lg-12">{{ x }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-center">
+            <div class="row mb-3 mt-4 ">
+                <div class="col">
+                    <h4>Hasil Radiologi</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center">
+
+        </div>
+        <div class="row mb-3 mt-4 ">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3 row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">Status Layanan</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control-plaintext" id="staticEmail"
+                                    value="{{hasil.status_layanan}}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">Pasien</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control-plaintext" id="staticEmail"
+                                    value="{{hasil.resume_medis.pasien.nama}}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">Layanan</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control-plaintext" id="staticEmail"
+                                    value="{{hasil.layanan_radiologi.nama}}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">Petugas</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control-plaintext" id="staticEmail"
+                                    value="{{hasil.petugas_radiologi.get_full_name}}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">Diagnosa</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control-plaintext" id="staticEmail"
+                                    value="{{hasil.diagnosa}}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">Catatan</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control-plaintext" id="staticEmail"
+                                    value="{{hasil.catatan}}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">File Tracer</label>
+                            <div class="col-sm-10">
+                                <a class="link-offset-3" id="staticEmail">{{file_tracer.file.url}}</a>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include "footer.html" %}
+</main>
+{% endlanguage %}
+{% endblock %}

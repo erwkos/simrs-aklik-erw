@@ -1,0 +1,81 @@
+<div class="row g-3 mt-2">
+    <hr class="my-1 text-primary">
+    <div class="accordion" id="accordionLayananICD10">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOneLayananICD10">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseOneLayananICD10" aria-expanded="true"
+                    aria-controls="collapseOneLayananICD10">
+                    Assessment ICD10
+                </button>
+            </h2>
+            <div id="collapseOneLayananICD10" class="accordion-collapse collapse show collapse show"
+                aria-ICD10elledby="headingOneLayananICD10" data-bs-parent="#accordionLayananICD10">
+                <div class="accordion-body">
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                        data-bs-target="#exampleModalICD10">
+                        Tambah ICD10
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModalICD10" tabindex="-1"
+                        aria-labelledby="exampleModalLabelICD10" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabelICD10">Tambah ICD10</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form method="POST" action="/soap/assessment-icd10">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="antrian_id" value="{{antrian.id}}" />
+                                    <div class="modal-body">
+                                        <select class="form-select" aria-label="Default select example" name="kode">
+                                            {% for icd10 in icd10_list %}
+                                            <option value="{{icd10.kode}}">{{icd10.nama}} ({{icd10.kode}})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body" style="display: block;">
+                        <table class="table table-bordered table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Kode</th>
+                                    <th>Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for icd10 in assessment_icd10 %}
+                                <tr>
+                                    <td>{{icd10.nama}}</td>
+                                    <td>{{icd10.kode}}</td>
+                                    <td>
+                                        <form method="POST" action="/soap/assessment-icd10/{{icd10.id}}/hapus">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="icd10_id" value="{{icd10.id}}" />
+                                            <button class="btn btn-warning" type="submit"
+                                                href="/ICD10/rawat-jalan/hasil/{{layanan.id}}"
+                                                target="_blank">Hapus</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,170 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>RESEP ASLI</title>
+    <link rel="stylesheet" type="text/css" href="./Resep_files/base.css">
+    <link rel="stylesheet" type="text/css" href="./Resep_files/style.css">
+    <link rel="stylesheet" type="text/css" href="./Resep_files/tabel.css">
+    <script language="JavaScript">
+        function cetak() {
+            SCETAK.innerHTML = '';
+            window.print();
+            if (confirm('Apakah menu print ini akan ditutup?')) {
+                window.close();
+            }
+            SCETAK.innerHTML = '<br /><input onClick=\'cetak()\' type=\'submit\' name=\'Submit\' value=\'Cetak\' class=\'tombol\'>';
+        }
+    </script>
+    <style type="text/css">
+        .halaman {
+            width: 9.5cm;
+            height: 11.5cm;
+            max-width: 9.5cm;
+            max-height: 11.5cm;
+        }
+        @print {
+            .noprint {
+                display: none;
+            }
+        }
+        * {
+            font-size: 11pt;
+        }
+        td {
+            font-size: 11pt !important;
+            line-height: 1.0;
+        }
+        .aturan-pakai-space {
+            font-size: 11pt !important;
+            line-height: 1.1;
+        }
+        table {
+            page-break-inside: auto;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+    </style>
+    <style type="text/css">
+        .head-cetak {
+            width: 600px;
+            text-align: left;
+            height: 90px;
+            padding-top: 0px;
+            padding-bottom: 2px;
+        }
+        #head-cetak-logo {
+            height: 70px;
+            padding-top: 0px;
+            font-size: 12px;
+        }
+        #logo {
+            height: 100%;
+            float: left;
+            padding-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="head-cetak">
+    <div id="logo">
+        <img style="width: auto;height:80px" src="./Resep_files/logo.png">
+    </div>
+    <div id="head-cetak-logo">
+        <b> RSU HARAPAN KELUARGA</b><br>
+        Jl. Raya Rancaekek - Cipacing KM. 20, KAB. SUMEDANG<br>
+        Telp: (022) 7796335, Fax: -<br>
+        Email: Info@rsharapankeluarga.com<br>
+        Website: Https://rsharapankeluarga.com<br>
+    </div>
+</div>
+<div class="halaman">
+    <center><span style=" font-size: 12pt;font-weight: bold">RESEP</span></center>
+    <br>
+    <div class="head-nota">
+        <table>
+            <tbody>
+            <tr>
+                <td>Nama Dokter</td>
+                <td>: dr.Abiyoga Basu Galindra Wicaksono</td>
+            </tr>
+            <tr>
+                <td>SIP</td>
+                <td>: 503/KEP.13F40386-PTSP/2021</td>
+</tr>
+            <tr>
+                <td>No. Resep</td>
+                <td>: ........................</td>
+            </tr>
+            <tr>
+                <td>Tanggal Resep</td>
+                <td>: 21/05/2023</td>
+            </tr>
+            <tr>
+                <td>No. RM</td>
+                <td>: 81476</td>
+            </tr>
+            <tr>
+                <td>Nama Pasien</td>
+                <td>: Ahmad Percobaan 2</td>
+            </tr>
+            <tr>
+                <td>Tanggal Lahir</td>
+                <td>: 06/05/1987</td>
+            </tr>
+            <tr>
+                <td>Asuransi</td>
+                <td>: UMUM</td>
+            </tr>
+            <tr>
+                <td>Riwayat Alergi</td>
+                <td>: -</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="head-nota">
+        <table style="border:none;">
+            <tbody>
+            <tr>
+                <td valign="top" width="5%" align="center">
+                    R/1
+                </td>
+                <td>
+                    BETADINE 1 ML &nbsp;&nbsp;&nbsp; 1/1 &nbsp; Jml: 100
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><span class="aturan-pakai-space">(Aturan Pakai)</span></td>
+            </tr>
+            <tr>
+                <td valign="top" width="5%" align="center">
+                    R/2
+                </td>
+                <td>
+                    KASA VERBAND BESAR &nbsp;&nbsp;&nbsp; 1/1 &nbsp; Jml: 1
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><span class="aturan-pakai-space">(Aturan Pakai)</span></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="display-blok footer">
+    </div>
+    <div class="data-input noprint">
+        <center>
+            <p><span id="SCETAK"><input type="button" class="tombol" value="Cetak" onclick="cetak()"></span></p>
+        </center>
+    </div>
+</div>
+</body>
+</html>

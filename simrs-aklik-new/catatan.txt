@@ -1,0 +1,18 @@
+git pull origin new #untuk ngambil updatean repo dari cikal ke local cikal
+
+git push origin new #dari local saya ngepush ke codingan andika
+
+git status #untuk melihat status
+
+git add . #ketika edit file atau nambah file itu bakal merah dan ngedit existing warna biru ke temporary
+git commit -m 'ada #keterangan untuk pesan' #ini sebelum mau nge push
+git status #list ada di terminal nanti keluar file di edit dan ditambahin apa aja
+git push origin new #langsung masukin ke repo cikal
+
+nanti klik klik pull request , nanti biar andika aja yang edit
+
+
+
+nambah satu lagi
+
+git pull origin new #kalo lagi nambahin lebih baik jangan ngedit filenya

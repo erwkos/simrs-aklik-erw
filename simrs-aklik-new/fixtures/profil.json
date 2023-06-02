@@ -1,0 +1,11 @@
+[
+  {
+    "model": "faskes.profil",
+    "pk": 1,
+    "fields": {
+      "nama": "RS Majalaya",
+      "alamat": "majalaya",
+      "logo": "aaaa"
+    }
+  }
+]
