@@ -1,9 +1,0 @@
-[
-  {
-    "model": "lab.kategorilayananlab",
-    "pk": 1,
-    "fields": {
-      "nama": "Vaksin"
-    }
-  }
-]
