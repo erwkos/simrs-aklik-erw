@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}
+Silahkan Masuk
+{% endblock %}
+
+{% block styleheader %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const username = document.getElementById("pengguna").value;
+        const password = document.getElementById("sandi").value;
+        var derived_key = CryptoJS.enc.Base64.parse("XxfjQ2pEXmiy/nNZvEJ43i8hJuaAnzbA1Cbn1hOuAgA=")
+        var iv = CryptoJS.enc.Utf8.parse("1020304050607087");
+        var hashedUsername = CryptoJS.AES.encrypt(username, derived_key, {iv: iv, mode: CryptoJS.mode.CBC}).toString();
+        var hashedPassword = CryptoJS.AES.encrypt(password, derived_key, {iv: iv, mode: CryptoJS.mode.CBC}).toString();
+        document.getElementById("hashedUsername").value = hashedUsername;
+        document.getElementById("hashedPassword").value = hashedPassword;
+        form.submit();
+    });
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+{% endblock %}
+
+{% block data-page %}
+signin
+{% endblock %}
+
+{% block content %}
+
+
+    {% include 'loader.html' %}
+<!-- Begin page content -->
+<main class="container-fluid h-100">
+    <div class="row h-100 overflow-auto">
+        <div class="col-12 text-center mb-auto px-0">
+            <header class="header">
+                <div class="row">
+                    <div class="col-auto"></div>
+                    <div class="col">
+                        <div class="logo-small">
+                            <img src="media/k2bftheme/assets/img/logo.png" alt="">
+                            <h5>K2BF SAGALAYA</h5>
+                        </div>
+                    </div>
+                    <div class="col-auto"></div>
+                </div>
+            </header>
+        </div>
+
+
+
+        {% include "messages_info.html" %}
+
+    <div class="row">
+        <div class="col-10 col-md-6 col-lg-5 col-xl-3 mx-auto align-self-center text-center py-4">
+            <h1 class="mb-4 text-color-theme">Masuk</h1>
+            <form class="was-validated needs-validation" method="POST" action="/masuk?next=/">
+    {% csrf_token %}
+    <!-- Tambahkan input tersembunyi untuk data username dan password -->
+    <input type="hidden" name="username" id="hashedUsername" value="">
+    <input type="hidden" name="password" id="hashedPassword" value="">
+
+    <div class="form-group form-floating mb-3 is-valid">
+        <input type="text" class="form-control" id="pengguna" placeholder="NIK 6 Digit">
+        <label class="form-control-label" for="pengguna">NIK 6 Digit</label>
+    </div>
+
+    <div class="form-group form-floating is-invalid mb-3">
+        <input type="password" class="form-control" id="sandi" placeholder="Kata Sandi">
+        <label class="form-control-label" for="sandi">Kata Sandi</label>
+    </div>
+    <p class="mb-3 text-center">
+        <a href="https://wa.me/6281224386646">
+            Lupa Kata Sandi ?
+        </a>
+    </p>
+
+    <button type="submit" class="btn btn-lg btn-default w-100 mb-4 shadow">
+        Masuk Sekarang
+    </button>
+</form>
+
+            <p class="mb-2 text-muted">Belum Aktivasi?</p>
+            <a href="/pendaftaran" target="_self" class="btn btn-primary">
+                Aktivasi Akun <i class="bi bi-arrow-right"></i>
+            </a>
+
+        </div>
+    </div>
+</main>
+{% endblock %}

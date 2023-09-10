@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="col-sm-12">
+    <div class="card">
+        <div class="card-header">
+
+            <div class="row">
+                <div class="col-6 text-start">
+                    <h5>File Upload</h5>
+                </div>
+                <div class="col-6 text-end">
+                    <h5><i class="ti ti-file-text"></i></h5>
+                </div>
+            </div>
+
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="mb-2 mt-2">
+                {% csrf_token %}
+                <input class="form-control" type="file" name="file" required>
+                <input type="hidden" name="action" value="upload_file">
+                <button class="btn btn-primary mb-2 mt-2" type="submit">Upload</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+        <tr>
+            {% for column in preview_data.columns %}
+            <th scope="col">{{ column }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for index,row in preview_data.iterrows %}
+        <tr>
+            {% for value in row %}
+            <td>{% if value == ' nan ' %} {% else %} {{value}} {% endif %}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

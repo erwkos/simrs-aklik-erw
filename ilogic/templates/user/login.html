@@ -1,0 +1,172 @@
+{% load crispy_forms_tags %}
+{% autoescape on %}
+<!DOCTYPE html>
+<html lang="en">
+<!-- [Head] start -->
+
+<head>
+    <title>Login | iLogic BPJS Kesehatan </title>
+    <!-- [Meta] -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Login | BPJS Kesehatan VIIS">
+    <meta name="keywords" content="bpjs, kesehatan, viis">
+    <meta name="author" content="lekatara">
+
+    <!-- [Favicon] icon -->
+    <link rel="icon" href="/static/favicon.png" type="image/x-icon">
+    <!-- [Font] Family -->
+    <link rel="stylesheet" href="/static/assets/fonts/inter/inter.css" id="main-font-link"/>
+
+    <!-- [Tabler Icons] https://tablericons.com -->
+    <link rel="stylesheet" href="/static/assets/fonts/tabler-icons.min.css"/>
+    <!-- [Feather Icons] https://feathericons.com -->
+    <link rel="stylesheet" href="/static/assets/fonts/feather.css"/>
+    <!-- [Font Awesome Icons] https://fontawesome.com/icons -->
+    <link rel="stylesheet" href="/static/assets/fonts/fontawesome.css"/>
+    <!-- [Material Icons] https://fonts.google.com/icons -->
+    <link rel="stylesheet" href="/static/assets/fonts/material.css"/>
+    <!-- [Template CSS Files] -->
+    <link rel="stylesheet" href="/static/assets/css/style.css" id="main-style-link"/>
+    <link rel="stylesheet" href="/static/assets/css/style-preset.css"/>
+
+    <!-- gridJS start  -->
+    <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+    <!-- gridJS end  -->
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const username = document.getElementById("pengguna").value;
+        const password = document.getElementById("sandi").value;
+        var derived_key = CryptoJS.enc.Base64.parse("XxfjQ2pEXmiy/nNZvEJ43i8hJuaAnzbA1Cbn1hOuAgA=")
+        var iv = CryptoJS.enc.Utf8.parse("1020304050607087");
+        var hashedUsername = CryptoJS.AES.encrypt(username, derived_key, {iv: iv, mode: CryptoJS.mode.CBC}).toString();
+        var hashedPassword = CryptoJS.AES.encrypt(password, derived_key, {iv: iv, mode: CryptoJS.mode.CBC}).toString();
+        document.getElementById("hashedUsername").value = hashedUsername;
+        document.getElementById("hashedPassword").value = hashedPassword;
+        form.submit();
+    });
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+
+
+</head>
+<!-- [Head] end -->
+<!-- [Body] Start -->
+
+<body>
+
+<!-- [ Pre-loader ] start -->
+<div class="loader-bg">
+    <div class="loader-track">
+        <div class="loader-fill"></div>
+    </div>
+</div>
+
+
+<center>
+<!-- [ Main Content ] start -->
+          <div class="card mt-5" style="width: 25rem;">
+            <div class="card-body">
+{#            <form class="was-validated needs-validation" method="POST">#}
+            <form method="POST">
+                {% csrf_token %}
+                <img src="/static/logobpjs.png" style="width: 15rem;"><br>
+                <span class="badge bg-light-success rounded-pill ms-2 mt-2 mb-2">iLogic v1.0</span>
+                <!-- Tambahkan input tersembunyi untuk data username dan password -->
+                <input type="hidden" name="username" id="hashedUsername" value="">
+                <input type="hidden" name="password" id="hashedPassword" value="">
+
+                <div class="form-group form-floating text-start">
+                  <input class="form-control" type="text" id="pengguna" required>
+                  <label class="mb-1" class="form-control-label"for="pengguna">Username</label>
+                </div>
+                <div class="form-group form-floating text-start">
+                  <input class="form-control" type="password" id="sandi" required>
+                  <label class="mb-1" for="sandi">Password</label>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <img src="{{ captcha_image }}" alt="Captcha" class="form-control" height="100%">
+                        </div>
+                    <div class="col-6">
+                <div class="form-group form-floating text-start">
+                <input type="text" name="captcha" class="form-control" id="id_captcha" required>
+                  <label class="mb-1" for="sandi">CAPTCHA</label>
+                    </div>
+                    </div>
+                <input type="hidden" name="captcha_0" value="{{ captcha_key }}">
+                </div>
+               <div class="form-group text-start mt-2">
+                    <button class="btn btn-primary w-100" type="submit">LOGIN</button>
+               </div>
+            </form>
+{#    <div class="form-group form-floating mb-3 is-valid">#}
+{#        <label class="form-label" for="pengguna">Username</label>#}
+{#        <input type="text" class="textinput form-control" id="pengguna" placeholder="Username">#}
+{#    </div>#}
+{##}
+{#    <div class="form-group form-floating is-invalid mb-3">#}
+{#        <label class="form-control-label" for="sandi">Password</label>#}
+{#        <input type="password" class="textinput form-control" id="sandi" placeholder="Kata Sandi">#}
+{#    </div>#}
+
+{#{{ login_form | crispy }}#}
+
+{#    <button type="submit" class="btn btn-lg btn-default w-100 mb-4 shadow">#}
+{#        LOGIN#}
+{#    </button>#}
+
+                {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                                {{ message }}
+                              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                {% endif %}
+            </div>
+          </div>
+<!-- [ Main Content ] end -->
+</center>
+
+<!-- Required Js -->
+<script src="/static/assets/js/plugins/popper.min.js"></script>
+<script src="/static/assets/js/plugins/simplebar.min.js"></script>
+<script src="/static/assets/js/plugins/bootstrap.min.js"></script>
+<script src="/static/assets/js/fonts/custom-font.js"></script>
+<script src="/static/assets/js/config.js"></script>
+<script src="/static/assets/js/pcoded.js"></script>
+<script src="/static/assets/js/plugins/feather.min.js"></script>
+
+<!-- [Page Specific JS] start -->
+<script src="/static/assets/js/plugins/simple-datatables.js"></script>
+<script>
+    document.getElementById('id_captcha_1').classList.add("form-control");
+    const dataTable = new simpleDatatables.DataTable('#pc-dt-simple', {
+        sortable: false,
+        perPage: 5
+    });
+    // new SimpleBar(document.querySelector('.sale-scroll'));
+    // new SimpleBar(document.querySelector('.feed-scroll'));
+    new SimpleBar(document.querySelector('.revenue-scroll'));
+    new SimpleBar(document.querySelector('.income-scroll'));
+    new SimpleBar(document.querySelector('.customer-scroll'));
+</script>
+<script>
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+</script>
+<!-- [Page Specific JS] end -->
+</body>
+<!-- [Body] end -->
+</html>
+{% endautoescape %}

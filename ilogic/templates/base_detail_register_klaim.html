@@ -1,0 +1,24 @@
+<table class="table">
+<tbody>
+  <tr>
+    <td><b>NO REG :</b></td>
+    <td><button type="button" class="btn btn-primary btn-sm">{{register.nomor_register_klaim}}</button></td>
+  </tr>
+  <tr>
+    <td><b>JENIS KLAIM :</b></td>
+    <td>{{register.jenis_klaim}}</td>
+  </tr>
+  <tr>
+    <td><b>NAMA PPKLAYAN</b></td>
+    <td>{{register.faskes.nama}}</td>
+  </tr>
+  <tr>
+    <td><b>BULAN PELAYANAN : </b></td>
+    <td>{{register.bulan_pelayanan | date:'M-Y'}}</td>
+  </tr>
+  <tr>
+    <td><b>STATUS : </b></td>
+    <td>{% include 'base_status_register_klaim.html' %}</td>
+  </tr>
+</tbody>
+</table>

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Daftar Data Klaim</h5>
+        </div>
+
+        <div class="card-body">
+                <center>
+            <div class="row">
+                <div class="col-3 mt-2 mb-2 m-l-10">
+                    <input class="form-control" type="text" name="search" id="input-search" placeholder="Cari (NOSEP)">
+                </div>
+                <div class="col-3 mt-2 mb-2 m-r-10">
+                    <select class="form-control" name="status" id="input-status">
+                        <option value="" selected>Pilih Status</option>
+                        <option value="Proses">Proses</option>
+                        <option value="Pembahasan">Pembahasan</option>
+                        <option value="Tidak Layak">Tidak Layak</option>
+                        <option value="Layak">Layak</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Dispute">Dispute</option>
+                        <option value="Klaim">Klaim</option>
+                    </select>
+                </div>
+                <div class="col-3 mt-2 mb-2 m-r-10">
+                <select class="form-control" name="status" id="input-verifikator">
+                    <option value="" selected>Pilih Verifikator</option>
+                    {% for verifikator in verifikator_list %}
+                    <option value="{{verifikator.id}}">{{verifikator.get_full_name}}</option>
+                    {% endfor %}
+                </select>
+                </div>
+
+            </div></center>
+            <div class="mt-2 mb-2 m-l-10 m-r-10" id="data-klaim"></div>
+        </div>
+        <div class="card-body">
+        </div>
+    </div>
+</div>
+
+<script>
+    var search = ''
+    var status = ''
+    var verifikator = ''
+    var grid = new gridjs.Grid({
+        columns: ["DETAIL", "NOSEP", "NOKARTU", "NMPESERTA", "BUPEL", "STATUS", "FASKES"],
+        pagination: {
+            limit: 10,
+            server: {
+                url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&search=${search}&status=${status}&verifikator=${verifikator}`
+            }
+        },
+        server: {
+            url: '/klaim/api/monitoring/data-klaim',
+            then: data => data.results.map(data =>
+                [ gridjs.html(`<a href="/verifikator/detail-data-klaim/${data.id}" class="btn btn-primary">DETAIL</a>`), data.NOSEP, data.NOKARTU, data.NMPESERTA, data.bupel, data.status, data.faskes]
+                ),
+            total: data => data.count
+            }
+   })
+   grid.render(document.getElementById("data-klaim"))
+
+   document.getElementById("input-search").addEventListener("input", function(e){
+    search = e.target.value
+    grid.updateConfig({
+    }).forceRender()
+   })
+
+   document.getElementById("input-status").addEventListener("input", function(e){
+    status = e.target.value
+    grid.updateConfig({
+    }).forceRender()
+   })
+
+   document.getElementById("input-verifikator").addEventListener("input", function(e){
+    verifikator = e.target.value
+    grid.updateConfig({
+    }).forceRender()
+   })
+
+
+
+</script>
+
+
+{% endblock %}

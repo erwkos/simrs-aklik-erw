@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load my_tags %}
+{% load static %}
+
+{% block content %}
+
+
+
+                {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                                {{ message }}
+                              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                {% endif %}
+
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>
+                Tugas Verifikasi Data Klaim <span class="badge bg-danger">{{ request.count_dataclaim }}</span>
+            </h5>
+<form method="post" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="excel">
+    <input type="hidden" name="import" value="import">
+    <button type="submit" class="btn btn-primary">Unggah Data</button>
+</form>
+            <form>
+                    <button type="submit" class="btn btn-primary" name="export" value="export"><i class="fas fa-file-download"></i></button>
+            </form>
+        </div>
+
+        <div class="card-body">
+              <form class="row row-cols-md-auto g-3 align-items-center">
+                <div class="col-12">
+                  <label class="sr-only" for="id_status">JNSPEL</label>
+                  <select class="form-select" name="JNSPEL" id="id_JNSPEL">
+                      <option selected value="">JNSPEL...</option>
+                      <option value="Rawat Inap" {% if request.GET.JNSPEL == 'Rawat Inap' %}selected {% endif %}>Rawat Inap</option>
+                      <option value="Rawat Jalan" {% if request.GET.JNSPEL == 'Rawat Jalan' %}selected {% endif %}>Rawat Jalan</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="sr-only" for="id_status">Status</label>
+                  <select class="form-select" name="status" id="id_status">
+                      <option selected value="">Status...</option>
+                      <option value="Proses" {% if request.GET.status == 'Proses' %}selected {% endif %}>Proses</option>
+                      <option value="Layak" {% if request.GET.status == 'Layak' %}selected {% endif %}>Layak</option>
+                      <option value="Pending" {% if request.GET.status == 'Pending' %}selected {% endif %}>Pending</option>
+                      <option value="Dispute" {% if request.GET.status == 'Dispute' %}selected {% endif %}>Dispute</option>
+                      <option value="Tidak Layak" {% if request.GET.status == 'Tidak Layak' %}selected {% endif %}>Tidak Layak</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+        </div>
+{#        <form>#}
+{#          <div class="form-row align-items-center container-fluid">#}
+{#            <div class="col-auto my-1">#}
+{#              {{myFilter.form.namars }}#}
+{#            </div>#}
+{#            {{ myFilter.form.media }}#}
+{#            <div class="col-auto my-1">#}
+{#                <select class="custom-select mr-sm-2" name="Status" id="id_Status">#}
+{#                  <option selected value="">Status...</option>#}
+{#                  <option value="Proses" {% if request.GET.Status == 'Proses' %}selected {% endif %}>Proses</option>#}
+{#                  <option value="Layak" {% if request.GET.Status == 'Layak' %}selected {% endif %}>Layak</option>#}
+{#                  <option value="Pending" {% if request.GET.Status == 'Pending' %}selected {% endif %}>Pending</option>#}
+{#                  <option value="Dispute" {% if request.GET.Status == 'Dispute' %}selected {% endif %}>Dispute</option>#}
+{#                  <option value="Tidak Layak" {% if request.GET.Status == 'Tidak Layak' %}selected {% endif %}>Tidak Layak</option>#}
+{#                </select>#}
+{#            </div>#}
+{##}
+{#            <div class="col-auto my-1">#}
+{#              <button type="submit" class="" name="export" value="export"><img src="https://img.icons8.com/color/32/000000/export-excel.png"/></button>#}
+{#            </div>#}
+{#          </div>#}
+{#        </form>#}
+        <div class="table-responsive">
+                <table class="table table-xs table-hover table-borderless mb-0" id="data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Status</th>
+                            <th scope="col">RS</th>
+                            <th scope="col">Rufil</th>
+                            <th scope="col">No SEP</th>
+                            <th scope="col">In</th>
+                            <th scope="col">Out</th>
+                            <th scope="col">Jns Pel</th>
+                            <th scope="col">No Kartu</th>
+                            <th scope="col">Nama</th>
+                            <th scope="col">Poli</th>
+                            <th scope="col">CBG</th>
+                            <th scope="col">Biaya</th>
+{#                            <th scope="col">Ket. Pending</th>#}
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for data_klaim in data_klaim %}
+                    <tr>
+                        <td>
+                            {% include 'base_status_data_klaim.html' %}
+                        </td>
+                        <td>{{data_klaim.faskes.nama}}</td>
+                        <td>{{data_klaim.rufil}}</td>
+                        <td>{{data_klaim.NOSEP}}</td>
+                        <td>{{data_klaim.TGLSEP}}</td>
+                        <td>{{data_klaim.TGLPULANG}}</td>
+                        <td>{{data_klaim.JNSPEL}}</td>
+                        <td>{{data_klaim.NOKARTU}}</td>
+                        <td>{{data_klaim.NMPESERTA}}</td>
+                        <td>{{data_klaim.bupel|date:'M-y'}}</td>
+                        <td>{{data_klaim.KDINACBG}}</td>
+                        <td>{{data_klaim.BYPENGAJUAN}}</td>
+{#                        <td>{{data_klaim.ket_pending_dispute}}</td>#}
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<!-- Pagination -->
+<div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if data_klaim.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if data_klaim.previous_page_number != 1 %}
+            <a href="?{% param_replace page=data_klaim.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ data_klaim.number }} of {{ data_klaim.paginator.num_pages }}
+
+        {% if data_klaim.has_next %}
+            {% if data_klaim.next_page_number != paginator.num_pages %}
+            <a href="?{% param_replace page=data_klaim.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=data_klaim.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>Data Klaim {{ data_klaim.start_index }} - {{ data_klaim.end_index }} </p>
+    </span>
+</div>
+
+{#<script>#}
+{#    var search = ''#}
+{#    var status = ''#}
+{#    var grid = new gridjs.Grid({#}
+{#        columns: ["DETAIL", "NOSEP", "NOKARTU", "NMPESERTA", "BUPEL", "STATUS", "FASKES"],#}
+{#        pagination: {#}
+{#            limit: 10,#}
+{#            server: {#}
+{#                url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&search=${search}&status=${status}`#}
+{#            }#}
+{#        },#}
+{#        server: {#}
+{#            url: '/verifikator/api/data-klaim',#}
+{#            then: data => data.results.map(data =>#}
+{#                [ gridjs.html(`<a href="/verifikator/detail-data-klaim/${data.id}" class="btn btn-primary">DETAIL</a>`), data.NOSEP, data.NOKARTU, data.NMPESERTA, data.bupel, data.status, data.faskes]#}
+{#                ),#}
+{#            total: data => data.count#}
+{#            }#}
+{#   })#}
+{#   grid.render(document.getElementById("data-klaim"))#}
+{##}
+{#   document.getElementById("input-search").addEventListener("input", function(e){#}
+{#    search = e.target.value#}
+{#    grid.updateConfig({#}
+{#    }).forceRender()#}
+{#   })#}
+{##}
+{#   document.getElementById("input-status").addEventListener("input", function(e){#}
+{#    status = e.target.value#}
+{#    grid.updateConfig({#}
+{#    }).forceRender()#}
+{#   })#}
+{##}
+{##}
+{##}
+{#</script>#}
+{% endblock %}

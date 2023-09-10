@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5>Input Data RS</h5>
+        </div>
+        <div class="card-body">
+                {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+                        {% endfor %}
+                {% endif %}
+
+            <!-- test  -->
+            <form method="POST">
+                {% csrf_token %}
+                {{form|crispy}}
+                <div class="form-group">
+                    <button class="btn btn-primary text-light w-100" type="submit">Submit</button>
+                </div>
+            </form>
+            <!-- endtest  -->
+
+        </div>
+    </div>
+</div>
+<div class="row"></div>
+<div class="row"></div>
+
+<script>
+    document.getElementById("id_bulan_pelayanan_day").style.display="none";
+</script>
+
+{% endblock %}

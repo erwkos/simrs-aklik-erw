@@ -1,0 +1,44 @@
+<div class="modal-dialog modal-dialog-centered modal-xl">
+    <form method="post" id="myForm">{% csrf_token %}
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ title }}</h5>
+            </div>
+    
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-4">
+                        <h4>Verifikator</h4>
+                        <p>
+                            Pilih verifikator yang akan dilimpahkan tugas
+                        </p>
+                    </div>
+                    <div class="col-8">
+                        <div class="row">
+                            {% for field in verifikator %}
+                            <div class="col-md-3">
+                                <label for="id_verifikator_{{ field.id }}" class="col col-form-label">
+                                    {% if field.get_full_name %}
+                                    {{ field.get_full_name }}
+                                    {% else %}
+                                    {{ field.username }}
+                                    {% endif %}
+                                </label>
+                                <input type="checkbox" name="verifikator" id="id_verifikator_{{ field.id }}" value="{{ field.id }}">
+                            </div>
+                            {% if forloop.counter|divisibleby:4 and not forloop.last %}
+                                </div><div class="row">
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="modal-footer" id="mFooter">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="submit" class="btn btn-primary" id="nextBtn">Simpan</button>
+            </div>
+        </div>
+    </form>
+</div>

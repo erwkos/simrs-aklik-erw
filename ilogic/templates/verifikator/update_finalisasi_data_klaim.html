@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Detail - Register Klaim</h5>
+        </div>
+        <div class="card-body">
+            <div class="container-fluid">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="row">
+                <div class="col-6 m-l-30 mt-4">
+                    <table class="table">
+                        <tbody>
+                          <tr>
+                            <td><b>NO REG :</b></td>
+                            <td><button type="button" class="btn btn-primary btn-sm">{{register.nomor_register_klaim}}</button></td>
+                          </tr>
+                          <tr>
+                            <td><b>JENIS KLAIM :</b></td>
+                            <td>{{register.jenis_klaim}}</td>
+                          </tr>
+                          <tr>
+                            <td><b>NAMA PPKLAYAN</b></td>
+                            <td>{{register.faskes.nama}}</td>
+                          </tr>
+                          <tr>
+                            <td><b>BULAN PELAYANAN : </b></td>
+                            <td>{{register.bulan_pelayanan | date:'M-Y'}}</td>
+                          </tr>
+                          <tr>
+                            <td><b>STATUS : </b></td>
+                            <td>{% include 'base_status_register_klaim.html' %}</td>
+                          </tr>
+                          <tr>
+                            <td><b>JUMLAH PROSES : </b></td>
+                            <td>{{ jumlah_proses }} | Rp{{ biaya_proses | default_if_none:0 | intcomma:'.00'}}</td>
+                          </tr>
+                          {% if register.status == 'Verifikasi' %}
+                          <tr>
+                            <td><b>JUMLAH LAYAK : </b></td>
+                            <td>{{ jumlah_layak }} | Rp{{ biaya_layak | default_if_none:0 | intcomma:'.00' }}</td>
+                          </tr>
+                          {% else %}
+                          <tr>
+                            <td><b>JUMLAH LAYAK : </b></td>
+                            <td>{{ jumlah_klaim }} | Rp{{ biaya_klaim | default_if_none:0 | intcomma:'.00' }}</td>
+                          </tr>
+
+                          {% endif %}
+                          <tr>
+                            <td><b>JUMLAH PENDING : </b></td>
+                            <td>{{ jumlah_pending }} | Rp{{ biaya_pending | default_if_none:0 | intcomma:'.00' }}</td>
+                          </tr>
+                          <tr>
+                            <td><b>JUMLAH DISPUTE : </b></td>
+                            <td>{{ jumlah_dispute }} | Rp{{ biaya_dispute | default_if_none:0 | intcomma:'.00' }}</td>
+                          </tr>
+                          <tr>
+                            <td><b>JUMLAH TIDAK LAYAK : </b></td>
+                            <td>{{ jumlah_tidak_layak }} | Rp{{ biaya_tidak_layak | default_if_none:0 | intcomma:'.00'  }}</td>
+                          </tr>
+                          <tr>
+                            <td><b>TOTAL KLAIM : </b></td>
+                            <td>{{ total_klaim }} | Rp{{ biaya_klaim | default_if_none:0 | intcomma:'.00' }}</td>
+                          </tr>
+                        </tbody>
+                    </table>
+            {% if register.status != 'Pengajuan' and register.verifikator == request.user %}
+            <form method="POST">
+                {% csrf_token %}
+                {{status_form|crispy}}
+                <input type="hidden" name="action" value="update_status">
+                <button class="btn btn-primary w-100" type="submit">EDIT</button>
+            </form>
+            {% endif %}
+        </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

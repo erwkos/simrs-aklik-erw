@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                  <thead>
+                  <tr>
+                    <th>Detail Register Klaim</th>
+                    <th class="text-end" colspan="2"><a href="#ke-ubah-status-register-klaim">Ubah Status</a></th>
+                  </tr>
+                  </thead>
+                    <tbody>
+                    <tr>
+                        <td>Variabel 1: XXXX</td>
+                        <td>Variabel 2: XXXX</td>
+                        <td>Variabel 3: XXXX</td>
+                    </tr>
+                    <tr>
+                        <td>Variabel 4: XXXX</td>
+                        <td>Variabel 5: XXXX</td>
+                        <td>Variabel 6: XXXX</td>
+                    </tr>
+                    <tr>
+                        <td>Variabel 7: XXXX</td>
+                        <td>Variabel 8: XXXX</td>
+                        <td>Variabel 9: XXXX</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Daftar Register Klaim - Data Klaim</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        {% for column in preview_data.columns %}
+                        <th scope="col">{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for index,row in preview_data.iterrows %}
+                    <tr>
+                        {% for value in row %}
+                        <td>{% if value == ' nan ' %} {% else %} {{value}} {% endif %}</td>
+                        <td><a class="btn btn-primary" href="#ke-ubah-status-data-klaim"></a></td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

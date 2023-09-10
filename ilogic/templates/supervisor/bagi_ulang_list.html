@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>
+                Pembagian Ulang
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="form-check-input" name="bagi_all" id="id_bagi_all"> #
+                            </th>
+                            <th>No Register</th>
+                            <th>Verifikator</th>
+                            <th>Jumlah Register</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for verif in verifikator %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input" name="bagi" id="id_bagi-{{ verif.id }}" value="{{ verif.id }}" data-reg="{{ verif.registerklaim_set.count }}"> {{ forloop.counter }}
+                            </td>
+                            <td>{{ verif.username }}</td>
+                            <td>{{ verif.get_full_name }}</td>
+                            <td>
+                                {{ verif.registerklaim_set.count }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td></td>
+                            <td colspan="2">Tidak ada data</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-primary" id="btnBagi" data-href="{% url 'supervisor:claim_bagi_ulang' %}">
+                    Proses Bagi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'modal.html' %}
+<script>
+    document.addEventListener("DOMContentLoaded", ()=>{
+        const bagiAll = document.getElementById('id_bagi_all');
+        const bagi = document.querySelectorAll('input[name="bagi"]');
+        const btnBagi = document.getElementById('btnBagi');
+        const modalEL = document.getElementById('myModal');
+        const modul = import('/static/js/data-request.js');
+
+        // inisiasi modal
+        const myModal = new bootstrap.Modal(
+            modalEL,
+            {
+                backdrop: 'static',
+                keyboard: false
+            }
+        );
+
+        // check semua dengan jumlah register claim lebih dari nol
+        bagiAll.addEventListener("click", ()=>{
+            bagi.forEach((checkbox)=>{
+                const reg = checkbox.getAttribute('data-reg');
+                if (reg > 0) {
+                    // hanya pilih register claim yang lebih dari nol
+                    if (bagiAll.checked) {
+                        checkbox.checked = true;
+                    } else {
+                        checkbox.checked = false;
+                    }
+                }
+            });
+        });
+
+        // checked `satuan`
+        bagi.forEach((checkbox)=>{
+            checkbox.addEventListener("click", ()=>{
+                const reg = checkbox.getAttribute('data-reg');
+                if (checkbox.checked && reg == 0) {
+                    // dilarang checked jika register claim adalah nol
+                    alert("Tidak ada register klaim yang bisa dibagi");
+                    checkbox.checked = false
+                }
+            });
+        });
+
+        btnBagi.addEventListener("click", (event)=>{
+            event.preventDefault();
+
+            let checkedBox = []
+            const formData = new FormData()
+            
+            // menambahkan field input checkbox yang sudah di checked
+            // ke form
+            bagi.forEach((checkbox)=>{
+                const reg = checkbox.getAttribute('data-reg');
+                if (checkbox.checked && reg > 0) {
+                    checkedBox.push(checkbox.value);
+                    formData.append(checkbox.name, checkbox.value);
+                }
+            });
+
+            modul.then((cls)=>{
+                const csrftoken = cls.getCookie('csrftoken');
+                const url = btnBagi.getAttribute('data-href');
+
+                const dataRequest = (method, data_url, form_data)=>{
+                    // sebenernya ini gak dipakes sih, hehehe
+                    // karena method post (submit form langsung dari modal)
+                    if (method == 'post') {
+                        formData.append('csrfmiddlewaretoken', csrftoken);
+                    }
+
+                    // mejalankan request via ajax
+                    const response = cls.DataRequest(method, data_url, form_data);
+                    response.then((items)=>{
+                        // mengisi modal dengan html dari response django
+                        modalEL.addEventListener("shown.bs.modal", (event)=>{
+                            modalEL.innerHTML = items.responseText;
+
+                            // selector form
+                            const myForm = document.getElementById('myForm');
+                            myForm.setAttribute('action', data_url);
+                            
+                            // masukkan field pada form modal ke form
+                            // supaya bisa di submit
+                            for (const element of myForm.elements) {
+                                formData.append(element.name, element.value);
+                            };
+
+                            // reload ke halaman ini saat submit form
+                            myForm.addEventListener("submit", (e)=>{
+                                // e.preventDefault();
+                                window.location.reload()
+                            })
+                        })
+                    });
+                };
+                
+                if (checkedBox.length > 0){
+                    // jika ada input checkbox yang dipilih (checked)
+                    // jalankan request GET dan tampilkan modal
+                    dataRequest('get', url+'?vrf='+checkedBox+'&modal=1');
+                    myModal.show();
+                } else if (checkedBox.length < 1) {
+                    alert('Tidak ada register yang dipilih')
+                };
+            });
+        })
+    }, false);
+</script>
+
+{% endblock %}

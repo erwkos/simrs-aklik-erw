@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<p><h4>Verifikator :</h4><br> {{verifikator}}</p>
+<br>
+<p><h4>Data Klaim :</h4><br> {{dataklaim}}</p>
+<br>
+
+<form method="POST">
+    {% csrf_token %}
+    <button class="btn btn-primary" type="submit">Proses{{dataklaim.count}}</button>
+</form>
+{% endblock %}

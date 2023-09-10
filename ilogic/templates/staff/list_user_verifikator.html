@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>
+                List User Verifikator
+            </h5>
+        </div>
+    <div class="container-fluid">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+    </div>
+{#        <div class="container">#}
+{#            <br>#}
+{#            <div class="card-body">#}
+{#              <form class="row row-cols-md-auto g-3 align-items-center">#}
+{#                <div class="col-6">#}
+{#                    {{ myFilter.form.jenis_klaim }}#}
+{#                </div>#}
+{#                <div class="col-6">#}
+{#                    {{ myFilter.form.status }}#}
+{#                </div>#}
+{#                <button type="submit" class="btn btn-primary">Submit</button>#}
+{#              </form>#}
+{#            </div>#}
+{#        </div>#}
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="col">Edit</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">First Name</th>
+                        <th scope="col">Last Name</th>
+                        <th scope="col">Active</th>
+                        <th scope="col">Last Login</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for verifikator in verifikator %}
+                    <tr>
+                        <td><a href="{% url 'staff:edit_user_verifikator' verifikator.id %}" type="button"
+                               class="btn btn-primary">Edit</a>
+                        </td>
+                        <td>{{ verifikator.username }}</td>
+                        <td>{{ verifikator.first_name }}</td>
+                        <td>{{ verifikator.last_name }}</td>
+                        <td>{{ verifikator.is_active }}</td>
+                        <td>{{ verifikator.last_login }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{#<div class="pagination justify-content-center">#}
+{#    <span class="step-links">#}
+{#        {% if register_list.has_previous %}#}
+{#            <a href="?{% param_replace page=1 %}">&laquo; First</a>#}
+{#            {% if register_list.previous_page_number != 1 %}#}
+{#            <a href="?{% param_replace page=register_list.previous_page_number %}">Previous</a>#}
+{#            {% endif %}#}
+{#        {% endif %}#}
+{##}
+{#        Page {{ register_list.number }} of {{ register_list.paginator.num_pages }}#}
+{##}
+{#        {% if register_list.has_next %}#}
+{#            {% if register_list.next_page_number != paginator.num_pages %}#}
+{#            <a href="?{% param_replace page=register_list.next_page_number %}">Next</a>#}
+{#            {% endif %}#}
+{#            <a href="?{% param_replace page=register_list.paginator.num_pages %}">Last &raquo;</a>#}
+{#        {% endif %}#}
+{#        <p>Register Klaim {{ register_list.start_index }} - {{ register_list.end_index }} </p>#}
+{#    </span>#}
+{#</div>#}
+
+{% endblock %}

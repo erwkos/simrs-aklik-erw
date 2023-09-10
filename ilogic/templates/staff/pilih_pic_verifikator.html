@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+            <div class="col-6 text-start">
+            <h5>Pilih PIC Verifikator</h5>
+            </div>
+            <div class="col-6 text-end">
+            <a href="#hapus">X</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+            <h5>Data Register Klaim</h5>
+            <div class="col-4">
+            <div class="form-group">
+                <label>Data 1</label>
+            </div>
+            </div>
+            <div class="col-4">
+            <div class="form-group">
+                <label>Data 2</label>
+            </div>
+            </div>
+            <div class="col-4">
+            <div class="form-group">
+                <label>Data 3</label>
+            </div>
+            </div>
+            <div class="col-4">
+            <div class="form-group">
+                <label>Data 4</label>
+            </div>
+            </div>
+            <div class="col-12">
+            <div class="form-group">
+                <label>Pilih PIC</label>
+                    <select class="form-select">
+                        <option>PIC A</option>
+                        <option>PIC B</option>
+                    </select>
+            </div>
+            </div>
+            <div class="col-12">
+            <div class="form-group">
+                <button class="btn btn-primary text-light w-100" type="submit">Submit</button>
+            </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

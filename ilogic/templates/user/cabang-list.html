@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>User Kantor Cabang {{ kanca }} 
+                <a class="btn btn-primary" href="{% url 'user:web_usr_add' %}">Add User</a>
+            </h5>
+        </div>
+
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <td>#</td>
+                            <td>Username</td>
+                            <td>First Name</td>
+                            <td>Last Name</td>
+                            <td>Group</td>
+                            <td>Active</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for obj in object_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ obj.username }}</td>
+                            <td>{{ obj.first_name }}</td>
+                            <td>{{ obj.last_name }}</td>
+                            <td>{{ obj.groups.all.0.name }}</td>
+                            <td>{{ obj.is_active }}</td>
+                            <td>
+                                <a href="{% url 'user:kanca_usr_passwd' obj.id %}" class="btn btn-success">
+                                    Ubah password
+                                </a>
+                                <a href="{% url 'user:kanca_grp_change' obj.id %}" class="btn btn-secondary">
+                                    Group
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td></td>
+                            <td colspan="5">Tidak ada data</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
