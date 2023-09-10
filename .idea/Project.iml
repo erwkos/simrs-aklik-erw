@@ -14,7 +14,7 @@
   </component>
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/simrs-aklik-new/simrs_aklik" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simrs-aklik/simrs_aklik" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10 (Project) (2)" jdkType="Python SDK" />
@@ -24,12 +24,41 @@
     <option name="format" value="PLAIN" />
     <option name="myDocStringFormat" value="Plain" />
   </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/simrs-aklik/admisi" />
+        <option value="$MODULE_DIR$/simrs-aklik/antrian" />
+        <option value="$MODULE_DIR$/simrs-aklik/daerah" />
+        <option value="$MODULE_DIR$/simrs-aklik/dokter" />
+        <option value="$MODULE_DIR$/simrs-aklik/faskes" />
+        <option value="$MODULE_DIR$/simrs-aklik/fixtures" />
+        <option value="$MODULE_DIR$/simrs-aklik/gizi" />
+        <option value="$MODULE_DIR$/simrs-aklik/icd" />
+        <option value="$MODULE_DIR$/simrs-aklik/igd" />
+        <option value="$MODULE_DIR$/simrs-aklik/inventory" />
+        <option value="$MODULE_DIR$/simrs-aklik/jazzmin" />
+        <option value="$MODULE_DIR$/simrs-aklik/jkn" />
+        <option value="$MODULE_DIR$/simrs-aklik/karyawan" />
+        <option value="$MODULE_DIR$/simrs-aklik/kasir" />
+        <option value="$MODULE_DIR$/simrs-aklik/media" />
+        <option value="$MODULE_DIR$/simrs-aklik/otherlayanan" />
+        <option value="$MODULE_DIR$/simrs-aklik/pasien" />
+        <option value="$MODULE_DIR$/simrs-aklik/perawat" />
+        <option value="$MODULE_DIR$/simrs-aklik/poli" />
+        <option value="$MODULE_DIR$/simrs-aklik/rawatinap" />
+        <option value="$MODULE_DIR$/simrs-aklik/soap" />
+        <option value="$MODULE_DIR$/simrs-aklik/static" />
+        <option value="$MODULE_DIR$/simrs-aklik/staticfiles" />
+        <option value="$MODULE_DIR$/simrs-aklik/user" />
+      </list>
+    </option>
+  </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Jinja2" />
     <option name="TEMPLATE_FOLDERS">
       <list>
-        <option value="$MODULE_DIR$/simrs-aklik-new/jazzmin/templates" />
-        <option value="$MODULE_DIR$/simrs-aklik-new/templates" />
+        <option value="$MODULE_DIR$/simrs-aklik/templates" />
       </list>
     </option>
   </component>
