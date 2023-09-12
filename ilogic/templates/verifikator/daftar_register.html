@@ -1,15 +1,14 @@
 {% extends 'base.html' %}
 {% load my_tags %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="col-xl-12 col-md-12 mb-4 mt-4">
     <div class="card table-card">
         <div class="card-header d-flex align-items-center justify-content-between">
             <h5>
-                Daftar Register Klaim 
-                {% if request.count_registerclaim %}
+                Daftar Register Klaim
                 <span class="badge bg-danger">{{ request.count_registerclaim }}</span>
-                {% endif %}
             </h5>
         </div>
 
@@ -17,15 +16,7 @@
             <br>
             <div class="card-body">
               <form class="row row-cols-md-auto g-3 align-items-center">
-                <div class="col-6">
-                    {{ myFilter.form.jenis_klaim }}
-                </div>
-                <div class="col-6">
-                    {{ myFilter.form.status }}
-                </div>
-                <div class="col-6">
-                    {{ myFilter.form.verifikator }}
-                </div>
+                    {{ myFilter.form | crispy }}
                 <button type="submit" class="btn btn-primary">Submit</button>
               </form>
             </div>

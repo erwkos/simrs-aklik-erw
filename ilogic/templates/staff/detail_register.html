@@ -29,7 +29,7 @@
                 {% csrf_token %}
                 {{status_form|crispy}}
                 <input type="hidden" name="action" value="update_status">
-                <button class="btn btn-primary w-100" type="submit">EDIT</button>
+                <button class="btn btn-primary w-100" type="submit">Simpan</button>
             </form>
             {% endif %}
             {% if register.status == 'Terima' and register.verifikator is None %}
@@ -37,7 +37,7 @@
                 {% csrf_token %}
                 {{pilih_verifikator_form|crispy}}
                 <input type="hidden" name="action" value="pilih_verifikator">
-                <button class="btn btn-primary w-100" type="submit">EDIT</button>
+                <button class="btn btn-primary w-100" type="submit">Simpan</button>
             </form>
             {% endif %}
             {% if register.status == 'Dikembalikan' and register.verifikator is None %}
@@ -45,7 +45,7 @@
                 {% csrf_token %}
                 {{alasan_dikembalikan_form |crispy}}
                 <input type="hidden" name="action" value="alasan_dikembalikan">
-                <button class="btn btn-primary w-100" type="submit">EDIT</button>
+                <button class="btn btn-primary w-100" type="submit">Simpan</button>
             </form>
             {% endif %}
                 </div>

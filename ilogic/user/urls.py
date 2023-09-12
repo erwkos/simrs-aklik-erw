@@ -19,5 +19,9 @@ urlpatterns = [
         path('', views.user_per_faskes, name='cbg_user_list')
     ])),
 
-    path('new-user/faskes/', views.create_user_faskes, name='create_user_faskes')
+    path('new-user/faskes/', views.create_user_faskes, name='create_user_faskes'),
+
+    path('list/verifikator/', views.user_per_verifikator, name='user_per_verifikator'),
+    path('edit/active/verifikator/<int:pk>/', views.edit_user_verifikator_active, name='edit_user_verifikator_active'),
+    path('edit/staff/verifikator/<int:pk>/', views.edit_user_verifikator_staff, name='edit_user_verifikator_staff'),
 ]

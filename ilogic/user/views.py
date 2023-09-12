@@ -20,11 +20,10 @@ from django.db.models import F
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
-
 from .decorators import permissions
 from .forms import (
     UserLoginForm, FormGroupChange, FormGroupNew,
-    FormNewUser, CaptchaForm, FormNewFaskesUser, AddUserFaskesForm
+    FormNewUser, CaptchaForm, FormNewFaskesUser, AddUserFaskesForm, IsStaffForm, IsActiveForm
 )
 from .models import User
 from faskes.models import Faskes, KantorCabang
@@ -310,10 +309,9 @@ def create_user_kantor_cabang(request):
                 # user login adalah anggota kantor cabang
                 # menambahkan user yang baru dibuat menjadi anggota
                 # kantor cabang, sesuai dengan adminWEB yang login
-                cbg = KantorCabang.objects.get(
-                    pk=is_cabang.pk
-                )
+                cbg = KantorCabang.objects.get(pk=is_cabang.pk)
                 cbg.user.add(fm)
+                messages.success(request, f'Username {fm} berhasil dibuat')
                 return redirect(reverse_lazy('user:kanca_user_list'))
 
             if is_faskes:
@@ -345,6 +343,8 @@ def create_user_faskes(request):
             # tambah fm ke faskes
             for i in Faskes.objects.filter(nama=request.POST.get('faskes')):
                 i.user.add(fm)
+                messages.success(request, f'Username {fm} berhasil dibuat')
+                return redirect(reverse_lazy('user:user_per_faskes'))
     else:
         form = FormNewFaskesUser()
         # form_faskes = AddUserFaskesForm()
@@ -361,16 +361,13 @@ def create_user_faskes(request):
 @permissions(role=['adminWEB'])
 def user_per_kanca(request):
     """user_per_faskes
-    
     List user berdasarkan Kantor Cabang
     """
     # initial relasi pada kantor cabang
     related_user = request.user.kantorcabang_set.all()
 
     # membuat object user
-    obj = User.objects.filter(
-        kantorcabang__in=related_user
-    )
+    obj = User.objects.filter(kantorcabang__in=related_user).exclude(groups__name='adminWEB')
     return render(
         request,
         'user/cabang-list.html',
@@ -385,7 +382,6 @@ def user_per_kanca(request):
 @permissions(role=['adminWEB'])
 def user_per_faskes(request):
     """update_user
-    
     Mengubah
     """
     # initial relasi faskes
@@ -402,18 +398,36 @@ def user_per_faskes(request):
 
 @login_required
 @permissions(role=['adminWEB'])
+def user_per_verifikator(request):
+    """user_per_verifikator
+    List user berdasarkan Kantor Cabang
+    """
+    # initial relasi pada kantor cabang
+    related_user = request.user.kantorcabang_set.all()
+
+    # membuat object user
+    obj = User.objects.filter(kantorcabang__in=related_user, groups__name='verifikator').order_by('-is_staff')
+
+    context = {
+        'object_list': obj,
+        'kanca': related_user.first()
+    }
+    return render(request, 'user/verifikator-list.html', context)
+
+
+@login_required
+@permissions(role=['adminWEB'])
 def change_password(request, pk):
     """change_password
-    
     Mengganti password user oleh `adminWEB`
     """
-    user = User.objects.get(
-        pk=pk
-    )
-    name = user.get_full_name() or user.username
+    queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
+    instance = queryset.get(id=pk)
+    # user = User.objects.get(pk=pk)
+    name = instance.get_full_name() or instance.username
     if request.method == 'POST':
         form = SetPasswordForm(
-            user=user,
+            user=instance,
             data=request.POST
         )
         if form.is_valid():
@@ -425,44 +439,34 @@ def change_password(request, pk):
             )
             return redirect(reverse_lazy('user:kanca_user_list'))
     else:
-        form = SetPasswordForm(
-            user=user
-        )
+        form = SetPasswordForm(user=instance)
     context = {
         "form": form
     }
-    return render(
-        request,
-        'user/ubahpassword.html',
-        context
-    )
+    return render(request,'user/ubahpassword.html', context)
 
 
 @login_required
 @permissions(role=['adminWEB'])
 def change_group(request, pk):
     """change group
-    
     `adminWEB` assign user ke group tertentu
     """
-    user = User.objects.get(pk=pk)
-    name = user.get_full_name() or user.username
-
+    queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
+    instance = queryset.get(id=pk)
+    # user = User.objects.get(pk=pk)
+    name = instance.get_full_name() or instance.username
+    form = FormGroupChange(instance=instance)
     if request.method == 'POST':
         form = FormGroupChange(data=request.POST)
         if form.is_valid():
-            new_groups = form.cleaned_data.get('group')
-            user.groups.set(new_groups)
-            messages.success(request, f"User {name} berhasil diubah group {new_groups}")
+            new_groups = form.cleaned_data.get('groups')
+            instance.groups.set(new_groups)
+            messages.success(request, f"User {name} berhasil diubah group")
             return redirect(reverse_lazy('user:kanca_user_list'))
-    else:
-        initial_group = user.groups.all()
-        initial = {"group": initial_group}
-        form = FormGroupChange(initial=initial)
-
     context = {
         "form": form,
-        "title": name
+        "title": name,
     }
     return render(request, 'user/change_user_group.html', context)
 
@@ -492,3 +496,51 @@ def add_group(request):
         'user/form.html',
         context
     )
+
+
+@login_required
+@permissions(role=['adminWEB'])
+def edit_user_verifikator_active(request, pk):
+    queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
+    instance = queryset.get(id=pk)
+    # user = User.objects.get(pk=pk)
+    form = IsActiveForm(instance=instance)
+    if request.method == 'POST':
+        form = IsActiveForm(data=request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Status Active berhasil diubah')
+            return redirect('user:user_per_verifikator')
+        else:
+            form = IsActiveForm()
+            messages.warning(request, 'Status Active tidak berhasil diubah')
+
+    content = {
+        'form': form,
+        'instance': instance,
+    }
+    return render(request, 'staff/edit_user_verifikator.html', content)
+
+
+@login_required
+@permissions(role=['adminWEB'])
+def edit_user_verifikator_staff(request, pk):
+    queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
+    instance = queryset.get(id=pk)
+    form = IsStaffForm(instance=instance)
+    if request.method == 'POST':
+        form = IsStaffForm(data=request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Status staff berhasil diubah')
+            return redirect('user:user_per_verifikator')
+        else:
+            form = IsStaffForm()
+            messages.warning(request, 'Status staff tidak berhasil diubah')
+
+    content = {
+        'form': form,
+        'instance': instance,
+    }
+    return render(request, 'staff/edit_user_verifikator.html', content)
+

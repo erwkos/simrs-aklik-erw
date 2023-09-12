@@ -29,7 +29,7 @@
                 {% csrf_token %}
                 {{status_form|crispy}}
                 <input type="hidden" name="action" value="update_status">
-                <button class="btn btn-primary w-100" type="submit">EDIT</button>
+                <button class="btn btn-primary w-100" type="submit">Simpan</button>
             </form>
 
             {% elif user.groups.all.0.name == 'supervisor' %}
@@ -37,7 +37,7 @@
                 {% csrf_token %}
                 {{status_form|crispy}}
                 <input type="hidden" name="action" value="update_status">
-                <button class="btn btn-primary w-100" type="submit">EDIT</button>
+                <button class="btn btn-primary w-100" type="submit">Simpan</button>
             </form>
 
             {% endif %}

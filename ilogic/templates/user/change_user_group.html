@@ -1,39 +1,22 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
 {% block content %}
-<div class="col-xl-12 col-md-12 mb-4 mt-4">
-    <div class="card table-card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <h5>Ubah Group User: {{ title }}</h5>
-        </div>
-
-        <div class="card-body">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
-                        {{ message }}
-                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-            <div class="table-responsive">
-                <form method="post">
+<div class="row">
+          <!-- [ form-element ] start -->
+          <div class="col-lg-12">
+            <div class="card">
+              <div class="card-header">
+                <h5>Ubah Group User: {{ title }}</h5>
+              </div>
+              <div class="card-body">
+                <form method="POST">
                     {% csrf_token %}
-                    <div class="form-row field-groups">
-                        <div>
-                            <div class="flex-container">
-                                <label for="id_groups">Group:</label>
-                                <div class="related-widget-wrapper" data-model-href="group">
-                                    {{ form.group }}
-                                    <a class="related-widget-wrapper-link add-related" id="add_id_groups" data-popup="yes" href="{% url 'user:kanca_grp_add' %}?_to_field=id&amp;_popup=1" title="Add another group"><img src="/static/admin/img/icon-addlink.svg" alt="Add"></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    {{ form|crispy }}
                     <button type="submit" class="btn btn-primary">Simpan</button>
                 </form>
+              </div>
             </div>
-        </div>
-    </div>
+          </div>
 </div>
 {% endblock %}

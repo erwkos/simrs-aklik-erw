@@ -36,10 +36,10 @@ class RegisterKlaim(models.Model):
     status = models.CharField(max_length=50,
                               choices=StatusRegisterChoices.choices, default=StatusRegisterChoices.PENGAJUAN)
 
-    kasus_rawat_jalan_aju = models.IntegerField(default=0)
-    biaya_rawat_jalan_aju = models.BigIntegerField(default=0)
-    kasus_rawat_inap_aju = models.IntegerField(default=0)
-    biaya_rawat_inap_aju = models.BigIntegerField(default=0)
+    kasus_rawat_jalan_aju = models.PositiveBigIntegerField(default=0)
+    biaya_rawat_jalan_aju = models.PositiveBigIntegerField(default=0)
+    kasus_rawat_inap_aju = models.PositiveBigIntegerField(default=0)
+    biaya_rawat_inap_aju = models.PositiveBigIntegerField(default=0)
     # kasus_rawat_jalan_lengkap = models.IntegerField(default=0)
     # biaya_rawat_jalan_lengkap = models.BigIntegerField(default=0)
     # kasus_rawat_inap_lengkap = models.IntegerField(default=0)
@@ -188,7 +188,7 @@ class DataKlaimCBG(models.Model):
     NMPESERTA = models.CharField(max_length=200, blank=True, null=True)
     POLI = models.CharField(max_length=200, blank=True, null=True)
     KDINACBG = models.CharField(max_length=200, blank=True, null=True)
-    BYPENGAJUAN = models.IntegerField(default=0)
+    BYPENGAJUAN = models.PositiveBigIntegerField(default=0)
     ket_pending_dispute = models.ManyToManyField(KeteranganPendingDispute)
     ket_jawaban_pending = models.ManyToManyField(JawabanPendingDispute)
     # ket_pending_dispute = models.CharField(max_length=500, blank=True, null=True)

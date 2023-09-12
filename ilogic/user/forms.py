@@ -19,23 +19,15 @@ class CaptchaForm(forms.Form):
     captcha = CaptchaField()
 
 
-class FormGroupChange(forms.Form):
+class FormGroupChange(forms.ModelForm):
     groups = forms.ModelMultipleChoiceField(
         queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB')),
         widget=forms.CheckboxSelectMultiple
     )
-    # group = forms.ModelMultipleChoiceField(
-    #     label='Group',
-    #     queryset=Group.objects.all(),
-    #     widget=FilteredSelectMultiple(
-    #         'Group',
-    #         is_stacked=False,
-    #         attrs={
-    #             "rows": 15,
-    #             "class": "form-control"
-    #         }
-    #     )
-    # )
+
+    class Meta:
+        model = Group
+        fields = ['groups']
 
 
 class FormGroupNew(forms.ModelForm):
@@ -43,23 +35,10 @@ class FormGroupNew(forms.ModelForm):
         queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB')),
         widget=forms.CheckboxSelectMultiple
     )
+
     class Meta:
         model = Group
         fields = '__all__'
-        # widgets = {
-        #     'permissions': FilteredSelectMultiple(
-        #         "Permission",
-        #         False,
-        #         attrs={
-        #             "class": "form-control"
-        #         }
-        #     ),
-        #     'name': forms.TextInput(
-        #         attrs={
-        #             "class": "form-control"
-        #         }
-        #     )
-        # }
 
 
 class FormNewUser(UserCreationForm):
@@ -113,3 +92,14 @@ class AddUserFaskesForm(forms.ModelForm):
         model = Faskes
         fields = ['faskes']
 
+
+class IsActiveForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['is_active']
+
+
+class IsStaffForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['is_staff']

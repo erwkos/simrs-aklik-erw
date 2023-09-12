@@ -49,8 +49,11 @@ def detail_register(request, pk):
     instance = queryset.get(id=pk)
     status_form = StatusRegisterKlaimForm(instance=instance)
     pilih_verifikator_form = PilihVerifikatorRegisterKlaimForm(instance=instance)
+
+    # hanya bisa dibagi PIC nya hanya untuk verifikator yg aktif dan statusnya staf
     pilih_verifikator_form.fields['verifikator'].queryset = kantor_cabang.user.filter(
-        groups__in=Group.objects.filter(name='verifikator'))
+        groups__in=Group.objects.filter(name='verifikator'), is_active=True, is_staff=True)
+
     alasan_dikembalikan_form = AlasanDikembalikanForm(instance=instance)
     if request.method == 'POST' and request.POST.get('action') == 'update_status':
         status_form = StatusRegisterKlaimForm(instance=instance, data=request.POST)
@@ -97,7 +100,7 @@ def detail_register(request, pk):
 def list_user_verifikator(request):
     verifikator_group = Group.objects.filter(name='verifikator').first()
     user_verifikator = (User.objects.filter(groups=verifikator_group,
-                                           kantorcabang__in=request.user.kantorcabang_set.all()).
+                                            kantorcabang__in=request.user.kantorcabang_set.all()).
                         order_by('is_active'))
 
     content = {
@@ -109,10 +112,12 @@ def list_user_verifikator(request):
 @login_required
 @permissions(role=['adminAK'])
 def edit_user_verifikator(request, pk):
-    user = User.objects.get(pk=pk)
-    form = IsActiveForm(instance=user)
+    queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
+    instance = queryset.get(id=pk)
+    # user = User.objects.get(pk=pk)
+    form = IsActiveForm(instance=instance)
     if request.method == 'POST':
-        form = IsActiveForm(data=request.POST, instance=user)
+        form = IsActiveForm(data=request.POST, instance=instance)
         if form.is_valid():
             form.save()
             messages.success(request, 'Status berhasil diubah')

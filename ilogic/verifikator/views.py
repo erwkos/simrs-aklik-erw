@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.models import Group
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Sum
 from django.http import JsonResponse, HttpResponseRedirect
@@ -22,7 +23,7 @@ from klaim.models import (
     DataKlaimCBG, KeteranganPendingDispute
 )
 from klaim.resources import DataKlaimCBGResource
-from .filters import DataKlaimCBGFilter
+from .filters import DataKlaimCBGFilter, DownloadDataKlaimCBGFilter
 from .forms import (
     StatusRegisterKlaimForm,
     ImportDataKlaimForm,
@@ -108,6 +109,10 @@ def detail_register(request, pk):
 def import_data_klaim(request):
     storage = TemporaryStorage()
     import_form = ImportDataKlaimForm()
+    verifikator = User.objects.filter(kantorcabang__in=request.user.kantorcabang_set.all(),
+                                      groups__name='verifikator',
+                                      is_active=True,
+                                      is_staff=True)
     if request.method == 'POST' and request.POST.get('action') == 'import':
         import_form = ImportDataKlaimForm(files=request.FILES, data=request.POST)
         if import_form.is_valid():
@@ -187,7 +192,9 @@ def import_data_klaim(request):
             #     else:
             #         index += 1
 
-            verifikator = register.faskes.kantor_cabang.user.filter(groups__name='verifikator', is_active=True)
+            # verifikator = register.faskes.kantor_cabang.user.filter(groups__name='verifikator',
+            #                                                         is_active=True,
+            #                                                         is_staff=True)
             # for i in verifikator_eksisting:
             #     get_verifikator = request.POST.get(str(i))
             #     if get_verifikator is not None:
@@ -264,6 +271,7 @@ def import_data_klaim(request):
 
     context = {
         'import_form': import_form,
+        'verifikator': verifikator,
     }
     return render(request, 'verifikator/import_data_klaim.html', context)
 
@@ -564,3 +572,92 @@ def update_data_klaim_cbg(request, pk):
     data['html_form'] = render_to_string(request=request, template_name='verifikator/update_data_klaim.html',
                                          context=context)
     return JsonResponse(data)
+
+
+@login_required
+@permissions(role=['verifikator'])
+def download_data_cbg(request):
+    # initial relasi pada kantor cabang
+    related_kantor_cabang = request.user.kantorcabang_set.all()
+    queryset = DataKlaimCBG.objects.filter(verifikator__kantorcabang__in=related_kantor_cabang)
+
+    # filter
+    myFilter = DownloadDataKlaimCBGFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    kantor_cabang = request.user.kantorcabang_set.all().first()
+    DownloadDataKlaimCBGFilter.fields['verifikator'].queryset = kantor_cabang.user.filter(
+        groups__in=Group.objects.filter(name='verifikator'), is_active=True, is_staff=True)
+
+
+    # fitur download
+    download = request.GET.get('download')
+    if download == 'download':
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+            date=datetime.datetime.now().strftime('%Y-%m-%d'),
+        )
+        workbook = Workbook()
+
+        # Get active worksheet/tab
+        worksheet = workbook.active
+        worksheet.title = 'Data Klaim CBG'
+
+        # Define the titles for columns
+        columns = [
+            'namars',
+            'status',
+            'NOSEP',
+            'TGLSEP',
+            'TGLPULANG',
+            'JNSPEL',
+            'NOKARTU',
+            'NMPESERTA',
+            'POLI',
+            'KDINACBG',
+            'BYPENGAJUAN',
+            'verifikator',
+            'ket_pending',
+        ]
+        row_num = 1
+
+        # Assign the titles for each cell of the header
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+
+        # Iterate through all movies
+        for queryset in queryset:
+            row_num += 1
+
+            # Define the data for each cell in the row
+            row = [
+                queryset.faskes.nama,
+                queryset.status,
+                queryset.NOSEP,
+                queryset.TGLSEP,
+                queryset.TGLPULANG,
+                queryset.JNSPEL,
+                queryset.NOKARTU,
+                queryset.NMPESERTA,
+                queryset.POLI,
+                queryset.KDINACBG,
+                queryset.BYPENGAJUAN,
+                queryset.verifikator.first_name,
+                # queryset.ket_pending_dispute,
+            ]
+
+            # Assign the data for each cell of the row
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+
+        workbook.save(response)
+        return response
+
+    context = {
+        'myFilter': myFilter,
+    }
+    return render(request, 'verifikator/download_data_cbg.html', context)

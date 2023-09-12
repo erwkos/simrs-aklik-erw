@@ -1,11 +1,11 @@
 <table class="table">
 <tbody>
   <tr>
-    <td><b>NO REG :</b></td>
+    <td><b>NO REG</b></td>
     <td><button type="button" class="btn btn-primary btn-sm">{{register.nomor_register_klaim}}</button></td>
   </tr>
   <tr>
-    <td><b>JENIS KLAIM :</b></td>
+    <td><b>JENIS KLAIM</b></td>
     <td>{{register.jenis_klaim}}</td>
   </tr>
   <tr>
@@ -13,12 +13,61 @@
     <td>{{register.faskes.nama}}</td>
   </tr>
   <tr>
-    <td><b>BULAN PELAYANAN : </b></td>
+    <td><b>BULAN PELAYANAN</b></td>
     <td>{{register.bulan_pelayanan | date:'M-Y'}}</td>
   </tr>
   <tr>
-    <td><b>STATUS : </b></td>
+    <td><b>STATUS</b></td>
     <td>{% include 'base_status_register_klaim.html' %}</td>
+  </tr>
+  <tr>
+    <td><b>TANGGAL AJU</b></td>
+    <td>{{ register.tgl_aju | date:'d-M-Y' }}</td>
+  </tr>
+  <tr>
+    <td><b>NOMOR PENGAJUAN</b></td>
+    <td>{{ register.nomor_surat_pengajuan_rs }}</td>
+  </tr>
+
+  <tr>
+    <td><b>KASUS RAWAT JALAN AJU</b></td>
+    <td>{{ register.kasus_rawat_jalan_aju }}</td>
+  </tr>
+  <tr>
+    <td><b>BIAYA RAWAT JALAN AJU</b></td>
+    <td>{{ register.biaya_rawat_jalan_aju }}</td>
+  </tr>
+  <tr>
+    <td><b>KASUS RAWAT INAP AJU</b></td>
+    <td>{{ register.kasus_rawat_inap_aju }}</td>
+  </tr>
+  <tr>
+    <td><b>BIAYA RAWAT INAP AJU</b></td>
+    <td>{{ register.biaya_rawat_inap_aju }}</td>
+  </tr>
+  <tr>
+    <td><b>NOMOR BA TERIMA</b></td>
+    <td>{{ register.no_ba_terima }}</td>
+  </tr>
+  <tr>
+    <td><b>NOMOR BA LENGKAP</b></td>
+    <td>{{ register.no_ba_lengkap }}</td>
+  </tr>
+  <tr>
+    <td><b>NOMOR BA HV</b></td>
+    <td>{{ register.no_ba_hasil_verifikasi }}</td>
+  </tr>
+  <tr>
+    <td><b>TANGGAL TERIMA</b></td>
+    <td>{{ register.tgl_terima | date:'d-M-Y' }}</td>
+  </tr>
+  <tr>
+    <td><b>TANGGAL BA LENGKAP</b></td>
+    <td>{{ register.tgl_ba_lengkap | date:'d-M-Y' }}</td>
+  </tr>
+  <tr>
+    <td><b>TANGGAL BAHV</b></td>
+    <td>{{ register.tgl_ba_verif | date:'d-M-Y' }}</td>
   </tr>
 </tbody>
 </table>

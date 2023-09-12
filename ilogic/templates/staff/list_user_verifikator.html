@@ -38,7 +38,7 @@
                 <table class="table table-hover table-borderless mb-0">
                     <thead>
                     <tr>
-                        <th scope="col">Edit</th>
+                        <th scope="col">Edit Active</th>
                         <th scope="col">Username</th>
                         <th scope="col">First Name</th>
                         <th scope="col">Last Name</th>
@@ -49,7 +49,8 @@
                     <tbody>
                         {% for verifikator in verifikator %}
                     <tr>
-                        <td><a href="{% url 'staff:edit_user_verifikator' verifikator.id %}" type="button"
+                        <td>
+                            <a href="{% url 'staff:edit_user_verifikator' verifikator.id %}" type="button"
                                class="btn btn-primary">Edit</a>
                         </td>
                         <td>{{ verifikator.username }}</td>

@@ -47,10 +47,41 @@
                 </div></center>
             </div>
         </div>
+
 </div>
     </center>
 </div>
 
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>List Verifikator Active</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">NO</th>
+                            <th scope="col">NAMA VERIFIKATOR</th>
+                            <th scope="col">Status Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for verifikator in verifikator %}
+                        <tr>
+                            <td>{{forloop.counter}}</td>
+                            <td>{{verifikator.first_name}}</td>
+                            <td>{{verifikator.is_active}}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
 <script>
     function getButtonAction(data) {
         if (data.is_pengajuan_ulang) {

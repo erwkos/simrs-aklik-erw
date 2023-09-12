@@ -8,8 +8,7 @@
                 <a class="btn btn-primary" href="{% url 'user:web_usr_add' %}">Add User</a>
             </h5>
         </div>
-
-        <div class="card-body">
+    <div class="container-fluid">
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
@@ -18,6 +17,10 @@
                     </div>
                 {% endfor %}
             {% endif %}
+    </div>
+
+
+        <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -41,11 +44,11 @@
                             <td>{{ obj.groups.all.0.name }}</td>
                             <td>{{ obj.is_active }}</td>
                             <td>
-                                <a href="{% url 'user:kanca_usr_passwd' obj.id %}" class="btn btn-success">
-                                    Ubah password
-                                </a>
+{#                                <a href="{% url 'user:kanca_usr_passwd' obj.id %}" class="btn btn-success">#}
+{#                                    Ubah password#}
+{#                                </a>#}
                                 <a href="{% url 'user:kanca_grp_change' obj.id %}" class="btn btn-secondary">
-                                    Group
+                                    Ganti Group
                                 </a>
                             </td>
                         </tr>

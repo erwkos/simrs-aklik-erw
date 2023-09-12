@@ -8,7 +8,7 @@ from django.contrib import messages
 from openpyxl.workbook import Workbook
 
 from user.decorators import permissions
-from klaim.filters import RegisterKlaimFaskesFilter
+from klaim.filters import RegisterKlaimFaskesFilter, RegisterKlaimKhususFaskesFilter
 from verifikator.filters import DataKlaimCBGFilter
 from .models import (
     Kepwil,
@@ -75,7 +75,7 @@ def daftar_register(request):
     queryset = RegisterKlaim.objects.filter(faskes=request.user.faskes_set.all().first()).order_by('-tgl_aju')
 
     # filter
-    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset)
+    myFilter = RegisterKlaimKhususFaskesFilter(request.GET, queryset=queryset)
     queryset = myFilter.qs
 
     # pagination

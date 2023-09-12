@@ -150,14 +150,8 @@
             <li class="pc-item"><a class="pc-link" href="{% url 'staff:daftar-register' %}"><span class="pc-badge bg-danger">{{ request.count_registerclaim }}</span>
               Daftar Register Klaim 
             </a>
-
-
             </li>
-            <li class="pc-item"><a class="pc-link" href="{% url 'staff:list_user_verifikator' %}"> Pengaturan Verifikator</li>
-{#            <li class="pc-item"><a class="pc-link" href="{% url 'staff:monitoring-data-klaim' %}">Monitoring Data Klaim</a></li>#}
-{#              <li class="pc-item">#}
-{#                <a href="{% url 'user:kanca_user_list' %}">User List</a>#}
-{#              </li>#}
+              <li class="pc-item"><a class="pc-link" href="{% url 'staff:list_user_verifikator' %}"> Pengaturan Verifikator</a></li>
           </ul>
         </li>
                 {% endif %}
@@ -179,6 +173,9 @@
                     </li>
                     <li class="pc-item">
                       <a class="pc-link" href="{% url 'user:cbg_user_list' %}">User Faskes</a>
+                    </li>
+                    <li class="pc-item">
+                      <a class="pc-link" href="{% url 'user:user_per_verifikator' %}">User Verifikator</a>
                     </li>
                   </ul>
                 </li>
@@ -206,6 +203,7 @@
             <li class="pc-item"><a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_CBG_verifikator' %}">Monitoring Tugas Verifikator Klaim CBG</a></li>
             <li class="pc-item"><a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_hitung_verifikator' %}">Monitoring Hitung Klaim</a></li>
             <li class="pc-item"><a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG' %}">Monitoring Pending/Dispute</a></li>
+            <li class="pc-item"><a class="pc-link" href="{% url 'verifikator:download_data_cbg' %}">Download Data CBG</a></li>
           </ul>
         </li>
                 {% endif %}
