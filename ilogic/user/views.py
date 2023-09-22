@@ -106,6 +106,126 @@ def decrypt_aes(encrypted_data, key, iv):
 
 
 def user_login(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        try:
+            captcha_value = request.POST.get('captcha')
+            captcha_key = request.POST.get('captcha_0')
+            # Verifikasi captcha
+            if CaptchaStore.objects.filter(challenge=captcha_value, hashkey=captcha_key).exists():
+                # print(CaptchaStore.objects.filter(challenge=captcha_value, hashkey=captcha_key))
+                print("Captcha Benar")
+            else:
+                # print(CaptchaStore.objects.filter(challenge=captcha_value, hashkey=captcha_key))
+                messages.warning(request, "Captcha Salah.")
+                # print("Captcha Salah")
+                return redirect('/user/login')
+            raw_username = request.POST.get('username')
+            raw_password = request.POST.get('password')
+            # Key yang digunakan untuk enkripsi dan dekripsi
+            derived_key = base64.b64decode("XxfjQ2pEXmiy/nNZvEJ43i8hJuaAnzbA1Cbn1hOuAgA=")
+            iv = "1020304050607087".encode('utf-8')
+
+            # Enkripsi username yang di-post
+            encrypted_username = base64.b64decode(raw_username)
+            # Dekripsi password yang di-post
+            decrypted_username = decrypt_aes(encrypted_username, derived_key, iv)
+            username = decrypted_username.decode('utf-8')
+
+            # Enkripsi password yang di-post
+            encrypted_password = base64.b64decode(raw_password)
+            # Dekripsi password yang di-post
+            decrypted_password = decrypt_aes(encrypted_password, derived_key, iv)
+            password = decrypted_password.decode('utf-8')
+
+            username = username
+            password = password
+            try:
+                user = User.objects.get(username=username)
+                # print("Kesini gak")
+                # print(user)
+                if user.login_is_blocked():
+                    # Misalnya, Anda memiliki user.block_login_time yang merupakan waktu dalam bentuk timestamp atau timedelta.
+                    block_time = user.block_login_time
+
+                    block_time = timezone.localtime(block_time)
+                    # Ubah waktu tersebut menjadi format yang lebih manusiawi, misalnya dalam format jam dan menit.
+                    formatted_time = block_time
+                    if isinstance(block_time, timedelta):
+                        hours, remainder = divmod(block_time.seconds, 3600)
+                        minutes, _ = divmod(remainder, 60)
+                        formatted_time = f"{hours} jam {minutes} menit"
+                    elif isinstance(block_time, datetime):
+                        formatted_time = block_time.strftime("%H:%M:%S")  # Sesuaikan format sesuai kebutuhan.
+                    messages.info(request,
+                                  f'Mohon maaf! Username Anda diblokir sampai pukul {formatted_time}. Terima Kasih')
+                    return render(request, 'user/login.html', {'login_form': login_form})
+            except ObjectDoesNotExist:
+                user = None
+                # print("malah jadi kesini")
+                # print(user)
+            if user is None:
+                messages.info(request, 'Username dan/atau Password salah!')
+            elif not user.check_password(password):
+                # print('check pass')
+                if user.login_attempt >= 3:
+                    user.login_attempt = 0
+                    user.blocked_count = F('blocked_count') + 1
+                    user.save()
+                    user.refresh_from_db()
+                    user.block_login_time = datetime.now(pytz.timezone(settings.TIME_ZONE)) + timedelta(
+                        minutes=3 * user.blocked_count)
+                    user.save()
+                    # Misalnya, Anda memiliki user.block_login_time yang merupakan waktu dalam bentuk timestamp atau timedelta.
+                    block_time = user.block_login_time
+
+                    # Ubah waktu tersebut menjadi format yang lebih manusiawi, misalnya dalam format jam dan menit.
+                    formatted_time = block_time
+                    if isinstance(block_time, timedelta):
+                        hours, remainder = divmod(block_time.seconds, 3600)
+                        minutes, _ = divmod(remainder, 60)
+                        formatted_time = f"{hours} jam {minutes} menit"
+                    elif isinstance(block_time, datetime):
+                        formatted_time = block_time.strftime("%H:%M:%S")  # Sesuaikan format sesuai kebutuhan.
+                    messages.info(request,
+                                  f'Mohon maaf! Username Anda diblokir sampai pukul {formatted_time}. Terima Kasih')
+                    return render(request, 'user/login.html', {'login_form': login_form})
+                else:
+                    user.login_attempt = F('login_attempt') + 1
+                    user.save()
+                    messages.info(request, 'Username dan/atau Password salah!')
+                    return redirect('/user/login')
+            else:
+                user = auth.authenticate(username=username, password=password)
+                # print("nahloh")
+                # print(user)
+                if user is not None:
+                    user.is_blocked = False
+                    user.login_attempt = 0
+                    user.blocked_count = 0
+                    user.block_login_time = None
+
+                    # Set session ID dan perangkat pada pengguna
+                    user_agent = request.META['HTTP_USER_AGENT'].__str__()
+                    remote_addr = request.META['REMOTE_ADDR'].__str__()
+                    try:
+                        remote_port = request.META['REMOTE_PORT'].__str__()
+                    except:
+                        remote_port = ''
+                    meta = user_agent + remote_addr #+ remote_port
+                    user.meta = meta
+
+                    user.save()
+                    auth.login(request, user)
+                    # messages.info(request,
+                    #               'Selamat datang di VIBI')
+                    return redirect('/')
+                else:
+                    messages.info(request, 'Gagal Login! Username Anda tidak memiliki hak akses pada aplikasi ini.')
+                    return redirect('/user/login')
+        except Exception as e:
+            messages.info(request, 'Username dan/atau Password salah!')
     login_form = UserLoginForm()
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -221,6 +341,7 @@ def user_login(request):
         'captcha_image': captcha_image,
         'login_form': login_form,
     }
+    # messages.success(request, 'Selamat datang di Aplikasi VIBI')
     return render(request, 'user/login.html', context)
 
 

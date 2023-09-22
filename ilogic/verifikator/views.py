@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Sum
 from django.http import JsonResponse, HttpResponseRedirect
@@ -7,6 +8,7 @@ from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.template.loader import render_to_string
+from django.urls import reverse
 from openpyxl import Workbook
 import pandas as pd
 import numpy as np
@@ -40,6 +42,7 @@ from .models import HitungDataKlaim
 from .storages import TemporaryStorage
 from collections import Counter
 from .utils import pembagian_tugas
+from django.db import IntegrityError
 
 
 @login_required
@@ -129,9 +132,20 @@ def import_data_klaim(request):
             data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
 
             with transaction.atomic():
-                obj_list = DataKlaimCBG.objects.bulk_create(
-                    [DataKlaimCBG(**dict(row[1])) for row in data_frame.iterrows()]
-                )
+                try:
+                    obj_list = []
+                    for _, row in data_frame.iterrows():
+                        data_klaim = DataKlaimCBG(**dict(row))
+                        try:
+                            data_klaim.full_clean()  # Validate the object
+                            obj_list.append(data_klaim)
+                        except ValidationError as e:
+                            messages.warning(request, f'Data dengan NOSEP: {data_klaim.NOSEP} yang sama sudah ada.')
+                            return redirect('/verifikator/import-data-klaim')
+                    DataKlaimCBG.objects.bulk_create(obj_list)
+                except IntegrityError:
+                    messages.info(request, 'Terjadi kesalahan saat mencoba menyimpan data.')
+                    return redirect('/verifikator/import-data-klaim')
 
                 valid_data = DataKlaimCBG.objects.filter(id__in=[obj.id for obj in obj_list
                                                                  if obj.NOSEP[:8] == register.faskes.kode_ppk and
@@ -159,7 +173,6 @@ def import_data_klaim(request):
         file_name = request.POST.get('file_name')
         nomor_register_klaim = request.POST.get('register')
         register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
-
         data_frame = pd.read_excel(storage.path(name=file_name))
         data_frame = data_frame.replace(np.nan, None)
         data_frame['register_klaim'] = register
@@ -167,14 +180,12 @@ def import_data_klaim(request):
         data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
         data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
         data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
-
         with transaction.atomic():
             register.has_import_data = True
             register.save()
             obj_list = DataKlaimCBG.objects.bulk_create(
                 [DataKlaimCBG(**dict(row[1])) for row in data_frame.iterrows()]
             )
-
             # verifikator = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
             # queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.BELUM_VER)
             # NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
@@ -202,10 +213,10 @@ def import_data_klaim(request):
             queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.BELUM_VER)
 
             NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
-            list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for item in
+            list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for
+                                                    item in
                                                     [items] * c]
             list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
-
             index = random.randrange(len(verifikator))
             for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
                 queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
@@ -225,10 +236,10 @@ def import_data_klaim(request):
             #     else:
             #         index += 1
             NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
-            list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item in
+            list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item
+                                                   in
                                                    [items] * c]
             list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
-
             index = random.randrange(len(verifikator))
             for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
                 queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
@@ -238,17 +249,16 @@ def import_data_klaim(request):
                     index = 0
                 else:
                     index += 1
-
             # sinkronisasi data
             q = DataKlaimCBG.objects.filter(register_klaim=register,
                                             status=StatusDataKlaimChoices.PROSES)
             for q in q:
                 q.save()
-
             register.file_data_klaim = storage.open(name=file_name)
             register.file_data_klaim.name = file_name
             register.save()
 
+            messages.success(request, "Data Berhasil Di-import")
     # if request.method == "POST" and request.POST.get("action") == "pembagian":
     #     register = get_object_or_404(RegisterKlaim, nomor_register_klaim=request.POST.get("register"))
     #     verifikator = register.faskes.kantor_cabang.user.filter(
@@ -268,7 +278,6 @@ def import_data_klaim(request):
     #         register.save()
     #         queryset_dataklaim.update(register_klaim=register)
     #         pembagian_tugas(queryset_id=queryset_id, verifikator=verifikator)
-
     context = {
         'import_form': import_form,
         'verifikator': verifikator,
