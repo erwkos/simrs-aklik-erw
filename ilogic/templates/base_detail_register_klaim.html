@@ -47,15 +47,15 @@
   </tr>
   <tr>
     <td><b>NOMOR BA TERIMA</b></td>
-    <td>{{ register.no_ba_terima }}</td>
+    <td>{{ register.no_ba_terima | default_if_none:""}}</td>
   </tr>
   <tr>
     <td><b>NOMOR BA LENGKAP</b></td>
-    <td>{{ register.no_ba_lengkap }}</td>
+    <td>{{ register.no_ba_lengkap | default_if_none:""}}</td>
   </tr>
   <tr>
     <td><b>NOMOR BA HV</b></td>
-    <td>{{ register.no_ba_hasil_verifikasi }}</td>
+    <td>{{ register.no_ba_hasil_verifikasi | default_if_none:""}}</td>
   </tr>
   <tr>
     <td><b>TANGGAL TERIMA</b></td>

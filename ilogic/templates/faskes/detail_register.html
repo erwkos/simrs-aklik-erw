@@ -19,16 +19,20 @@
                 {% endfor %}
             {% endif %}
 
+            {% if register.status == 'Dikembalikan' %}
             <!-- test  -->
             <form method="POST">
                 {% csrf_token %}
                 {{form|crispy}}
                 <div class="form-group">
-                    {% if register.status == 'Dikembalikan' %}
                     <button class="btn btn-primary text-light w-100" type="submit">Update</button>
-                    {% endif %}
                 </div>
             </form>
+            {% else %}
+            <form>
+                {{form_disable|crispy}}
+            </form>
+            {% endif %}
             <!-- endtest  -->
 
         </div>

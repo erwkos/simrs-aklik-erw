@@ -23,5 +23,5 @@ class DownloadDataKlaimCBGFilter(django_filters.FilterSet):
             'JNSPEL',
             'status',
             # 'bupel',
-            'verifikator',
+            # 'verifikator',
         ]

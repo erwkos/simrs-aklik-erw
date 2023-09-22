@@ -32,7 +32,7 @@ from .forms import (
     DataKlaimVerifikatorForm, FinalisasiVerifikatorForm, HitungDataKlaimForm, KeteranganPendingForm,
     STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR
 )
-from user.decorators import permissions
+from user.decorators import permissions, check_device
 from user.models import User
 from klaim.choices import (
     StatusDataKlaimChoices,
@@ -46,6 +46,7 @@ from django.db import IntegrityError
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def daftar_register(request):
     queryset = RegisterKlaim.objects.filter(
@@ -73,6 +74,7 @@ def daftar_register(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def detail_register(request, pk):
     kantor_cabang = request.user.kantorcabang_set.all().first()
@@ -108,6 +110,7 @@ def detail_register(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def import_data_klaim(request):
     storage = TemporaryStorage()
@@ -286,6 +289,7 @@ def import_data_klaim(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def daftar_data_klaim(request):
     queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NMPESERTA', 'TGLSEP')
@@ -393,8 +397,8 @@ def daftar_data_klaim(request):
     return render(request, 'verifikator/daftar_data_klaim.html', context)
 
 
-
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def detail_data_klaim(request, pk):
     dataklaimcbg = DataKlaimCBG.objects.filter(verifikator=request.user).get(id=pk)
@@ -435,6 +439,7 @@ def detail_data_klaim(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def detail_data_klaim(request, pk):
     queryset = DataKlaimCBG.objects.filter(verifikator=request.user)
@@ -470,11 +475,17 @@ def detail_data_klaim(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def finalisasi_data_klaim(request):
     queryset = RegisterKlaim.objects.filter(
         nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang,
         status=StatusRegisterChoices.VERIFIKASI).order_by('created_at')
+
+    # filter
+    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
 
     # pagination
     paginator = Paginator(queryset, 25)
@@ -483,12 +494,14 @@ def finalisasi_data_klaim(request):
 
     context = {
         'register_list': queryset,
+        'myFilter': myFilter,
     }
 
     return render(request, 'verifikator/finalisasi_data_klaim.html', context)
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def update_finalisasi_data_klaim(request, pk):
     kantor_cabang = request.user.kantorcabang_set.all().first()
@@ -560,6 +573,7 @@ def update_finalisasi_data_klaim(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def update_data_klaim_cbg(request, pk):
     data = dict()
@@ -584,6 +598,7 @@ def update_data_klaim_cbg(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def download_data_cbg(request):
     # initial relasi pada kantor cabang
@@ -595,9 +610,6 @@ def download_data_cbg(request):
     queryset = myFilter.qs
 
     kantor_cabang = request.user.kantorcabang_set.all().first()
-    DownloadDataKlaimCBGFilter.fields['verifikator'].queryset = kantor_cabang.user.filter(
-        groups__in=Group.objects.filter(name='verifikator'), is_active=True, is_staff=True)
-
 
     # fitur download
     download = request.GET.get('download')

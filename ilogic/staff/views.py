@@ -13,11 +13,12 @@ from .forms import (
 from klaim.models import (
     RegisterKlaim,
 )
-from user.decorators import permissions
+from user.decorators import permissions, check_device
 from user.models import User
 
 
 @login_required
+@check_device
 @permissions(role=['adminAK'])
 def daftar_register_klaim(request):
     queryset = RegisterKlaim.objects.filter(
@@ -41,6 +42,7 @@ def daftar_register_klaim(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminAK'])
 def detail_register(request, pk):
     kantor_cabang = request.user.kantorcabang_set.all().first()
@@ -65,6 +67,9 @@ def detail_register(request, pk):
             elif instance.status == 'Dikembalikan':
                 messages.info(request, "Klaim berhasil dikembalikan. Selanjutnya isi alasan pengembalian. Terima Kasih")
             return redirect(request.headers.get('Referer'))
+        else:
+            messages.warning(request, "Proses Simpan Register Klaim Gagal")
+            return redirect(request.headers.get('Referer'))
     if request.method == 'POST' and request.POST.get('action') == 'pilih_verifikator':
         pilih_verifikator_form = PilihVerifikatorRegisterKlaimForm(instance=instance, data=request.POST)
         if pilih_verifikator_form.is_valid():
@@ -72,11 +77,18 @@ def detail_register(request, pk):
             messages.success(request, "Pilih PIC Berhasil. Selanjutnya dapat memberikan informasi ke Verifikator. "
                                       "Terima Kasih")
             return redirect(request.headers.get('Referer'))
+        else:
+            messages.warning(request, "Proses Simpan Register Klaim Gagal")
+            return redirect(request.headers.get('Referer'))
+
     if request.method == 'POST' and request.POST.get('action') == 'alasan_dikembalikan':
         alasan_dikembalikan_form = AlasanDikembalikanForm(instance=instance, data=request.POST)
         if alasan_dikembalikan_form.is_valid():
             alasan_dikembalikan_form.save()
             messages.success(request, "Keterangan Pengembalian berhasil disimpan. Terima Kasih")
+            return redirect(request.headers.get('Referer'))
+        else:
+            messages.warning(request, "Proses Simpan Register Klaim Gagal")
             return redirect(request.headers.get('Referer'))
     context = {
         'register': instance,
@@ -96,6 +108,7 @@ def detail_register(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['adminAK'])
 def list_user_verifikator(request):
     verifikator_group = Group.objects.filter(name='verifikator').first()
@@ -110,6 +123,7 @@ def list_user_verifikator(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminAK'])
 def edit_user_verifikator(request, pk):
     queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())

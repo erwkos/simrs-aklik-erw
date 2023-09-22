@@ -1,13 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group
 from django.conf import settings
-
+from django.contrib.auth.models import User
 from datetime import datetime
 import pytz
 
 
 class User(AbstractUser):
     email = models.EmailField(blank=True, null=True) # unique dioff saja, ternyata error saat pembuatan
+    meta = models.CharField(max_length=255, null=True, blank=True)
 
     login_attempt = models.IntegerField(default=0)
     blocked_count = models.IntegerField(default=0)
@@ -28,4 +29,10 @@ class User(AbstractUser):
             return bool(self.block_login_time > datetime.now(pytz.timezone(settings.TIME_ZONE)))
         return False
 
+
+# class UserProfile(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
+#     user_agent = models.CharField(max_length=255, null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
 

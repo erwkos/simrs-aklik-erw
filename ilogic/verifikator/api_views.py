@@ -16,7 +16,7 @@ from klaim.models import (
     DataKlaimCBG
 )
 from klaim.choices import (
-    StatusRegisterChoices
+    StatusRegisterChoices, NamaJenisKlaimChoices
 )
 from .serializers import (
     RegisterKlaimSerializer,
@@ -27,7 +27,8 @@ from user.models import User
 
 
 class RegisterKlaimViewSet(GenericViewSet):
-    queryset = RegisterKlaim.objects.filter(status=StatusRegisterChoices.VERIFIKASI)
+    list_jenis_klaim = [NamaJenisKlaimChoices.CBG_REGULER, NamaJenisKlaimChoices.CBG_SUSULAN]
+    queryset = RegisterKlaim.objects.filter(status=StatusRegisterChoices.VERIFIKASI, jenis_klaim__nama__in=list_jenis_klaim)
     serializer_class = RegisterKlaimSerializer
     pagination_class = LimitOffsetPagination
     filter_backends = [filters.SearchFilter]

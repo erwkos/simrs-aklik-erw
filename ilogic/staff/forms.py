@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.forms import SelectDateWidget
 
@@ -13,8 +15,12 @@ STATUS_CHOICES_TERIMA_REGISTER_STAFAK = (
 )
 
 
-class DateInput(forms.DateInput):
+class DateInputMaxToday(forms.DateInput):
     input_type = 'date'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.attrs.setdefault('max', datetime.date.today())
 
 
 class StatusRegisterKlaimForm(forms.ModelForm):
@@ -26,7 +32,9 @@ class StatusRegisterKlaimForm(forms.ModelForm):
 
 
 class PilihVerifikatorRegisterKlaimForm(forms.ModelForm):
-    tgl_terima = forms.DateField(widget=DateInput)
+    tgl_terima = forms.DateField(widget=DateInputMaxToday, required=True)
+    no_ba_terima = forms.CharField(required=True, min_length=5)
+    verifikator = forms.ModelChoiceField(queryset=User.objects.all(), required=True)
 
     class Meta:
         model = RegisterKlaim
@@ -34,6 +42,7 @@ class PilihVerifikatorRegisterKlaimForm(forms.ModelForm):
 
 
 class AlasanDikembalikanForm(forms.ModelForm):
+    keterangan = forms.CharField(min_length=5, required=True)
 
     class Meta:
         model = RegisterKlaim

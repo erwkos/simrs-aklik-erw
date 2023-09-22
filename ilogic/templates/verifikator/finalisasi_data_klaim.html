@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load my_tags %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="col-xl-12 col-md-12 mb-4 mt-4">
@@ -10,6 +11,17 @@
                 <span class="badge bg-danger">{{ request.count_finalisasi }}</span>
             </h5>
         </div>
+
+        <div class="container">
+            <br>
+            <div class="card-body">
+              <form class="row row-cols-md-auto g-3 align-items-center">
+                    {{ myFilter.form | crispy }}
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </form>
+            </div>
+
+
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover table-borderless mb-0">

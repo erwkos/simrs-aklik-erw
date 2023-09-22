@@ -14,7 +14,7 @@ from klaim.choices import StatusRegisterChoices, StatusDataKlaimChoices, JenisPe
 from klaim.filters import RegisterKlaimFaskesFilter
 from klaim.models import DataKlaimCBG, RegisterKlaim
 from supervisor.forms import PilihVerifikatorRegisterKlaimSupervisorForm
-from user.decorators import permissions
+from user.decorators import permissions, check_device
 from verifikator.forms import StatusRegisterKlaimForm
 from collections import Counter
 
@@ -22,6 +22,7 @@ from collections import Counter
 # Create your views here.
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def daftar_register_supervisor(request):
     queryset = RegisterKlaim.objects.filter(
@@ -44,6 +45,7 @@ def daftar_register_supervisor(request):
 
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def detail_register_supervisor(request, pk):
     kantor_cabang = request.user.kantorcabang_set.all().first()
@@ -71,6 +73,7 @@ def detail_register_supervisor(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def daftar_pembagian_ulang_verifikasi_cbg(request):
     queryset = RegisterKlaim.objects.filter(
@@ -98,6 +101,7 @@ def daftar_pembagian_ulang_verifikasi_cbg(request):
 
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def update_pembagian_ulang_verifikasi_cbg(request, pk):
     kantor_cabang = request.user.kantorcabang_set.all().first()
@@ -198,6 +202,7 @@ def update_pembagian_ulang_verifikasi_cbg(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def api_json_pembagian_data_klaim_cbg(request):
     queryset = DataKlaimCBG.objects.filter(register_klaim__id=67).values('register_klaim__nomor_register_klaim', 'bupel',
@@ -207,6 +212,7 @@ def api_json_pembagian_data_klaim_cbg(request):
 
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def pembagian_ulang(request):
     """pembagian ulang

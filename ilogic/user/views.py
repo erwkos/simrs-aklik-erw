@@ -17,10 +17,11 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import F
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
-from .decorators import permissions
+from .decorators import permissions, check_device
 from .forms import (
     UserLoginForm, FormGroupChange, FormGroupNew,
     FormNewUser, CaptchaForm, FormNewFaskesUser, AddUserFaskesForm, IsStaffForm, IsActiveForm
@@ -30,7 +31,21 @@ from faskes.models import Faskes, KantorCabang
 
 
 @login_required
+@check_device
 def dashboard(request):
+    # user_device = request.user.meta
+    # user_agent = request.META['HTTP_USER_AGENT'].__str__()
+    # remote_addr = request.META['REMOTE_ADDR'].__str__()
+    # try:
+    #     remote_port = request.META['REMOTE_PORT'].__str__()
+    # except:
+    #     remote_port = ''
+    # current_device = user_agent + remote_addr + remote_port
+    # print(user_device)
+    # print(current_device)
+    # print(user_device==current_device)
+    # if user_device != current_device:
+    #     return HttpResponse("Akses terlarang!")
     return render(request, 'dashboard.html', {})
 
 
@@ -227,113 +242,6 @@ def user_login(request):
         except Exception as e:
             messages.info(request, 'Username dan/atau Password salah!')
     login_form = UserLoginForm()
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-    if request.method == 'POST':
-        captcha_value = request.POST.get('captcha')
-        captcha_key = request.POST.get('captcha_0')
-        # Verifikasi captcha
-        if CaptchaStore.objects.filter(challenge=captcha_value, hashkey=captcha_key).exists():
-            # print(CaptchaStore.objects.filter(challenge=captcha_value, hashkey=captcha_key))
-            print("Captcha Benar")
-        else:
-            # print(CaptchaStore.objects.filter(challenge=captcha_value, hashkey=captcha_key))
-            messages.warning(request, "Captcha Salah.")
-            # print("Captcha Salah")
-            return redirect('/user/login')
-        raw_username = request.POST.get('username')
-        raw_password = request.POST.get('password')
-        # Key yang digunakan untuk enkripsi dan dekripsi
-        derived_key = base64.b64decode("XxfjQ2pEXmiy/nNZvEJ43i8hJuaAnzbA1Cbn1hOuAgA=")
-        iv = "1020304050607087".encode('utf-8')
-
-        # Enkripsi username yang di-post
-        encrypted_username = base64.b64decode(raw_username)
-        # Dekripsi password yang di-post
-        decrypted_username = decrypt_aes(encrypted_username, derived_key, iv)
-        username = decrypted_username.decode('utf-8')
-
-        # Enkripsi password yang di-post
-        encrypted_password = base64.b64decode(raw_password)
-        # Dekripsi password yang di-post
-        decrypted_password = decrypt_aes(encrypted_password, derived_key, iv)
-        password = decrypted_password.decode('utf-8')
-
-        username = username
-        password = password
-        try:
-            user = User.objects.get(username=username)
-            # print("Kesini gak")
-            # print(user)
-            if user.login_is_blocked():
-                # Misalnya, Anda memiliki user.block_login_time yang merupakan waktu dalam bentuk timestamp atau timedelta.
-                block_time = user.block_login_time
-
-                block_time = timezone.localtime(block_time)
-                # Ubah waktu tersebut menjadi format yang lebih manusiawi, misalnya dalam format jam dan menit.
-                formatted_time = block_time
-                if isinstance(block_time, timedelta):
-                    hours, remainder = divmod(block_time.seconds, 3600)
-                    minutes, _ = divmod(remainder, 60)
-                    formatted_time = f"{hours} jam {minutes} menit"
-                elif isinstance(block_time, datetime):
-                    formatted_time = block_time.strftime("%H:%M:%S")  # Sesuaikan format sesuai kebutuhan.
-                messages.info(request,
-                              f'Mohon maaf! Username Anda diblokir sampai pukul {formatted_time}. Terima Kasih')
-                return render(request, 'user/login.html', {'login_form': login_form})
-        except ObjectDoesNotExist:
-            user = None
-            # print("malah jadi kesini")
-            # print(user)
-        if user is None:
-            messages.info(request,
-                          'Username dan/atau Password salah!')
-        elif not user.check_password(password):
-            # print('check pass')
-            if user.login_attempt >= 3:
-                user.login_attempt = 0
-                user.blocked_count = F('blocked_count') + 1
-                user.save()
-                user.refresh_from_db()
-                user.block_login_time = datetime.now(pytz.timezone(settings.TIME_ZONE)) + timedelta(
-                    minutes=3 * user.blocked_count)
-                user.save()
-                # Misalnya, Anda memiliki user.block_login_time yang merupakan waktu dalam bentuk timestamp atau timedelta.
-                block_time = user.block_login_time
-
-                # Ubah waktu tersebut menjadi format yang lebih manusiawi, misalnya dalam format jam dan menit.
-                formatted_time = block_time
-                if isinstance(block_time, timedelta):
-                    hours, remainder = divmod(block_time.seconds, 3600)
-                    minutes, _ = divmod(remainder, 60)
-                    formatted_time = f"{hours} jam {minutes} menit"
-                elif isinstance(block_time, datetime):
-                    formatted_time = block_time.strftime("%H:%M:%S")  # Sesuaikan format sesuai kebutuhan.
-                messages.info(request,
-                              f'Mohon maaf! Username Anda diblokir sampai pukul {formatted_time}. Terima Kasih')
-                return render(request, 'user/login.html', {'login_form': login_form})
-            else:
-                user.login_attempt = F('login_attempt') + 1
-                user.save()
-                messages.info(request, 'Username dan/atau Password salah!')
-                return redirect('/user/login')
-        else:
-            user = auth.authenticate(username=username, password=password)
-            # print("nahloh")
-            # print(user)
-            if user is not None:
-                user.is_blocked = False
-                user.login_attempt = 0
-                user.blocked_count = 0
-                user.block_login_time = None
-                user.save()
-                auth.login(request, user)
-                # messages.info(request,
-                #               'Selamat datang di VIBI')
-                return redirect('/')
-            else:
-                messages.info(request, 'Masukan Username dan/atau Password dengan benar! Terima Kasih.')
-                return redirect('/user/login')
     new_captcha = CaptchaStore.generate_key()
     captcha_image = captcha_image_url(new_captcha)
     context = {
@@ -346,6 +254,7 @@ def user_login(request):
 
 
 @login_required
+@check_device
 def ubahpassword(request):
     if request.method == 'POST':
         raw_old_password = request.POST.get('old_password')
@@ -405,8 +314,9 @@ def user_logout(request):
     return redirect('/user/login')
 
 
-@permissions(role=['adminWEB'])
 @login_required
+@check_device
+@permissions(role=['adminWEB'])
 def create_user_kantor_cabang(request):
     """create user
     
@@ -454,6 +364,7 @@ def create_user_kantor_cabang(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def create_user_faskes(request):
     faskes = Faskes.objects.filter(kantor_cabang__user=request.user)
@@ -479,6 +390,7 @@ def create_user_faskes(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def user_per_kanca(request):
     """user_per_faskes
@@ -500,6 +412,7 @@ def user_per_kanca(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def user_per_faskes(request):
     """update_user
@@ -518,6 +431,7 @@ def user_per_faskes(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def user_per_verifikator(request):
     """user_per_verifikator
@@ -537,6 +451,7 @@ def user_per_verifikator(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def change_password(request, pk):
     """change_password
@@ -568,6 +483,7 @@ def change_password(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def change_group(request, pk):
     """change group
@@ -593,6 +509,7 @@ def change_group(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def add_group(request):
     """add group
@@ -620,6 +537,7 @@ def add_group(request):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def edit_user_verifikator_active(request, pk):
     queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
@@ -644,6 +562,7 @@ def edit_user_verifikator_active(request, pk):
 
 
 @login_required
+@check_device
 @permissions(role=['adminWEB'])
 def edit_user_verifikator_staff(request, pk):
     queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())

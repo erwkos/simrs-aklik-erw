@@ -1,3 +1,4 @@
+import calendar
 import datetime
 
 from django.core.paginator import Paginator
@@ -7,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from openpyxl.workbook import Workbook
 
-from user.decorators import permissions
+from user.decorators import permissions, check_device
 from klaim.filters import RegisterKlaimFaskesFilter, RegisterKlaimKhususFaskesFilter
 from verifikator.filters import DataKlaimCBGFilter
 from .models import (
@@ -23,19 +24,27 @@ from klaim.choices import (
 )
 from .forms import (
     RegisterKlaimForm,
-    UpdateRegisterKlaimForm, DataKlaimCBGFaskesForm, JawabanPendingDisputeForm
+    UpdateRegisterKlaimForm, DataKlaimCBGFaskesForm, JawabanPendingDisputeForm, UpdateRegisterKlaimDisableForm
 )
 
 
 @login_required
+@check_device
 @permissions(role=['faskes'])
 def register(request):
     user = request.user
+    today = datetime.date.today()
     if request.method == 'POST':
         form = RegisterKlaimForm(data=request.POST)
         if form.is_valid():
             jenis_klaim = JenisKlaim.objects.filter(nama=form.cleaned_data.get('jenis_klaim'))[0]
-            if jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER:
+            if form.cleaned_data.get('bulan_pelayanan').year >= today.year and form.cleaned_data.get('bulan_pelayanan').month >= today.month:
+                messages.warning(request, f"Pengajuan {form.cleaned_data.get('jenis_klaim')} dengan bulan pelayanan "
+                                          f"{calendar.month_name[form.cleaned_data.get('bulan_pelayanan').month]} "
+                                          f"{form.cleaned_data.get('bulan_pelayanan').year} "
+                                          f"masih belum tersedia! Mohon cek kembali bulan pelayanan yang diajukan. Terima Kasih.")
+                return render(request, 'faskes/input.html', {'form': RegisterKlaimForm()})
+            elif jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER:
                 if RegisterKlaim.objects.filter(
                     jenis_klaim__nama=form.cleaned_data.get('jenis_klaim'),
                     bulan_pelayanan__year=form.cleaned_data.get('bulan_pelayanan').year,
@@ -43,7 +52,7 @@ def register(request):
                     faskes=request.user.faskes_set.all().first()
                 ).exists(): # and form.cleaned_data.get('is_pengajuan_ulang') is False: # untuk klaim reguler hanya bisa diajukan 1x per rs
                     messages.warning(request, f"{form.cleaned_data.get('jenis_klaim')} dengan bulan pelayanan "
-                                              f"{form.cleaned_data.get('bulan_pelayanan').month} "
+                                              f"{calendar.month_name[form.cleaned_data.get('bulan_pelayanan').month]} "
                                               f"{form.cleaned_data.get('bulan_pelayanan').year} "
                                               f"sudah pernah diajukan sebelumnya! Terima Kasih.")
                     return render(request, 'faskes/input.html', {'form': RegisterKlaimForm()})
@@ -58,7 +67,7 @@ def register(request):
             #         update(prosesklaim=False)
 
             messages.success(request, f"{form.cleaned_data.get('jenis_klaim')} dengan bulan pelayanan "
-                                      f"{form.cleaned_data.get('bulan_pelayanan').month} "
+                                      f"{calendar.month_name[form.cleaned_data.get('bulan_pelayanan').month]} "
                                       f"{form.cleaned_data.get('bulan_pelayanan').year} "
                                       f"berhasil diajukan! Terima Kasih.")
             data = form.cleaned_data
@@ -70,6 +79,7 @@ def register(request):
 
 
 @login_required
+@check_device
 @permissions(role=['faskes'])
 def daftar_register(request):
     queryset = RegisterKlaim.objects.filter(faskes=request.user.faskes_set.all().first()).order_by('-tgl_aju')
@@ -92,14 +102,18 @@ def daftar_register(request):
 
 
 @login_required
+@check_device
 @permissions(role=['faskes'])
 def detail_register(request, pk):
     queryset = RegisterKlaim.objects.filter(faskes=request.user.faskes_set.all().first())
     instance = queryset.get(pk=pk)
     form = UpdateRegisterKlaimForm(instance=instance)
+    form_disable = UpdateRegisterKlaimDisableForm(instance=instance)
     if request.method == 'POST' and instance.status == StatusRegisterChoices.DIKEMBALIKAN:
         form = UpdateRegisterKlaimForm(instance=instance, data=request.POST)
-        if form.is_valid():
+        if not form.has_changed():
+            messages.warning(request, 'Tidak ada perubahan data')
+        elif form.is_valid():
             form.save()
             instance.status = StatusRegisterChoices.PENGAJUAN
             instance.save()
@@ -108,12 +122,14 @@ def detail_register(request, pk):
 
     context = {
         'register': instance,
-        'form': form
+        'form': form,
+        'form_disable': form_disable,
     }
     return render(request, 'faskes/detail_register.html', context)
 
 
 @login_required
+@check_device
 @permissions(role=['faskes'])
 def daftar_data_klaim_pending_dispute_cbg(request):
     queryset = DataKlaimCBG.objects.filter(faskes=request.user.faskes_set.all().first(), prosesklaim=True,
@@ -165,8 +181,6 @@ def daftar_data_klaim_pending_dispute_cbg(request):
         for queryset in queryset:
             row_num += 1
 
-            print(queryset.ket_pending_dispute.all())
-
             # Define the data for each cell in the row
             row = [
                 queryset.faskes.nama,
@@ -206,6 +220,7 @@ def daftar_data_klaim_pending_dispute_cbg(request):
 
 
 @login_required
+@check_device
 @permissions(role=['faskes'])
 def detail_data_klaim_pending_dispute_cbg(request, pk):
     queryset = DataKlaimCBG.objects.filter(faskes=request.user.faskes_set.all().first(), prosesklaim=True,

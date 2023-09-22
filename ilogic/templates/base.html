@@ -76,6 +76,35 @@
                             {% if request.user.is_superuser %}
                             <small>Administrator</small>
                             {% endif %}
+
+                            {% if user.groups.all.0.name == 'supervisor' %}
+                            <small>Supervisor</small>
+                            {% endif %}
+
+                            {% if user.groups.all.0.name == 'adminWEB' %}
+                            <small>Administrator</small>
+                            {% endif %}
+
+                            {% if user.groups.all.0.name == 'adminAK' %}
+                            <small>Staf AK</small>
+                            {% endif %}
+
+                            {% if user.groups.all.0.name == 'verifikator' %}
+                            <small>Verifikator</small>
+                            {% endif %}
+
+                            {% if user.groups.all.0.name == 'faskes' %}
+                            <small>Faskes</small>
+                            {% endif %}
+
+                            {% if user.groups.all.0.name == 'verifikator' or user.groups.all.0.name == 'adminAK' or user.groups.all.0.name == 'adminWEB' or user.groups.all.0.name == 'verifikator' %}
+                            <small>{{ request.user.kantorcabang_set.all.0 }}</small>
+                            {% endif %}
+
+                            {% if user.groups.all.0.name == 'faskes' %}
+                            <small>{{ request.user.faskes_set.all.0 }}</small>
+                            {% endif %}
+
                         </div>
                         <a class="btn btn-icon btn-link-secondary avtar-s" data-bs-toggle="collapse"
                            href="#pc_sidebar_userlink">

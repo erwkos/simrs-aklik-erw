@@ -20,11 +20,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
 
+from user import views
 from user.views import dashboard
 
 admin.site.site_header = "BPJS Kesehatan"
 admin.site.site_title = "BPJS Kesehatan"
 admin.site.index_title = "Selamat Datang di Portal BPJS Kesehatan"
+
+admin.site.login = views.user_login
 
 urlpatterns = [
     path('admin/ilogic/', admin.site.urls),

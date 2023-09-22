@@ -59,6 +59,9 @@ INSTALLED_APPS = [
     # 'django.contrib.sessions',
     'single_session',
 
+    # user-agent
+    'django_user_agents',
+
 ]
 
 MIDDLEWARE = [
@@ -76,6 +79,9 @@ MIDDLEWARE = [
     # session
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'django.contrib.auth.middleware.AuthenticationMiddlware'
+
+    # user-agent
+    'django_user_agents.middleware.UserAgentMiddleware',
 ]
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
@@ -205,10 +211,15 @@ REST_FRAMEWORK = {
     ]
 }
 
-SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_AGE = None
+# session cookie
+# SESSION_COOKIE_HTTPONLY = True
+# SESSION_COOKIE_SECURE = True
+# SESSION_COOKIE_SAMESITE = "Lax"
+
+# CSRF cookie
+# CSRF_COOKIE_SECURE = True
+# CSRF_COOKIE_HTTPONLY = True
+# CSRF_COOKIE_AGE = None
 
 
 # session logout automatis

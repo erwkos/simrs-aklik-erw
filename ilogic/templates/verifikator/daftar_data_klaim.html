@@ -22,12 +22,12 @@
             <h5>
                 Tugas Verifikasi Data Klaim <span class="badge bg-danger">{{ request.count_dataclaim }}</span>
             </h5>
-<form method="post" action="" enctype="multipart/form-data">
-    {% csrf_token %}
-    <input type="file" name="excel">
-    <input type="hidden" name="import" value="import">
-    <button type="submit" class="btn btn-primary">Unggah Data</button>
-</form>
+{#<form method="post" action="" enctype="multipart/form-data">#}
+{#    {% csrf_token %}#}
+{#    <input type="file" name="excel">#}
+{#    <input type="hidden" name="import" value="import">#}
+{#    <button type="submit" class="btn btn-primary">Unggah Data</button>#}
+{#</form>#}
             <form>
                     <button type="submit" class="btn btn-primary" name="export" value="export"><i class="fas fa-file-download"></i></button>
             </form>

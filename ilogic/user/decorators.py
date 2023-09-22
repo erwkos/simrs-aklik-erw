@@ -20,3 +20,27 @@ def permissions(role=[]):
                 return HttpResponse(content="Anda Tidak Memiliki Hak Akses, Harap Menghubungi Admin!", status=403)
         return _decorator
     return decorator
+
+
+def check_device(view_func):
+    def wrapper_func(request, *args, **kwargs):
+        user_device = request.user.meta
+        user_agent = request.META['HTTP_USER_AGENT'].__str__()
+        remote_addr = request.META['REMOTE_ADDR'].__str__()
+        try:
+            remote_port = request.META['REMOTE_PORT'].__str__()
+        except:
+            remote_port = ''
+        current_device = user_agent + remote_addr #+ remote_port
+
+        print(user_device)
+        print(current_device)
+        print(user_device==current_device)
+
+        if user_device != current_device:
+            return HttpResponse("Akses terlarang!")
+        else:
+            return view_func(request, *args, **kwargs)
+
+
+    return wrapper_func

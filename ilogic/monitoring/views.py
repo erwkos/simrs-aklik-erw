@@ -2,13 +2,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from klaim.models import DataKlaimCBG
-from user.decorators import permissions
+from user.decorators import permissions, check_device
 from django.http import JsonResponse
 
 from verifikator.models import HitungDataKlaim
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_CBG(request):
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
@@ -20,6 +21,7 @@ def api_json_data_klaim_CBG(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def monitoring_data_klaim_CBG(request):
     context = {}
@@ -27,6 +29,7 @@ def monitoring_data_klaim_CBG(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_CBG_verifikator(request):
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
@@ -39,13 +42,16 @@ def api_json_data_klaim_CBG_verifikator(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def monitoring_data_klaim_CBG_verifikator(request):
     context = {}
     return render(request, 'monitoring/monitoring_data_klaim_CBG_verifikator.html', context=context)\
 
 
+
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def api_json_data_klaim_CBG_supervisor(request):
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
@@ -57,6 +63,7 @@ def api_json_data_klaim_CBG_supervisor(request):
 
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def monitoring_data_klaim_CBG_supervisor(request):
     context = {}
@@ -64,6 +71,7 @@ def monitoring_data_klaim_CBG_supervisor(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_hitung_verifikator(request):
     queryset = HitungDataKlaim.objects.filter(nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang,
@@ -74,6 +82,7 @@ def api_json_data_klaim_hitung_verifikator(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def monitoring_data_klaim_hitung_verifikator(request):
     context = {}
@@ -81,6 +90,7 @@ def monitoring_data_klaim_hitung_verifikator(request):
 
 
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def api_json_data_klaim_hitung_supervisor(request):
     queryset = HitungDataKlaim.objects.filter(nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang,).\
@@ -88,7 +98,9 @@ def api_json_data_klaim_hitung_supervisor(request):
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
+
 @login_required
+@check_device
 @permissions(role=['supervisor'])
 def monitoring_data_klaim_hitung_supervisor(request):
     context = {}
@@ -96,6 +108,7 @@ def monitoring_data_klaim_hitung_supervisor(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_pending_dispute_CBG(request):
     status_klaim = ('Pending', 'Dispute', 'Pembahasan')
@@ -110,6 +123,7 @@ def api_json_data_klaim_pending_dispute_CBG(request):
 
 
 @login_required
+@check_device
 @permissions(role=['verifikator'])
 def monitoring_data_klaim_pending_dispute_CBG(request):
     context = {}

@@ -91,5 +91,15 @@
     </div>
 </div>
 
+<script>
+    let currentDate = new Date().toJSON().slice(0, 10);
+
+    document.getElementById("id_tgl_ba_verif").setAttribute("min", "{{ register.tgl_ba_lengkap | date:'Y-m-d' }}");
+    if (currentDate > "{{ register.tgl_selesai_verif | date:'Y-m-d' }}") {
+        document.getElementById("id_tgl_ba_verif").setAttribute("max", "{{ register.tgl_selesai_verif | date:'Y-m-d' }}");
+    } else if (currentDate < "{{ register.tgl_selesai_verif | date:'Y-m-d' }}") {
+        document.getElementById("id_tgl_ba_verif").setAttribute("max", currentDate);
+    }
+</script>
 
 {% endblock %}
