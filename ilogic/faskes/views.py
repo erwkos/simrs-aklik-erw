@@ -131,7 +131,7 @@ def detail_register(request, pk):
                     bulan_pelayanan__year=form.cleaned_data.get('bulan_pelayanan').year,
                     bulan_pelayanan__month=form.cleaned_data.get('bulan_pelayanan').month,
                     faskes=request.user.faskes_set.all().first()
-                ).exists(): # and form.cleaned_data.get('is_pengajuan_ulang') is False: # untuk klaim reguler hanya bisa diajukan 1x per rs
+                ).exclude(status=StatusRegisterChoices.DIKEMBALIKAN).exists(): # and form.cleaned_data.get('is_pengajuan_ulang') is False: # untuk klaim reguler hanya bisa diajukan 1x per rs
                     messages.warning(request, f"{form.cleaned_data.get('jenis_klaim')} dengan bulan pelayanan "
                                               f"{calendar.month_name[form.cleaned_data.get('bulan_pelayanan').month]} "
                                               f"{form.cleaned_data.get('bulan_pelayanan').year} "

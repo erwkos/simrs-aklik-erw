@@ -26,8 +26,10 @@ STATUS_CHOICES_FASKES = (
 class DataKlaimCBGFilter(django_filters.FilterSet):
     status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_VERIFIKATOR)
     nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
-    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month')
-    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year')
+    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month', widget=NumberInput(attrs={'min': 0, 'oninput':
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year', widget=NumberInput(attrs={'min': 0, 'oninput':
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
 
     class Meta:
         model = DataKlaimCBG
@@ -37,8 +39,10 @@ class DataKlaimCBGFilter(django_filters.FilterSet):
 class DataKlaimCBGFaskesFilter(django_filters.FilterSet):
     status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_FASKES)
     # nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
-    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month')
-    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year')
+    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month', widget=NumberInput(attrs={'min': 0, 'oninput':
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year', widget=NumberInput(attrs={'min': 0, 'oninput':
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
 
 
     class Meta:

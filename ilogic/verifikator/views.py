@@ -395,6 +395,7 @@ def daftar_data_klaim(request):
         columns = [
             'namars',
             'status',
+            'NOREG',
             'NOSEP',
             'TGLSEP',
             'TGLPULANG',
@@ -426,6 +427,7 @@ def daftar_data_klaim(request):
             row = [
                 queryset.faskes.nama,
                 queryset.status,
+                queryset.register_klaim.nomor_register_klaim,
                 queryset.NOSEP,
                 queryset.TGLSEP,
                 queryset.TGLPULANG,
@@ -720,6 +722,7 @@ def download_data_cbg(request):
                 columns = [
                     'namars',
                     'status',
+                    'NOREG',
                     'NOSEP',
                     'TGLSEP',
                     'TGLPULANG',
@@ -752,6 +755,7 @@ def download_data_cbg(request):
                     row = [
                         queryset.faskes.nama,
                         queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
                         queryset.NOSEP,
                         queryset.TGLSEP,
                         queryset.TGLPULANG,
