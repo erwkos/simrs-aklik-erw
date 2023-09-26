@@ -60,7 +60,7 @@
         </div>
     </div>
 </div>
-{{ register.tgl_terima | date:'Y-m-d' }}
+
 <script>
     document.getElementById("id_tgl_ba_lengkap").setAttribute("min", "{{ register.tgl_terima | date:'Y-m-d' }}");
     document.getElementById("id_tgl_ba_lengkap").setAttribute("max", "{{ register.tgl_ba_lengkap_seharusnya | date:'Y-m-d' }}");

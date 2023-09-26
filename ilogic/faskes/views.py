@@ -56,6 +56,16 @@ def register(request):
                                               f"{form.cleaned_data.get('bulan_pelayanan').year} "
                                               f"sudah pernah diajukan sebelumnya! Terima Kasih.")
                     return render(request, 'faskes/input.html', {'form': RegisterKlaimForm()})
+            elif RegisterKlaim.objects.filter(
+                    jenis_klaim__nama=form.cleaned_data.get('jenis_klaim'),
+                    bulan_pelayanan__year=form.cleaned_data.get('bulan_pelayanan').year,
+                    bulan_pelayanan__month=form.cleaned_data.get('bulan_pelayanan').month,
+                    faskes=request.user.faskes_set.all().first()).exclude(status=StatusRegisterChoices.SELESAI).exists():
+                    messages.warning(request, f"{form.cleaned_data.get('jenis_klaim')} dengan bulan pelayanan "
+                                              f"{calendar.month_name[form.cleaned_data.get('bulan_pelayanan').month]} "
+                                              f"{form.cleaned_data.get('bulan_pelayanan').year} "
+                                              f"sedang tahap pengajuan/verifikasi! Terima Kasih.")
+                    return render(request, 'faskes/input.html', {'form': RegisterKlaimForm()})
 
 
                 # return render(request, 'faskes/input.html', {'form': RegisterKlaimForm()})
@@ -114,6 +124,30 @@ def detail_register(request, pk):
         if not form.has_changed():
             messages.warning(request, 'Tidak ada perubahan data')
         elif form.is_valid():
+            jenis_klaim = JenisKlaim.objects.filter(nama=form.cleaned_data.get('jenis_klaim'))[0]
+            if jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER:
+                if RegisterKlaim.objects.filter(
+                    jenis_klaim__nama=form.cleaned_data.get('jenis_klaim'),
+                    bulan_pelayanan__year=form.cleaned_data.get('bulan_pelayanan').year,
+                    bulan_pelayanan__month=form.cleaned_data.get('bulan_pelayanan').month,
+                    faskes=request.user.faskes_set.all().first()
+                ).exists(): # and form.cleaned_data.get('is_pengajuan_ulang') is False: # untuk klaim reguler hanya bisa diajukan 1x per rs
+                    messages.warning(request, f"{form.cleaned_data.get('jenis_klaim')} dengan bulan pelayanan "
+                                              f"{calendar.month_name[form.cleaned_data.get('bulan_pelayanan').month]} "
+                                              f"{form.cleaned_data.get('bulan_pelayanan').year} "
+                                              f"sudah pernah diajukan sebelumnya! Terima Kasih.")
+                    return redirect(request.headers.get('Referer'))
+            elif RegisterKlaim.objects.filter(
+                    jenis_klaim__nama=form.cleaned_data.get('jenis_klaim'),
+                    bulan_pelayanan__year=form.cleaned_data.get('bulan_pelayanan').year,
+                    bulan_pelayanan__month=form.cleaned_data.get('bulan_pelayanan').month,
+                    faskes=request.user.faskes_set.all().first()).exclude(status=StatusRegisterChoices.SELESAI).exists():
+                messages.warning(request, f"{form.cleaned_data.get('jenis_klaim')} dengan bulan pelayanan "
+                                          f"{calendar.month_name[form.cleaned_data.get('bulan_pelayanan').month]} "
+                                          f"{form.cleaned_data.get('bulan_pelayanan').year} "
+                                          f"sedang tahap pengajuan/verifikasi! Terima Kasih.")
+                return redirect(request.headers.get('Referer'))
+
             form.save()
             instance.status = StatusRegisterChoices.PENGAJUAN
             instance.save()

@@ -9,6 +9,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="file_name" value="{{file_name}}">
                 <input type="hidden" name="register" value="{{register}}">
+                <input type="hidden" name="password" value="{{password}}">
                 <input type="hidden" name="action" value="confirm">
                 <button class="btn btn-primary" {% if total_data_invalid > 0 %}disabled{% endif %}>CONFIRM</button>
             </form>

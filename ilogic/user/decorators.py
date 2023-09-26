@@ -33,14 +33,9 @@ def check_device(view_func):
             remote_port = ''
         current_device = user_agent + remote_addr #+ remote_port
 
-        print(user_device)
-        print(current_device)
-        print(user_device==current_device)
-
         if user_device != current_device:
             return HttpResponse("Akses terlarang!")
         else:
             return view_func(request, *args, **kwargs)
-
 
     return wrapper_func

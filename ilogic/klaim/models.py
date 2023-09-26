@@ -177,7 +177,7 @@ class DataKlaimCBG(models.Model):
 
     bupel = models.DateField(blank=True, null=True)
     tgl_SLA = models.DateField(blank=True, null=True)
-    rufil = models.CharField(max_length=200, null=True)
+    rufil = models.CharField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=200,
                               default=StatusDataKlaimChoices.BELUM_VER, choices=StatusDataKlaimChoices.choices)
     NOSEP = models.CharField(max_length=200, blank=True, null=True, unique=True)

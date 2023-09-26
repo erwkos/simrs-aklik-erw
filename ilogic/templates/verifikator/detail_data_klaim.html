@@ -2,6 +2,14 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
+<style>
+    .OLevelResult {
+        display: none;
+    }
+    .OLevelResult.active {
+        display: block;
+    }
+</style>
 <div class="col-xl-12 col-md-12 mb-4 mt-4">
     <div class="card table-card">
         <div class="card-header d-flex align-items-center justify-content-between">
@@ -113,7 +121,9 @@
             <form method="POST">
                 {% csrf_token %}
                 {{ data_klaim_form|crispy }}
-                {{ data_klaim_pending_form|crispy }}
+                <div id="pending-form">
+                    {{ data_klaim_pending_form|crispy }}
+                </div>
                 <input type="hidden" name="next" value="{{ request.GET.next }}">
                 <button class="btn btn-primary w-100" type="submit">Simpan</button>
             </form>
@@ -123,5 +133,57 @@
     </div>
 </div>
 
+<script>
+function changeOptions(selectEl) {
+    let subForms = document.getElementsByClassName('OLevelResult')
+    if (selectEl === 'Pending') {
+        document.getElementById("div_id_jenis_pending").classList.add("active");
+        document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+        document.getElementById("id_jenis_pending").setAttribute("required", "");
+        document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+
+        document.getElementById("div_id_jenis_dispute").classList.remove("active");
+        document.getElementById("id_jenis_dispute").removeAttribute("required");
+    } else if (selectEl === 'Dispute') {
+        document.getElementById("div_id_jenis_pending").classList.add("active");
+        document.getElementById("div_id_jenis_dispute").classList.add("active");
+        document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+        document.getElementById("id_jenis_pending").setAttribute("required", "");
+        document.getElementById("id_jenis_dispute").setAttribute("required", "");
+        document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+    } else if (selectEl === 'Tidak Layak') {
+        document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+        document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+
+        document.getElementById("div_id_jenis_pending").classList.remove("active");
+        document.getElementById("div_id_jenis_dispute").classList.remove("active");
+        document.getElementById("id_jenis_pending").removeAttribute("required");
+        document.getElementById("id_jenis_dispute").removeAttribute("required");
+    } else {
+        document.getElementById("div_id_jenis_pending").classList.remove("active");
+        document.getElementById("div_id_jenis_dispute").classList.remove("active");
+        document.getElementById("div_id_ket_pending_dispute").classList.remove("active");
+        document.getElementById("id_jenis_pending").removeAttribute("required");
+        document.getElementById("id_jenis_dispute").removeAttribute("required");
+        document.getElementById("id_ket_pending_dispute").removeAttribute("required");
+    }
+}
+
+{#  for (let i = 0; i < subForms.length; i += 1) {#}
+{#    if (selectEl === subForms[i].name) {#}
+{#      for(let j=i; j>-1 ;j--) {#}
+{#        subForms[j].classList.add("active");#}
+{#      }#}
+{#    } else {#}
+{#      subForms[i].classList.remove("active");#}
+{#    }#}
+{#  }#}
+{#}#}
+
+document.getElementById("id_status").setAttribute("onchange", "changeOptions(this.value)");
+document.getElementById("div_id_jenis_pending").classList.add("OLevelResult");
+document.getElementById("div_id_jenis_dispute").classList.add("OLevelResult");
+document.getElementById("div_id_ket_pending_dispute").classList.add("OLevelResult");
+</script>
 
 {% endblock %}

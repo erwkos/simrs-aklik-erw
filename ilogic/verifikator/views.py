@@ -1,3 +1,8 @@
+import io
+
+import msoffcrypto
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 from django.contrib import messages
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -9,6 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.urls import reverse
+from msoffcrypto.exceptions import InvalidKeyError, DecryptionError
 from openpyxl import Workbook
 import pandas as pd
 import numpy as np
@@ -17,7 +23,9 @@ import time
 import random
 import datetime
 
+from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
+from xlrd import XLRDError
 
 from klaim.filters import RegisterKlaimFaskesFilter
 from klaim.models import (
@@ -53,7 +61,8 @@ def daftar_register(request):
         nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang).order_by('-tgl_aju')
 
     # filter
-    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset)
+    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset, request=request)
+    myFilter.request = request
     queryset = myFilter.qs
 
     # pagination
@@ -122,32 +131,70 @@ def import_data_klaim(request):
     if request.method == 'POST' and request.POST.get('action') == 'import':
         import_form = ImportDataKlaimForm(files=request.FILES, data=request.POST)
         if import_form.is_valid():
+            list_data_import = ['NOSEP', 'TGLSEP', 'TGLPULANG', 'JNSPEL', 'NOKARTU', 'NMPESERTA',
+                                'POLI', 'KDINACBG', 'BYPENGAJUAN']
             nomor_register_klaim = import_form.cleaned_data.get('register')
             register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
             file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
             storage.save(name=file_name, content=import_form.cleaned_data.get('file'))
-            data_frame = pd.read_excel(storage.path(name=file_name))
+            get_password = request.POST.get('password')
+            if get_password != '':
+                unlocked_file = io.BytesIO()
+                try:
+                    with open(storage.path(name=file_name), "rb") as file:
+                        excel_file = msoffcrypto.OfficeFile(file)
+                        excel_file.load_key(password=get_password)
+                        excel_file.decrypt(unlocked_file)
+                    data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
+                except InvalidKeyError:
+                    messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
+                    return redirect('/verifikator/import-data-klaim')
+                except DecryptionError:
+                    messages.warning(request,  'File Excel seharusnya tidak memiliki password!')
+                    return redirect('/verifikator/import-data-klaim')
+                except Exception as e:
+                    messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
+                    return redirect('/verifikator/import-data-klaim')
+            else:
+                try:
+                    data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+                except XLRDError:
+                    messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+                    return redirect('/verifikator/import-data-klaim')
+                except Exception as e:
+                    messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+                    return redirect('/verifikator/import-data-klaim')
+                # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import, engine='openpyxl', password='Qwerty1!')
             data_frame = data_frame.replace(np.nan, None)
             data_frame['register_klaim'] = register
             data_frame['faskes'] = register.faskes
             data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
             data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
             data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
+            register.password_file_excel = get_password
+            register.save()
 
             with transaction.atomic():
                 try:
                     obj_list = []
                     for _, row in data_frame.iterrows():
-                        data_klaim = DataKlaimCBG(**dict(row))
+                        data_klaim = DataKlaimCBG()
                         try:
+                            data_klaim = DataKlaimCBG(**dict(row))
                             data_klaim.full_clean()  # Validate the object
                             obj_list.append(data_klaim)
-                        except ValidationError as e:
-                            messages.warning(request, f'Data dengan NOSEP: {data_klaim.NOSEP} yang sama sudah ada.')
+                        except TypeError as e:
+                            messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+                            return redirect('/verifikator/import-data-klaim')
+                        except Exception as e:
+                            messages.warning(request, f'Kesalahan terjadi pada No SEP : {data_klaim.NOSEP}. Keterangan error : {e}')
                             return redirect('/verifikator/import-data-klaim')
                     DataKlaimCBG.objects.bulk_create(obj_list)
                 except IntegrityError:
                     messages.info(request, 'Terjadi kesalahan saat mencoba menyimpan data.')
+                    return redirect('/verifikator/import-data-klaim')
+                except Exception as e:
+                    messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')
                     return redirect('/verifikator/import-data-klaim')
 
                 valid_data = DataKlaimCBG.objects.filter(id__in=[obj.id for obj in obj_list
@@ -170,13 +217,44 @@ def import_data_klaim(request):
                            'preview_data_invalid': df_invalid,
                            'total_data_invalid': total_data_invalid,
                            'file_name': file_name,
-                           'register': nomor_register_klaim})
+                           'register': nomor_register_klaim,
+                           'password': get_password})
 
     if request.method == 'POST' and request.POST.get('action') == 'confirm':
+        list_data_import = ['NOSEP', 'TGLSEP', 'TGLPULANG', 'JNSPEL', 'NOKARTU', 'NMPESERTA',
+                            'POLI', 'KDINACBG', 'BYPENGAJUAN']
         file_name = request.POST.get('file_name')
         nomor_register_klaim = request.POST.get('register')
+        get_password = request.POST.get('password')
         register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
-        data_frame = pd.read_excel(storage.path(name=file_name))
+        if get_password != '':
+            unlocked_file = io.BytesIO()
+            try:
+                with open(storage.path(name=file_name), "rb") as file:
+                    excel_file = msoffcrypto.OfficeFile(file)
+                    excel_file.load_key(password=request.POST.get('password'))
+                    excel_file.decrypt(unlocked_file)
+                data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
+            except InvalidKeyError:
+                messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
+                return redirect('/verifikator/import-data-klaim')
+            except DecryptionError:
+                messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
+                return redirect('/verifikator/import-data-klaim')
+            except Exception as e:
+                messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
+                return redirect('/verifikator/import-data-klaim')
+        else:
+            try:
+                data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+            except XLRDError:
+                messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+                return redirect('/verifikator/import-data-klaim')
+            except Exception as e:
+                messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+                return redirect('/verifikator/import-data-klaim')
+
+        # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
         data_frame = data_frame.replace(np.nan, None)
         data_frame['register_klaim'] = register
         data_frame['faskes'] = register.faskes
@@ -334,9 +412,13 @@ def daftar_data_klaim(request):
             cell = worksheet.cell(row=row_num, column=col_num)
             cell.value = column_title
 
-        # Iterate through all movies
+        # Iterate through all
         for queryset in queryset:
             row_num += 1
+
+            ket_pending_disput_queryset = ''
+            for x in queryset.ket_pending_dispute.all():
+                ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
 
             # Define the data for each cell in the row
             row = [
@@ -352,7 +434,7 @@ def daftar_data_klaim(request):
                 queryset.KDINACBG,
                 queryset.BYPENGAJUAN,
                 queryset.verifikator.first_name,
-                # queryset.ket_pending_dispute,
+                ket_pending_disput_queryset,
             ]
 
             # Assign the data for each cell of the row
@@ -464,6 +546,7 @@ def detail_data_klaim(request, pk):
                 instance.ket_pending_dispute.add(obj_keterangan)
             data_klaim_form.save()
             next = request.POST.get('next', '/')
+            messages.success(request, f'NO SEP {instance.NOSEP} berhasil diupdate.')
             return HttpResponseRedirect(next)
 
     context = {
@@ -483,7 +566,7 @@ def finalisasi_data_klaim(request):
         status=StatusRegisterChoices.VERIFIKASI).order_by('created_at')
 
     # filter
-    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset)
+    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset, request=request)
     queryset = myFilter.qs
 
 
@@ -606,79 +689,95 @@ def download_data_cbg(request):
     queryset = DataKlaimCBG.objects.filter(verifikator__kantorcabang__in=related_kantor_cabang)
 
     # filter
-    myFilter = DownloadDataKlaimCBGFilter(request.GET, queryset=queryset)
+    myFilter = DownloadDataKlaimCBGFilter(request.GET, queryset=queryset, request=request)
     queryset = myFilter.qs
 
     kantor_cabang = request.user.kantorcabang_set.all().first()
 
     # fitur download
     download = request.GET.get('download')
-    if download == 'download':
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        )
-        response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
-            date=datetime.datetime.now().strftime('%Y-%m-%d'),
-        )
-        workbook = Workbook()
+    bupel_month = request.GET.get('bupel_month')
+    bupel_year = request.GET.get('bupel_year')
+    try:
+        if bupel_month is not '' and bupel_year is not '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
 
-        # Get active worksheet/tab
-        worksheet = workbook.active
-        worksheet.title = 'Data Klaim CBG'
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim CBG'
 
-        # Define the titles for columns
-        columns = [
-            'namars',
-            'status',
-            'NOSEP',
-            'TGLSEP',
-            'TGLPULANG',
-            'JNSPEL',
-            'NOKARTU',
-            'NMPESERTA',
-            'POLI',
-            'KDINACBG',
-            'BYPENGAJUAN',
-            'verifikator',
-            'ket_pending',
-        ]
-        row_num = 1
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NOSEP',
+                    'TGLSEP',
+                    'TGLPULANG',
+                    'JNSPEL',
+                    'NOKARTU',
+                    'NMPESERTA',
+                    'POLI',
+                    'KDINACBG',
+                    'BYPENGAJUAN',
+                    'verifikator',
+                    'ket_pending',
+                ]
+                row_num = 1
 
-        # Assign the titles for each cell of the header
-        for col_num, column_title in enumerate(columns, 1):
-            cell = worksheet.cell(row=row_num, column=col_num)
-            cell.value = column_title
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
 
-        # Iterate through all movies
-        for queryset in queryset:
-            row_num += 1
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
 
-            # Define the data for each cell in the row
-            row = [
-                queryset.faskes.nama,
-                queryset.status,
-                queryset.NOSEP,
-                queryset.TGLSEP,
-                queryset.TGLPULANG,
-                queryset.JNSPEL,
-                queryset.NOKARTU,
-                queryset.NMPESERTA,
-                queryset.POLI,
-                queryset.KDINACBG,
-                queryset.BYPENGAJUAN,
-                queryset.verifikator.first_name,
-                # queryset.ket_pending_dispute,
-            ]
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
 
-            # Assign the data for each cell of the row
-            for col_num, cell_value in enumerate(row, 1):
-                cell = worksheet.cell(row=row_num, column=col_num)
-                cell.value = cell_value
 
-        workbook.save(response)
-        return response
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.NOSEP,
+                        queryset.TGLSEP,
+                        queryset.TGLPULANG,
+                        queryset.JNSPEL,
+                        queryset.NOKARTU,
+                        queryset.NMPESERTA,
+                        queryset.POLI,
+                        queryset.KDINACBG,
+                        queryset.BYPENGAJUAN,
+                        queryset.verifikator.first_name,
+                        ket_pending_disput_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        else:
+            messages.warning(request, 'Bulan dan Tahun harus diisi!')
+    except Exception as e:
+        messages.warning(request, "Terjadi Kesalahan Dalam Download Data, dengan Keterangan: " + str(e))
+
 
     context = {
         'myFilter': myFilter,
     }
     return render(request, 'verifikator/download_data_cbg.html', context)
+
+

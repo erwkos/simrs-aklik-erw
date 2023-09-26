@@ -39,6 +39,11 @@
                         {% csrf_token %}
                         {{import_form|crispy}}
                         <input type="hidden" name="action" value="import">
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Isi Password Excel</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Hanya diisi jika File Excel memiliki Password">
+                </div>
+
                         <button type="submit" class="btn btn-primary w-100">IMPORT</button>
                     </form>
                 </div></center>
@@ -53,8 +58,7 @@
                 <div class="mb-3">
                     <label for="exampleFormControlInput1" class="form-label">Nomor register</label>
                     <input type="text" class="form-control" id="register" name="register">
-                  </div>
-                  
+                </div>
                 <input type="hidden" name="action" value="pembagian">
                 <button type="submit" class="btn btn-primary w-100">Bagikan tugas</button>
             </form>

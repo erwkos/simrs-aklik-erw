@@ -5,26 +5,22 @@ from user.models import User
 from django.contrib.auth.models import Group
 
 
-# def verifikator_kantor_cabang(request):
-#     queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
-#     # queryset = User.objects.filter(groups__in=Group.objects.filter(name='verifikator'),
-#     #                                kantorcabang=request.user.kantorcabang_set.first())
-#     return queryset
-#
-
 class RegisterKlaimFaskesFilter(django_filters.FilterSet):
-    # def __init__(self, data=None, queryset=None, *, request=None, user=None, prefix=None):
-    #     super().__init__(data=data, queryset=queryset, prefix=prefix)
-    #     self.filters['verifikator'].queryset = User.objects.filter(groups__in=Group.objects.filter(name='verifikator'))
-    #
-    verifikator = django_filters.ModelChoiceFilter(queryset=User.objects.filter(groups__in=Group.objects.filter(name='verifikator')))
     class Meta:
         model = RegisterKlaim
         fields = ['jenis_klaim',
                   'status',
-                  # 'verifikator',
+                  'verifikator',
                   ]
 
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop('request', None)  # Dapatkan 'request' dari kwargs
+        super().__init__(*args, **kwargs)
+
+        if request and request.user.is_authenticated:
+            # Filter queryset berdasarkan request.user jika pengguna terautentikasi
+            self.filters['verifikator'].field.queryset = User.objects.filter(kantorcabang__in=request.user.kantorcabang_set.all(),
+                                                                             groups__in=Group.objects.filter(name='verifikator'))
 
 class RegisterKlaimKhususFaskesFilter(django_filters.FilterSet):
 

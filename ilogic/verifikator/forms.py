@@ -106,7 +106,7 @@ class DataKlaimVerifikatorForm(forms.ModelForm):
 
 
 class KeteranganPendingForm(forms.ModelForm):
-    ket_pending_dispute= forms.CharField(required=False)
+    ket_pending_dispute= forms.CharField(required=False, min_length=5)
 
     class Meta:
         model = KeteranganPendingDispute

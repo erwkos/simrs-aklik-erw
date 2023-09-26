@@ -371,12 +371,20 @@ def create_user_faskes(request):
     if request.method == 'POST':
         form = FormNewFaskesUser(data=request.POST)
         if form.is_valid():
-            fm = form.save()
             # tambah fm ke faskes
-            for i in Faskes.objects.filter(nama=request.POST.get('faskes')):
-                i.user.add(fm)
-                messages.success(request, f'Username {fm} berhasil dibuat')
-                return redirect(reverse_lazy('user:user_per_faskes'))
+            add_faskes = faskes.filter(nama=request.POST.get('faskes')).first()
+            if add_faskes is not None:
+                try:
+                    fm = form.save()
+                    add_faskes.user.add(fm)
+                    messages.success(request, f'Username {fm} berhasil dibuat')
+                    return redirect(request.headers.get('Referer'))
+                except Exception as e:
+                    messages.warning(request, "Terdapat Error dengan Keterangan :", str(e))
+                    return redirect(request.headers.get('Referer'))
+            elif add_faskes is None:
+                messages.warning(request, "Terdapat Error dengan Keterangan : Tidak ada Faskes")
+                return redirect(request.headers.get('Referer'))
     else:
         form = FormNewFaskesUser()
         # form_faskes = AddUserFaskesForm()

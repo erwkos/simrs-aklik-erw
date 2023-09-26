@@ -1,7 +1,9 @@
 import django_filters
 
+from faskes.models import Faskes
 from klaim.models import DataKlaimCBG
-
+from user.models import User
+from django.contrib.auth.models import Group
 
 class DataKlaimCBGFilter(django_filters.FilterSet):
 
@@ -25,3 +27,11 @@ class DownloadDataKlaimCBGFilter(django_filters.FilterSet):
             # 'bupel',
             # 'verifikator',
         ]
+
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop('request', None)  # Dapatkan 'request' dari kwargs
+        super().__init__(*args, **kwargs)
+
+        if request and request.user.is_authenticated:
+            # Filter queryset berdasarkan request.user jika pengguna terautentikasi
+            self.filters['faskes'].field.queryset = Faskes.objects.filter(kantor_cabang__in=request.user.kantorcabang_set.all())

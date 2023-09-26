@@ -20,5 +20,6 @@ urlpatterns = [
     path('update/finalisasi-data-klaim/<int:pk>', views.update_finalisasi_data_klaim,
          name='update-finalisasi-data-klaim'),
     path('update/update-data_klaim-cbg/<int:pk>', views.update_data_klaim_cbg, name='update-data-klaim-cbg'),
-    path('download/cbg/', views.download_data_cbg, name='download_data_cbg')
+    path('download/cbg/', views.download_data_cbg, name='download_data_cbg'),
+
 ] + router.urls
