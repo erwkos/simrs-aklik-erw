@@ -37,25 +37,26 @@
 
         <div class="card-body">
               <form class="row row-cols-md-auto g-3 align-items-center">
-                <div class="col-12">
-                  <label class="sr-only" for="id_status">JNSPEL</label>
-                  <select class="form-select" name="JNSPEL" id="id_JNSPEL">
-                      <option selected value="">JNSPEL...</option>
-                      <option value="Rawat Inap" {% if request.GET.JNSPEL == 'Rawat Inap' %}selected {% endif %}>Rawat Inap</option>
-                      <option value="Rawat Jalan" {% if request.GET.JNSPEL == 'Rawat Jalan' %}selected {% endif %}>Rawat Jalan</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <label class="sr-only" for="id_status">Status</label>
-                  <select class="form-select" name="status" id="id_status">
-                      <option selected value="">Status...</option>
-                      <option value="Proses" {% if request.GET.status == 'Proses' %}selected {% endif %}>Proses</option>
-                      <option value="Layak" {% if request.GET.status == 'Layak' %}selected {% endif %}>Layak</option>
-                      <option value="Pending" {% if request.GET.status == 'Pending' %}selected {% endif %}>Pending</option>
-                      <option value="Dispute" {% if request.GET.status == 'Dispute' %}selected {% endif %}>Dispute</option>
-                      <option value="Tidak Layak" {% if request.GET.status == 'Tidak Layak' %}selected {% endif %}>Tidak Layak</option>
-                  </select>
-                </div>
+{#                <div class="col-12">#}
+{#                  <label class="sr-only" for="id_status">JNSPEL</label>#}
+{#                  <select class="form-select" name="JNSPEL" id="id_JNSPEL">#}
+{#                      <option selected value="">JNSPEL...</option>#}
+{#                      <option value="Rawat Inap" {% if request.GET.JNSPEL == 'Rawat Inap' %}selected {% endif %}>Rawat Inap</option>#}
+{#                      <option value="Rawat Jalan" {% if request.GET.JNSPEL == 'Rawat Jalan' %}selected {% endif %}>Rawat Jalan</option>#}
+{#                  </select>#}
+{#                </div>#}
+{#                <div class="col-12">#}
+{#                  <label class="sr-only" for="id_status">Status</label>#}
+{#                  <select class="form-select" name="status" id="id_status">#}
+{#                      <option selected value="">Status...</option>#}
+{#                      <option value="Proses" {% if request.GET.status == 'Proses' %}selected {% endif %}>Proses</option>#}
+{#                      <option value="Layak" {% if request.GET.status == 'Layak' %}selected {% endif %}>Layak</option>#}
+{#                      <option value="Pending" {% if request.GET.status == 'Pending' %}selected {% endif %}>Pending</option>#}
+{#                      <option value="Dispute" {% if request.GET.status == 'Dispute' %}selected {% endif %}>Dispute</option>#}
+{#                      <option value="Tidak Layak" {% if request.GET.status == 'Tidak Layak' %}selected {% endif %}>Tidak Layak</option>#}
+{#                  </select>#}
+{#                </div>#}
+                  {{ myFilter.form | crispy }}
                 <div class="col-12">
                   <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
@@ -90,6 +91,7 @@
                             <th scope="col">Status</th>
                             <th scope="col">RS</th>
                             <th scope="col">Rufil</th>
+                            <th scope="col">No REG</th>
                             <th scope="col">No SEP</th>
                             <th scope="col">In</th>
                             <th scope="col">Out</th>
@@ -110,6 +112,7 @@
                         </td>
                         <td>{{data_klaim.faskes.nama}}</td>
                         <td>{{data_klaim.rufil}}</td>
+                        <td>{{data_klaim.register_klaim.nomor_register_klaim}}</td>
                         <td>{{data_klaim.NOSEP}}</td>
                         <td>{{data_klaim.TGLSEP}}</td>
                         <td>{{data_klaim.TGLPULANG}}</td>

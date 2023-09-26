@@ -3,6 +3,7 @@ import io
 import msoffcrypto
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
+from dal import autocomplete
 from django.contrib import messages
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -27,6 +28,7 @@ from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
 from xlrd import XLRDError
 
+from faskes.models import Faskes
 from klaim.filters import RegisterKlaimFaskesFilter
 from klaim.models import (
     RegisterKlaim,
@@ -698,8 +700,9 @@ def download_data_cbg(request):
     download = request.GET.get('download')
     bupel_month = request.GET.get('bupel_month')
     bupel_year = request.GET.get('bupel_year')
+    faskes = request.GET.get('faskes')
     try:
-        if bupel_month is not '' and bupel_year is not '':
+        if bupel_month != '' and bupel_year != '' and faskes != '':
             if download == 'download':
                 response = HttpResponse(
                     content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -770,14 +773,31 @@ def download_data_cbg(request):
                 workbook.save(response)
                 return response
         else:
-            messages.warning(request, 'Bulan dan Tahun harus diisi!')
+            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi!')
     except Exception as e:
         messages.warning(request, "Terjadi Kesalahan Dalam Download Data, dengan Keterangan: " + str(e))
-
 
     context = {
         'myFilter': myFilter,
     }
     return render(request, 'verifikator/download_data_cbg.html', context)
+
+
+class RumahSakitAutocomplete(autocomplete.Select2QuerySetView):
+    # def __init__(self, *args, **kwargs):
+    #     request = kwargs.pop('request', None)  # Dapatkan 'request' dari kwargs
+    #     super().__init__(*args, **kwargs)
+    def get_queryset(self, *args, **kwargs):
+        request = kwargs.pop('request', None)  # Dapatkan 'request' dari kwargs
+        super().__init__(*args, **kwargs)
+        # Don't forget to filter out results depending on the visitor !
+        if not self.request.user.is_authenticated:
+            return Faskes.objects.none()
+
+        qs = Faskes.objects.filter(kantor_cabang__in=self.request.user.kantorcabang_set.all())
+
+        if self.q:
+            qs = qs.filter(nama__icontains=self.q)
+        return qs
 
 

@@ -1,11 +1,45 @@
 import django_filters
+from dal import autocomplete
+from django.forms import NumberInput
 
 from faskes.models import Faskes
 from klaim.models import DataKlaimCBG
 from user.models import User
 from django.contrib.auth.models import Group
 
+STATUS_CHOICES_VERIFIKATOR = (
+    ('Proses', 'Proses'),
+    ('Layak', 'Layak'),
+    ('Pending', 'Pending'),
+    ('Dispute', 'Dispute'),
+    ('Tidak Layak', 'Tidak Layak'),
+)
+
+STATUS_CHOICES_FASKES = (
+    ('Pending', 'Pending'),
+    ('Dispute', 'Dispute'),
+    ('Tidak Layak', 'Tidak Layak'),
+    ('Pembahasan', 'Pembahasan'),
+)
+
+
 class DataKlaimCBGFilter(django_filters.FilterSet):
+    status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_VERIFIKATOR)
+    nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
+    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month')
+    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year')
+
+    class Meta:
+        model = DataKlaimCBG
+        fields = ['JNSPEL', 'status']
+
+
+class DataKlaimCBGFaskesFilter(django_filters.FilterSet):
+    status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_FASKES)
+    # nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
+    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month')
+    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year')
+
 
     class Meta:
         model = DataKlaimCBG
@@ -14,17 +48,23 @@ class DataKlaimCBGFilter(django_filters.FilterSet):
 
 class DownloadDataKlaimCBGFilter(django_filters.FilterSet):
     nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
-    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month')
-    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year')
+    bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month', widget=NumberInput(attrs={'min': 0, 'oninput':
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+    bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year', widget=NumberInput(attrs={'min': 0, 'oninput':
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+    faskes = django_filters.ModelChoiceFilter(queryset=Faskes.objects.all(),
+                                              widget=autocomplete.ModelSelect2(
+                                                  url='verifikator:rumahsakit-autocomplete',
+                                              ))
 
     class Meta:
         model = DataKlaimCBG
         fields = [
-            # 'register_klaim',
-            'faskes',
+            # 'nomor_register_klaim',
+            # 'bupel',
             'JNSPEL',
             'status',
-            # 'bupel',
+            # 'faskes',
             # 'verifikator',
         ]
 

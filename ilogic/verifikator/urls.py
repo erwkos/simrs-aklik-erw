@@ -4,6 +4,7 @@ from rest_framework.routers import SimpleRouter
 
 from . import views
 from . import api_views
+from .views import RumahSakitAutocomplete
 
 router = SimpleRouter(trailing_slash=False)
 router.register('api/register-klaim', api_views.RegisterKlaimViewSet, basename='api-register-klaim')
@@ -21,5 +22,8 @@ urlpatterns = [
          name='update-finalisasi-data-klaim'),
     path('update/update-data_klaim-cbg/<int:pk>', views.update_data_klaim_cbg, name='update-data-klaim-cbg'),
     path('download/cbg/', views.download_data_cbg, name='download_data_cbg'),
+
+    # autocomplete
+    path('api/rumahsakit-autocomplete/', RumahSakitAutocomplete.as_view(), name='rumahsakit-autocomplete'),
 
 ] + router.urls

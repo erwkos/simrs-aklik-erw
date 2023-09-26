@@ -10,7 +10,7 @@ from openpyxl.workbook import Workbook
 
 from user.decorators import permissions, check_device
 from klaim.filters import RegisterKlaimFaskesFilter, RegisterKlaimKhususFaskesFilter
-from verifikator.filters import DataKlaimCBGFilter
+from verifikator.filters import DataKlaimCBGFilter, DataKlaimCBGFaskesFilter
 from .models import (
     Kepwil,
     KantorCabang,
@@ -170,7 +170,7 @@ def daftar_data_klaim_pending_dispute_cbg(request):
                                            prosespending=True).order_by('NMPESERTA', 'TGLSEP')
 
     # filter
-    myFilter = DataKlaimCBGFilter(request.GET, queryset=queryset)
+    myFilter = DataKlaimCBGFaskesFilter(request.GET, queryset=queryset)
     queryset = myFilter.qs
 
     # export excel

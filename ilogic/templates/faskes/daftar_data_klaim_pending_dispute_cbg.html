@@ -17,23 +17,24 @@
 
         <div class="card-body">
               <form class="row row-cols-md-auto g-3 align-items-center">
-                <div class="col-12">
-                  <label class="sr-only" for="id_status">JNSPEL</label>
-                  <select class="form-select" name="JNSPEL" id="id_JNSPEL">
-                      <option selected value="">JNSPEL...</option>
-                      <option value="Rawat Inap" {% if request.GET.JNSPEL == 'Rawat Inap' %}selected {% endif %}>Rawat Inap</option>
-                      <option value="Rawat Jalan" {% if request.GET.JNSPEL == 'Rawat Jalan' %}selected {% endif %}>Rawat Jalan</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <label class="sr-only" for="id_status">Status</label>
-                  <select class="form-select" name="status" id="id_status">
-                      <option selected value="">Status...</option>
-                      <option value="Pending" {% if request.GET.status == 'Pending' %}selected {% endif %}>Pending</option>
-                      <option value="Dispute" {% if request.GET.status == 'Dispute' %}selected {% endif %}>Dispute</option>
-                      <option value="Pembahasan" {% if request.GET.status == 'Pembahasan' %}selected {% endif %}>Pembahasan</option>
-                  </select>
-                </div>
+{#                <div class="col-12">#}
+{#                  <label class="sr-only" for="id_status">JNSPEL</label>#}
+{#                  <select class="form-select" name="JNSPEL" id="id_JNSPEL">#}
+{#                      <option selected value="">JNSPEL...</option>#}
+{#                      <option value="Rawat Inap" {% if request.GET.JNSPEL == 'Rawat Inap' %}selected {% endif %}>Rawat Inap</option>#}
+{#                      <option value="Rawat Jalan" {% if request.GET.JNSPEL == 'Rawat Jalan' %}selected {% endif %}>Rawat Jalan</option>#}
+{#                  </select>#}
+{#                </div>#}
+{#                <div class="col-12">#}
+{#                  <label class="sr-only" for="id_status">Status</label>#}
+{#                  <select class="form-select" name="status" id="id_status">#}
+{#                      <option selected value="">Status...</option>#}
+{#                      <option value="Pending" {% if request.GET.status == 'Pending' %}selected {% endif %}>Pending</option>#}
+{#                      <option value="Dispute" {% if request.GET.status == 'Dispute' %}selected {% endif %}>Dispute</option>#}
+{#                      <option value="Pembahasan" {% if request.GET.status == 'Pembahasan' %}selected {% endif %}>Pembahasan</option>#}
+{#                  </select>#}
+{#                </div>#}
+                  {{ myFilter.form | crispy }}
                 <div class="col-12">
                   <button type="submit" class="btn btn-primary">Submit</button>
                 </div>

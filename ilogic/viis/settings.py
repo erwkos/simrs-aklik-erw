@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'django_filters',
     'captcha',
     'django.contrib.humanize',
+    'dal',
+    'dal_select2',
 
     # session
     # 'django.contrib.sessions',
@@ -223,7 +225,7 @@ REST_FRAMEWORK = {
 
 
 # session logout automatis
-SESSION_COOKIE_AGE = 600
+SESSION_COOKIE_AGE = 60000
 SESSION_SAVE_EVERY_REQUEST = True
 
 # captcha size
