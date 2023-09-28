@@ -192,6 +192,7 @@ def daftar_data_klaim_pending_dispute_cbg(request):
         columns = [
             'namars',
             'Status',
+            'NOREG',
             'NOSEP',
             'TGLSEP',
             'TGLPULANG',
@@ -215,10 +216,19 @@ def daftar_data_klaim_pending_dispute_cbg(request):
         for queryset in queryset:
             row_num += 1
 
+            ket_pending_disput_queryset = ''
+            for x in queryset.ket_pending_dispute.all():
+                ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+            ket_jawaban_pending_queryset = ''
+            for x in queryset.ket_jawaban_pending.all():
+                ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
             # Define the data for each cell in the row
             row = [
                 queryset.faskes.nama,
                 queryset.status,
+                queryset.register_klaim.nomor_register_klaim,
                 queryset.NOSEP,
                 queryset.TGLSEP,
                 queryset.TGLPULANG,
@@ -228,8 +238,8 @@ def daftar_data_klaim_pending_dispute_cbg(request):
                 queryset.POLI,
                 queryset.KDINACBG,
                 queryset.BYPENGAJUAN,
-                # queryset.ket_pending_dispute.all(),
-                # queryset.ket_jawaban_pending.all().last(),
+                ket_pending_disput_queryset,
+                ket_jawaban_pending_queryset,
             ]
 
             # Assign the data for each cell of the row

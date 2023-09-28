@@ -21,7 +21,7 @@
     $(function(){
     $.getJSON("{% url 'monitoring:api_json_data_klaim_CBG_supervisor' %}", function(mps) {
         $("#output").pivotUI(mps,
-            { rows: ["tgl_SLA", "faskes__nama", "register_klaim__nomor_register_klaim", "JNSPEL", "bupel", ], cols: ["verifikator__first_name", "status"] },
+            { rows: ["tgl_SLA", "faskes__nama", "register_klaim__nomor_register_klaim", "JNSPEL", "bupel", ], cols: ["verifikator__username", "status"] },
             false
         );
     });

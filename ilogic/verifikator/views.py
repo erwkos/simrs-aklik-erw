@@ -437,7 +437,7 @@ def daftar_data_klaim(request):
                 queryset.POLI,
                 queryset.KDINACBG,
                 queryset.BYPENGAJUAN,
-                queryset.verifikator.first_name,
+                queryset.verifikator.username,
                 ket_pending_disput_queryset,
             ]
 
@@ -765,7 +765,7 @@ def download_data_cbg(request):
                         queryset.POLI,
                         queryset.KDINACBG,
                         queryset.BYPENGAJUAN,
-                        queryset.verifikator.first_name,
+                        queryset.verifikator.username,
                         ket_pending_disput_queryset,
                     ]
 

@@ -21,7 +21,7 @@
     $(function(){
     $.getJSON("{% url 'monitoring:api_json_data_klaim_hitung_supervisor' %}", function(mps) {
         $("#output").pivotUI(mps,
-            { rows: ["tglhitung","periodehitung",], cols: ["jenis_klaim", "verifikator__first_name",] },
+            { rows: ["tglhitung","periodehitung",], cols: ["jenis_klaim", "verifikator__username",] },
             false
         );
     });

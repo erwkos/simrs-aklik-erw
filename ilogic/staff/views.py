@@ -25,7 +25,7 @@ def daftar_register_klaim(request):
         nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang).order_by('-tgl_aju')
 
     # filter
-    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset)
+    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset, request=request)
     queryset = myFilter.qs
 
     # pagination

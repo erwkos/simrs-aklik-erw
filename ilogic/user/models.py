@@ -15,7 +15,7 @@ class User(AbstractUser):
     block_login_time = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        return f'{self.first_name}'
+        return f'{self.username}'
 
     def check_permissions(self, group_list):
         group_list_obj = Group.objects.filter(name__in=group_list)

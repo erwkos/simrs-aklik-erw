@@ -14,7 +14,7 @@ from verifikator.models import HitungDataKlaim
 def api_json_data_klaim_CBG(request):
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__first_name', 'status', 'JNSPEL',
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
                'tgl_SLA')
     data = list(queryset)
     return JsonResponse(data, safe=False)
@@ -35,7 +35,7 @@ def api_json_data_klaim_CBG_verifikator(request):
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False,
                                            verifikator=request.user).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__first_name', 'status', 'JNSPEL',
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
                'tgl_SLA')
     data = list(queryset)
     return JsonResponse(data, safe=False)
@@ -56,7 +56,7 @@ def monitoring_data_klaim_CBG_verifikator(request):
 def api_json_data_klaim_CBG_supervisor(request):
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__first_name', 'status', 'JNSPEL',
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
                'tgl_SLA')
     data = list(queryset)
     return JsonResponse(data, safe=False)
@@ -76,7 +76,7 @@ def monitoring_data_klaim_CBG_supervisor(request):
 def api_json_data_klaim_hitung_verifikator(request):
     queryset = HitungDataKlaim.objects.filter(nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang,
                                               verifikator=request.user).\
-        values('tglhitung', 'periodehitung', 'jenis_klaim', 'verifikator__first_name')
+        values('tglhitung', 'periodehitung', 'jenis_klaim', 'verifikator__username')
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -94,7 +94,7 @@ def monitoring_data_klaim_hitung_verifikator(request):
 @permissions(role=['supervisor'])
 def api_json_data_klaim_hitung_supervisor(request):
     queryset = HitungDataKlaim.objects.filter(nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang,).\
-        values('tglhitung', 'periodehitung', 'jenis_klaim', 'verifikator__first_name')
+        values('tglhitung', 'periodehitung', 'jenis_klaim', 'verifikator__username')
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -116,7 +116,7 @@ def api_json_data_klaim_pending_dispute_CBG(request):
                                            request.user.kantorcabang_set.all().first().kode_cabang,
                                            prosesklaim=True,
                                            status__in=status_klaim).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__first_name', 'status', 'JNSPEL',
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
                'tgl_SLA')
     data = list(queryset)
     return JsonResponse(data, safe=False)
