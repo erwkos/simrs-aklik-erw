@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('bupel', models.DateField(blank=True, null=True)),
                 ('tgl_SLA', models.DateField(blank=True, null=True)),
-                ('rufil', models.CharField(max_length=200, null=True)),
+                ('Algoritma', models.CharField(max_length=200, null=True)),
                 ('status', models.CharField(choices=[('Pembahasan', 'Pembahasan'), ('Tidak Layak', 'Tidak Layak'), ('Layak', 'Layak'), ('Pending', 'Pending'), ('Dispute', 'Dispute'), ('Klaim', 'Klaim'), ('Belum Ver', 'Belum Ver'), ('Proses', 'Proses')], default='Belum Ver', max_length=200)),
                 ('NOSEP', models.CharField(blank=True, max_length=200, null=True, unique=True)),
                 ('TGLSEP', models.DateField(blank=True, null=True)),

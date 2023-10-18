@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name="dataklaimcbg",
-            name="rufil",
+            name="Algoritma",
             field=models.CharField(blank=True, max_length=200, null=True),
         ),
     ]

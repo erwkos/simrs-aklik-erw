@@ -134,7 +134,7 @@ def import_data_klaim(request):
         import_form = ImportDataKlaimForm(files=request.FILES, data=request.POST)
         if import_form.is_valid():
             list_data_import = ['NOSEP', 'TGLSEP', 'TGLPULANG', 'JNSPEL', 'NOKARTU', 'NMPESERTA',
-                                'POLI', 'KDINACBG', 'BYPENGAJUAN']
+                                'POLI', 'KDINACBG', 'BYPENGAJUAN', 'ALGORITMA']
             nomor_register_klaim = import_form.cleaned_data.get('register')
             register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
             file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
@@ -224,7 +224,7 @@ def import_data_klaim(request):
 
     if request.method == 'POST' and request.POST.get('action') == 'confirm':
         list_data_import = ['NOSEP', 'TGLSEP', 'TGLPULANG', 'JNSPEL', 'NOKARTU', 'NMPESERTA',
-                            'POLI', 'KDINACBG', 'BYPENGAJUAN']
+                            'POLI', 'KDINACBG', 'BYPENGAJUAN', 'ALGORITMA']
         file_name = request.POST.get('file_name')
         nomor_register_klaim = request.POST.get('register')
         get_password = request.POST.get('password')
