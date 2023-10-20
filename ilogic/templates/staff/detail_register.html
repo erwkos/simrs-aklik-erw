@@ -66,6 +66,21 @@
           </div>
         </div>
     </div>
+
+    {% elif register.verifikator and register.status == 'Terima'%}
+        <div class="col-lg-6">
+        <div class="card">
+        <div class="card-header">
+            <h5>Aksi Staf Administrasi Klaim</h5>
+        </div>
+        <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ pilih_verifikator_form|crispy }}
+                    <input type="hidden" name="action" value="pilih_verifikator">
+                    <button class="btn btn-primary w-100" type="submit">Simpan</button>
+                </form>
+        </div>
     {% endif %}
 </div>
 

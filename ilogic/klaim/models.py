@@ -83,6 +83,8 @@ class RegisterKlaim(models.Model):
         if self.tgl_ba_lengkap is None:
             if self.tgl_terima:
                 self.tgl_ba_lengkap = self.tgl_terima + timedelta(days=9)
+        elif self.tgl_ba_lengkap > self.tgl_terima + timedelta(days=9):
+            self.tgl_ba_lengkap = self.tgl_terima + timedelta(days=9)
         super(RegisterKlaim, self).save(*args, **kwargs)
 
     @cached_property

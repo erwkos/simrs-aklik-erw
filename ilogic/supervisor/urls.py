@@ -14,5 +14,7 @@ urlpatterns = [
          name='update_pembagian_ulang_verifikasi_cbg'),
     path('api/json/pembagian/data/klaim/cbg/', views.api_json_pembagian_data_klaim_cbg,
          name='api_json_pembagian_data_klaim_cbg'),
+    path('list/user/verifikator/', views.list_user_verifikator, name='list_user_verifikator'),
+    path('edit/user/verifikator/<int:pk>/', views.edit_user_verifikator, name='edit_user_verifikator'),
 
 ]

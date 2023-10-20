@@ -114,7 +114,7 @@ def list_user_verifikator(request):
     verifikator_group = Group.objects.filter(name='verifikator').first()
     user_verifikator = (User.objects.filter(groups=verifikator_group,
                                             kantorcabang__in=request.user.kantorcabang_set.all()).
-                        order_by('is_active'))
+                        order_by('-is_staff'))
 
     content = {
         'verifikator': user_verifikator,
@@ -132,15 +132,20 @@ def edit_user_verifikator(request, pk):
     form = IsActiveForm(instance=instance)
     if request.method == 'POST':
         form = IsActiveForm(data=request.POST, instance=instance)
-        if form.is_valid():
+        if not form.has_changed():
+            messages.warning(request, f'Status {instance} tidak ada perubahan')
+            return redirect('supervisor:list_user_verifikator')
+        elif form.is_valid():
             form.save()
-            messages.success(request, 'Status berhasil diubah')
-            return redirect('staff:list_user_verifikator')
+            messages.success(request, f'Status {instance} berhasil diubah')
+            return redirect('supervisor:list_user_verifikator')
         else:
             form = IsActiveForm()
-            messages.warning(request, 'Status tidak berhasil diubah')
+            messages.warning(request, f'Status {instance} tidak berhasil diubah')
+
 
     content = {
         'form': form,
+        'instance': instance
     }
     return render(request, 'staff/edit_user_verifikator.html', content)

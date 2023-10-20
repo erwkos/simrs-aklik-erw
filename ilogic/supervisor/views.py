@@ -13,8 +13,9 @@ from faskes.models import KantorCabang
 from klaim.choices import StatusRegisterChoices, StatusDataKlaimChoices, JenisPelayananChoices
 from klaim.filters import RegisterKlaimFaskesFilter
 from klaim.models import DataKlaimCBG, RegisterKlaim
-from supervisor.forms import PilihVerifikatorRegisterKlaimSupervisorForm
+from supervisor.forms import PilihVerifikatorRegisterKlaimSupervisorForm, IsActiveForm
 from user.decorators import permissions, check_device
+from user.models import User
 from verifikator.forms import StatusRegisterKlaimForm
 from collections import Counter
 
@@ -349,3 +350,46 @@ def pembagian_ulang(request):
         'supervisor/bagi_ulang_list.html',
         context
     )
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def list_user_verifikator(request):
+    verifikator_group = Group.objects.filter(name='verifikator').first()
+    user_verifikator = (User.objects.filter(groups=verifikator_group,
+                                            kantorcabang__in=request.user.kantorcabang_set.all()).
+                        order_by('-is_staff'))
+
+    content = {
+        'verifikator': user_verifikator,
+    }
+    return render(request, 'supervisor/list_user_verifikator.html', content)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def edit_user_verifikator(request, pk):
+    queryset = User.objects.filter(kantorcabang=request.user.kantorcabang_set.all().first())
+    instance = queryset.get(id=pk)
+    # user = User.objects.get(pk=pk)
+    form = IsActiveForm(instance=instance)
+    if request.method == 'POST':
+        form = IsActiveForm(data=request.POST, instance=instance)
+        if not form.has_changed():
+            messages.warning(request, f'Status {instance} tidak ada perubahan')
+            return redirect('supervisor:list_user_verifikator')
+        elif form.is_valid():
+            form.save()
+            messages.success(request, f'Status {instance} berhasil diubah')
+            return redirect('supervisor:list_user_verifikator')
+        else:
+            form = IsActiveForm()
+            messages.warning(request, f'Status {instance} tidak berhasil diubah')
+
+    content = {
+        'form': form,
+        'instance': instance
+    }
+    return render(request, 'supervisor/edit_user_verifikator.html', content)

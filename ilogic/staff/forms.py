@@ -50,6 +50,10 @@ class AlasanDikembalikanForm(forms.ModelForm):
 
 
 class IsActiveForm(forms.ModelForm):
+    is_staff = forms.BooleanField(label="Verifikator Aktif", required=False,
+                                  help_text="Jika Ter-Checklist, maka Verifikator masih bisa login dan "
+                                            "melakukan verifikasi, namun tidak dapat menjadi PIC dan pembagian klaim.")
+
     class Meta:
         model = User
-        fields = ['is_active']
+        fields = ['is_staff']

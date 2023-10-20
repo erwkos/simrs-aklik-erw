@@ -25,11 +25,12 @@ STATUS_CHOICES_FASKES = (
 
 class DataKlaimCBGFilter(django_filters.FilterSet):
     status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_VERIFIKATOR)
-    nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
+    nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim', label="Nomor Register")
     bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month', widget=NumberInput(attrs={'min': 0, 'oninput':
-        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }), label='Bulan Layan')
     bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year', widget=NumberInput(attrs={'min': 0, 'oninput':
-        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }), label='Tahun Layan')
+    nama_peserta = django_filters.CharFilter(field_name='NMPESERTA', label="Nama Peserta")
 
     class Meta:
         model = DataKlaimCBG

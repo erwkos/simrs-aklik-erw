@@ -42,21 +42,46 @@
                         <th scope="col">Username</th>
                         <th scope="col">First Name</th>
                         <th scope="col">Last Name</th>
-                        <th scope="col">Active</th>
+                        <th scope="col">Status Verifikator</th>
+                        <th scope="col">Status Login</th>
                         <th scope="col">Last Login</th>
                     </tr>
                     </thead>
                     <tbody>
                         {% for verifikator in verifikator %}
                     <tr>
+                    {% for i in request.user.groups.all %}
+                        {% if i.name == 'verifikator' %}
                         <td>
                             <a href="{% url 'staff:edit_user_verifikator' verifikator.id %}" type="button"
                                class="btn btn-primary">Edit</a>
                         </td>
+                        {% endif %}
+
+                        {% if i.name == 'supervisor' %}
+                        <td>
+                            <a href="{% url 'supervisor:edit_user_verifikator' verifikator.id %}" type="button"
+                               class="btn btn-primary">Edit</a>
+                        </td>
+                        {% endif %}
+                    {% endfor %}
                         <td>{{ verifikator.username }}</td>
                         <td>{{ verifikator.first_name }}</td>
                         <td>{{ verifikator.last_name }}</td>
-                        <td>{{ verifikator.is_active }}</td>
+                        <td>
+                            {% if verifikator.is_staff %}
+                                <i class="fas fa-user-check"></i>
+                            {% else %}
+                                <i class="ti ti-x"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if verifikator.is_active %}
+                                <i class="fas fa-user-check"></i>
+                            {% else %}
+                                <i class="ti ti-x"></i>
+                            {% endif %}
+                        </td>
                         <td>{{ verifikator.last_login }}</td>
                     </tr>
                     {% endfor %}
