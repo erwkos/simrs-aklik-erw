@@ -223,12 +223,12 @@ def user_login(request):
 
                     # Set session ID dan perangkat pada pengguna
                     user_agent = request.META['HTTP_USER_AGENT'].__str__()
-                    remote_addr = request.META['REMOTE_ADDR'].__str__()
-                    try:
-                        remote_port = request.META['REMOTE_PORT'].__str__()
-                    except:
-                        remote_port = ''
-                    meta = user_agent + remote_addr #+ remote_port
+                    # remote_addr = request.META['REMOTE_ADDR'].__str__()
+                    # try:
+                    #     remote_port = request.META['REMOTE_PORT'].__str__()
+                    # except:
+                    #     remote_port = ''
+                    meta = user_agent # + remote_addr + remote_port
                     user.meta = meta
 
                     user.save()

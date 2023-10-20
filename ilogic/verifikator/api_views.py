@@ -37,7 +37,7 @@ class RegisterKlaimViewSet(GenericViewSet):
     def get_queryset(self):
         if self.action == 'list':
             queryset_kc = self.queryset.filter(nomor_register_klaim__startswith=self.request.user.kantorcabang_set.all().first().kode_cabang)
-            return queryset_kc.filter(Q(file_data_klaim=None) | Q(file_data_klaim=''))
+            return queryset_kc  # filter(Q(file_data_klaim=None) | Q(file_data_klaim=''))
         return super(RegisterKlaimViewSet, self).get_queryset()
 
     def list(self, request):

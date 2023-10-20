@@ -24,14 +24,14 @@ def permissions(role=[]):
 
 def check_device(view_func):
     def wrapper_func(request, *args, **kwargs):
-        user_device = request.user.meta
+        user_device = request.user.meta.__str__()
         user_agent = request.META['HTTP_USER_AGENT'].__str__()
         remote_addr = request.META['REMOTE_ADDR'].__str__()
-        try:
-            remote_port = request.META['REMOTE_PORT'].__str__()
-        except:
-            remote_port = ''
-        current_device = user_agent + remote_addr #+ remote_port
+        # try:
+        #     remote_port = request.META['REMOTE_PORT'].__str__()
+        # except:
+        #     remote_port = ''
+        current_device = user_agent # + remote_addr #+ remote_port
 
         if user_device != current_device:
             return HttpResponse("Akses terlarang!")

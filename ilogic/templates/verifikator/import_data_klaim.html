@@ -120,16 +120,13 @@
         server: {
             url: '/verifikator/api/register-klaim',
             then: data => data.results.map(data =>
-                [data.nomor_register_klaim, data.status,
-                data.bulan_pelayanan,
-                data.faskes,
-                data.jenis_klaim,
-                {#`${data.is_pengajuan_ulang ? "yes" : "no"}`,#}
-                gridjs.html(getButtonAction(data))
-               ]
-                ),
+                [data.nomor_register_klaim, data.status, data.bulan_pelayanan, data.faskes, data.jenis_klaim,
+                    {#`${data.is_pengajuan_ulang ? "yes" : "no"}`,#}
+                    gridjs.html(getButtonAction(data))
+                ]
+            ),
             total: data => data.count
-            }
+        }
    })
    grid.render(document.getElementById("data-register"))
 
