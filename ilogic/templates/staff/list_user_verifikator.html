@@ -51,7 +51,7 @@
                         {% for verifikator in verifikator %}
                     <tr>
                     {% for i in request.user.groups.all %}
-                        {% if i.name == 'verifikator' %}
+                        {% if i.name == 'adminAK' %}
                         <td>
                             <a href="{% url 'staff:edit_user_verifikator' verifikator.id %}" type="button"
                                class="btn btn-primary">Edit</a>

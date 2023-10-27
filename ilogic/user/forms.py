@@ -57,6 +57,7 @@ class FormNewUser(UserCreationForm):
             'password2',
             'first_name',
             'last_name',
+            'npp',
             'groups',
         ]
 
