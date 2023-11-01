@@ -10,7 +10,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, null=True) # unique dioff saja, ternyata error saat pembuatan
     meta = models.CharField(max_length=255, null=True, blank=True)
 
-    npp = models.CharField(max_length=25, default="NPP Kosong")
+    npp = models.CharField(max_length=25)
 
     login_attempt = models.IntegerField(default=0)
     blocked_count = models.IntegerField(default=0)
