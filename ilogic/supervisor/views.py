@@ -1,3 +1,4 @@
+import datetime
 import random
 
 from django.contrib import messages
@@ -8,14 +9,17 @@ from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
+from openpyxl.workbook import Workbook
 
 from faskes.models import KantorCabang
 from klaim.choices import StatusRegisterChoices, StatusDataKlaimChoices, JenisPelayananChoices
 from klaim.filters import RegisterKlaimFaskesFilter
-from klaim.models import DataKlaimCBG, RegisterKlaim
-from supervisor.forms import PilihVerifikatorRegisterKlaimSupervisorForm, IsActiveForm
+from klaim.models import DataKlaimCBG, RegisterKlaim, JenisKlaim, SLA
+from supervisor.forms import PilihVerifikatorRegisterKlaimSupervisorForm, IsActiveForm, SLAUpdateForm, \
+    SLACreateForm
 from user.decorators import permissions, check_device
 from user.models import User
+from verifikator.filters import DownloadDataKlaimCBGFilter
 from verifikator.forms import StatusRegisterKlaimForm
 from collections import Counter
 
@@ -226,18 +230,18 @@ def pembagian_ulang(request):
     # pilih hanya verifikator
     group = Group.objects.filter(name='verifikator')
     verifikator = kantor_cabang.user.filter(
-        groups__in = group,
-        kantorcabang__kode_cabang = kantor_cabang.kode_cabang
+        groups__in=group,
+        kantorcabang__kode_cabang=kantor_cabang.kode_cabang
     )
     qs_register = RegisterKlaim.objects.filter(
-        status = StatusRegisterChoices.VERIFIKASI,
-        verifikator__in = verifikator,
+        status=StatusRegisterChoices.VERIFIKASI,
+        verifikator__in=verifikator,
         nomor_register_klaim__startswith=kantor_cabang.kode_cabang
     ).order_by('-tgl_aju')
     data_claim = DataKlaimCBG.objects.filter(
-        register_klaim__in = qs_register,
-        status = StatusDataKlaimChoices.PROSES,
-        verifikator__in = verifikator
+        register_klaim__in=qs_register,
+        status=StatusDataKlaimChoices.PROSES,
+        verifikator__in=verifikator
     )
 
     # method GET dan modal on
@@ -393,3 +397,168 @@ def edit_user_verifikator(request, pk):
         'instance': instance
     }
     return render(request, 'supervisor/edit_user_verifikator.html', content)
+
+
+# asal dari verifikator
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def download_data_cbg(request):
+    # initial relasi pada kantor cabang
+    related_kantor_cabang = request.user.kantorcabang_set.all()
+    queryset = DataKlaimCBG.objects.filter(verifikator__kantorcabang__in=related_kantor_cabang)
+
+    # filter
+    myFilter = DownloadDataKlaimCBGFilter(request.GET, queryset=queryset, request=request)
+    queryset = myFilter.qs
+
+    kantor_cabang = request.user.kantorcabang_set.all().first()
+
+    # fitur download
+    download = request.GET.get('download')
+    bupel_month = request.GET.get('bupel_month')
+    bupel_year = request.GET.get('bupel_year')
+    faskes = request.GET.get('faskes')
+    try:
+        if bupel_month != '' and bupel_year != '' and faskes != '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
+
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim CBG'
+
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NOREG',
+                    'NOSEP',
+                    'TGLSEP',
+                    'TGLPULANG',
+                    'JNSPEL',
+                    'NOKARTU',
+                    'NMPESERTA',
+                    'POLI',
+                    'KDINACBG',
+                    'BYPENGAJUAN',
+                    'verifikator',
+                    'jenis_pending',
+                    'jenis_dispute',
+                    'ket_pending',
+                ]
+                row_num = 1
+
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
+
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
+
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
+                        queryset.NOSEP,
+                        queryset.TGLSEP,
+                        queryset.TGLPULANG,
+                        queryset.JNSPEL,
+                        queryset.NOKARTU,
+                        queryset.NMPESERTA,
+                        queryset.POLI,
+                        queryset.KDINACBG,
+                        queryset.BYPENGAJUAN,
+                        queryset.verifikator.username,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
+                        ket_pending_disput_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        else:
+            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi!')
+    except Exception as e:
+        messages.warning(request, "Terjadi Kesalahan Dalam Download Data, dengan Keterangan: " + str(e))
+
+    context = {
+        'myFilter': myFilter,
+    }
+    return render(request, 'verifikator/download_data_cbg.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def list_pengaturan_sla(request):
+    queryset = SLA.objects.filter(kantor_cabang=request.user.kantorcabang_set.all().first())
+
+    context = {
+        'queryset': queryset
+    }
+
+    return render(request, 'supervisor/list_pengaturan_sla.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def add_pengaturan_sla(request):
+    form = SLACreateForm(request.POST or None)
+    if form.is_valid():
+        queryset = SLA.objects.filter(kantor_cabang=request.user.kantorcabang_set.all().first(),
+                                      jenis_klaim=form.cleaned_data['jenis_klaim']).first()
+        if queryset is not None:
+            messages.warning(request, f'Data SLA {queryset.jenis_klaim} Sudah Ada')
+            return redirect('supervisor:list_pengaturan_sla')
+        elif queryset is None:
+            data = form.cleaned_data
+            data['kantor_cabang'] = request.user.kantorcabang_set.all().first()
+            SLA.objects.create(**data)
+            messages.success(request, f'Data SLA {data["jenis_klaim"]} Berhasil Dibuat')
+            return redirect('supervisor:list_pengaturan_sla')
+
+    context = {
+        'form': form
+    }
+
+    return render(request, 'supervisor/add_pengaturan_sla.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def edit_pengaturan_sla(request, pk):
+    instance = SLA.objects.get(id=pk)
+    form = SLAUpdateForm(request.POST or None, instance=instance)
+    if form.is_valid():
+        form.save()
+        messages.success(request, f'Data SLA {instance.jenis_klaim.nama} Berhasil Diubah Menjadi Tgl BA Lengkap + {instance.plus_hari_sla} Hari')
+        return redirect('supervisor:list_pengaturan_sla')
+
+    context = {
+        'form': form,
+        'instance': instance
+    }
+
+    return render(request, 'supervisor/edit_pengaturan_sla.html', context)

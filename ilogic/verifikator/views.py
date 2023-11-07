@@ -32,7 +32,7 @@ from faskes.models import Faskes
 from klaim.filters import RegisterKlaimFaskesFilter
 from klaim.models import (
     RegisterKlaim,
-    DataKlaimCBG, KeteranganPendingDispute
+    DataKlaimCBG, KeteranganPendingDispute, SLA
 )
 from klaim.resources import DataKlaimCBGResource
 from .filters import DataKlaimCBGFilter, DownloadDataKlaimCBGFilter
@@ -89,16 +89,33 @@ def daftar_register(request):
 @permissions(role=['verifikator'])
 def detail_register(request, pk):
     kantor_cabang = request.user.kantorcabang_set.all().first()
-    queryset = RegisterKlaim.objects.filter(
-        nomor_register_klaim__startswith=kantor_cabang.kode_cabang)
+    queryset = RegisterKlaim.objects.filter(nomor_register_klaim__startswith=kantor_cabang.kode_cabang)
     instance = queryset.get(id=pk)
     status_form = StatusRegisterKlaimForm(instance=instance)
     if request.method == 'POST' and request.POST.get('action') == 'update_status':
         status_form = StatusRegisterKlaimForm(instance=instance, data=request.POST)
         if instance.verifikator != request.user:
             return HttpResponse(content="Anda Tidak Memiliki Hak Akses, Harap Menghubungi Admin!", status=403)
+
         if status_form.is_valid():
             status_form.save()
+
+            # jika tgl ba lengkap diubah, maka tgl SLA verifikasi juga berubah
+            if 'tgl_ba_lengkap' in status_form.changed_data:
+                data_klaim = DataKlaimCBG.objects.filter(
+                    register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
+                if data_klaim:
+                    sla = SLA.objects.filter(jenis_klaim=instance.jenis_klaim,
+                                             kantor_cabang=request.user.kantorcabang_set.all().first()).first()
+                    if sla:
+                        if instance.tgl_ba_lengkap:
+                            tgl_sla = instance.tgl_ba_lengkap + datetime.timedelta(days=sla.plus_hari_sla)
+                            data_klaim.update(tgl_SLA=tgl_sla)
+                    else:
+                        if instance.tgl_ba_lengkap:
+                            tgl_sla = instance.tgl_ba_lengkap + datetime.timedelta(days=6)
+                            data_klaim.update(tgl_SLA=tgl_sla)
+
             if instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
                 data_klaim = DataKlaimCBG.objects.filter(faskes=instance.faskes,
                                                          bupel=instance.bulan_pelayanan,
@@ -110,6 +127,14 @@ def detail_register(request, pk):
                     data_klaim.prosesklaim = False
                     data_klaim.is_hitung = False
                     data_klaim.save()
+
+                # status Tidak Layak tidak dapat diubah lagi status nya oleh Faskes
+                data_klaim_tidak_layak = DataKlaimCBG.objects.filter(faskes=instance.faskes,
+                                                                     bupel=instance.bulan_pelayanan,
+                                                                     status=StatusDataKlaimChoices.TIDAK_LAYAK)
+                for data_klaim_tidak_layak in data_klaim_tidak_layak:
+                    data_klaim_tidak_layak.prosestidaklayak = True
+                    data_klaim_tidak_layak.save()
             messages.success(request, "Data Berhasil Disimpan. Selanjutnya lakukan import data klaim. Terima Kasih")
             return redirect(request.headers.get('Referer'))
 
@@ -373,6 +398,12 @@ def import_data_klaim(request):
 @permissions(role=['verifikator'])
 def daftar_data_klaim(request):
     queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NMPESERTA', 'TGLSEP')
+    # i = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP='0038R0910423V017114')
+    # # i = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP='0038R0910423V017407')
+    # if i.exists():
+    #     print('ada object' + str(i))
+    # else:
+    #     print('tidak ada object' + str(i))
 
     # filter
     myFilter = DataKlaimCBGFilter(request.GET, queryset=queryset)
@@ -406,6 +437,8 @@ def daftar_data_klaim(request):
             'KDINACBG',
             'BYPENGAJUAN',
             'verifikator',
+            'jenis_pending',
+            'jenis_dispute',
             'ket_pending',
         ]
         row_num = 1
@@ -438,6 +471,8 @@ def daftar_data_klaim(request):
                 queryset.KDINACBG,
                 queryset.BYPENGAJUAN,
                 queryset.verifikator.username,
+                queryset.jenis_pending,
+                queryset.jenis_dispute,
                 ket_pending_disput_queryset,
             ]
 
@@ -458,12 +493,58 @@ def daftar_data_klaim(request):
         # Load the pandas dataframe into a tablib dataset
         dataset = Dataset().load(df)
 
+        # cek column sudah sesuai
+        list_status_mandatory = ['status', 'NOSEP', 'jenis_pending', 'jenis_dispute', 'ket_pending']
+        list_status_df = df.columns.tolist()
+        for daftar in list_status_mandatory:
+            print(daftar)
+            print(list_status_df)
+            if daftar not in list_status_df:
+                messages.warning(request, f'File yang diimport harus memiliki kolom {list_status_mandatory}')
+                return redirect(request.headers.get('Referer'))
+
+        # cek sep tersebut berstatus bukan proses
+        for status in dataset['status']:
+            if status == 'Proses':
+                messages.warning(request, 'File yang diimport harus berstatus "Layak", "Pending, '
+                                          '"Dispute", "Tidak Layak"')
+                return redirect(request.headers.get('Referer'))
+
+        # cek sep tersebut memang milik verifikator dan yang diimport adalah status belum diverif
+        for i in dataset['NOSEP']:
+            queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP=i)
+            if not queryset.exists():
+                messages.warning(request, f'Terdapat NO SEP {i} yang tidak terdapat dalam verifikasi klaim '
+                                          f'verifikator bersangkutan.')
+                return redirect(request.headers.get('Referer'))
+            else:
+                for a in queryset:
+                    if a.status != 'Proses':
+                        messages.warning(request, f'Terdapat NO SEP {a.NOSEP} yang sudah di verifikasi. '
+                                                  f'Status yang diimport tidak boleh dalam keadaan telah diverifikasi.')
+                        return redirect(request.headers.get('Referer'))
+
         try:
-            result = data_claim_resource.import_data(dataset, dry_run=True, raise_errors=True)
+            list_id = []
+            ket_pending_dispute_excel = dataset['ket_pending']
+            for i in ket_pending_dispute_excel:
+                obj_ket_pending_dispute = KeteranganPendingDispute(ket_pending_dispute=i, verifikator=request.user)
+                obj_ket_pending_dispute.save()
+                list_id.append(obj_ket_pending_dispute.id)
+
+            df['ket_pending_dispute'] = list_id
+
+            for index, row in df.iterrows():
+                obj = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP=row['NOSEP']).first()
+                obj.ket_pending_dispute.add(row['ket_pending_dispute'])
+
+            dataset_new = Dataset().load(df)
+
+            result = data_claim_resource.import_data(dataset_new, dry_run=True, raise_errors=True)
             if not result.has_errors():
                 # Impor data sebenarnya (setelah sukses dry_run)
-                data_claim_resource.import_data(dataset, dry_run=False)
-                messages.success(request, 'Data berhasil diimpor. {0} {1}'.format(dataset, data_claim_resource))
+                data_claim_resource.import_data(dataset_new, dry_run=False)
+                messages.success(request, 'Data berhasil diimport. {0}'.format(dataset_new))
             else:
                 # Ada kesalahan, tampilkan pesan kesalahan kepada pengguna
                 messages.info(request, 'Terjadi kesalahan saat mengimpor data.')
@@ -572,7 +653,6 @@ def finalisasi_data_klaim(request):
     # filter
     myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset, request=request)
     queryset = myFilter.qs
-
 
     # pagination
     paginator = Paginator(queryset, 25)
@@ -733,6 +813,8 @@ def download_data_cbg(request):
                     'KDINACBG',
                     'BYPENGAJUAN',
                     'verifikator',
+                    'jenis_pending',
+                    'jenis_dispute',
                     'ket_pending',
                 ]
                 row_num = 1
@@ -750,7 +832,6 @@ def download_data_cbg(request):
                     for x in queryset.ket_pending_dispute.all():
                         ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
 
-
                     # Define the data for each cell in the row
                     row = [
                         queryset.faskes.nama,
@@ -766,6 +847,8 @@ def download_data_cbg(request):
                         queryset.KDINACBG,
                         queryset.BYPENGAJUAN,
                         queryset.verifikator.username,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
                         ket_pending_disput_queryset,
                     ]
 

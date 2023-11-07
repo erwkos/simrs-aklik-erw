@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load my_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+        <div class="col-xl-12 col-md-12 mb-4 mt-4">
+            <div class="row mb-2 mt-2">
+                <div class="col">
+                    <h3>Tambah SLA Verifikasi Klaim</h3>
+                </div>
+            </div>
+            <div class="row mt-2 mb-5">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-primary text-light mt-3 btn-lg btn-block" style="width: 100%;">
+                        SIMPAN
+                    </button>
+                </form>
+            </div>
+        </div>
+
+{% endblock %}

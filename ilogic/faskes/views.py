@@ -121,9 +121,9 @@ def detail_register(request, pk):
     form_disable = UpdateRegisterKlaimDisableForm(instance=instance)
     if request.method == 'POST' and instance.status == StatusRegisterChoices.DIKEMBALIKAN:
         form = UpdateRegisterKlaimForm(instance=instance, data=request.POST)
-        if not form.has_changed():
-            messages.warning(request, 'Tidak ada perubahan data')
-        elif form.is_valid():
+        # if not form.has_changed():
+        #     messages.warning(request, 'Tidak ada perubahan data')
+        if form.is_valid():
             jenis_klaim = JenisKlaim.objects.filter(nama=form.cleaned_data.get('jenis_klaim'))[0]
             if jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER:
                 if RegisterKlaim.objects.filter(
@@ -167,7 +167,7 @@ def detail_register(request, pk):
 @permissions(role=['faskes'])
 def daftar_data_klaim_pending_dispute_cbg(request):
     queryset = DataKlaimCBG.objects.filter(faskes=request.user.faskes_set.all().first(), prosesklaim=True,
-                                           prosespending=True).order_by('NMPESERTA', 'TGLSEP')
+                                           prosespending=True, prosestidaklayak=False).order_by('NMPESERTA', 'TGLSEP')
 
     # filter
     myFilter = DataKlaimCBGFaskesFilter(request.GET, queryset=queryset)
@@ -268,7 +268,7 @@ def daftar_data_klaim_pending_dispute_cbg(request):
 @permissions(role=['faskes'])
 def detail_data_klaim_pending_dispute_cbg(request, pk):
     queryset = DataKlaimCBG.objects.filter(faskes=request.user.faskes_set.all().first(), prosesklaim=True,
-                                           prosespending=True).order_by('NMPESERTA', 'TGLSEP')
+                                           prosespending=True, prosestidaklayak=False).order_by('NMPESERTA', 'TGLSEP')
     instance = queryset.get(pk=pk)
     data_klaim_form = DataKlaimCBGFaskesForm(instance=instance)
     jawaban_pending_dispute_form = JawabanPendingDisputeForm()

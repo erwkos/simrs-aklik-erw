@@ -1,6 +1,7 @@
 import django_filters
 from dal import autocomplete
 from django.forms import NumberInput
+from django_filters import OrderingFilter
 
 from faskes.models import Faskes
 from klaim.models import DataKlaimCBG
@@ -32,9 +33,27 @@ class DataKlaimCBGFilter(django_filters.FilterSet):
         "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }), label='Tahun Layan')
     nama_peserta = django_filters.CharFilter(field_name='NMPESERTA', label="Nama Peserta")
 
+    o = OrderingFilter(
+        fields=(
+            ('status', 'Status'),
+            ('faskes', 'RS'),
+            ('register_klaim', 'NO REG'),
+            ('NOSEP', 'No SEP'),
+            ('TGLSEP', 'In'),
+            ('TGLPULANG', 'Out'),
+            ('JNSPEL', 'JNS PEL'),
+            ('NOKARTU', 'Noka'),
+            ('NMPESERTA', 'Nama'),
+            ('bupel', 'Bulan Layan'),
+            ('POLI', 'POLI'),
+            ('KDINACBG', 'CBG'),
+            ('BYPENGAJUAN', 'Biaya'),
+        )
+    )
+
     class Meta:
         model = DataKlaimCBG
-        fields = ['JNSPEL', 'status']
+        fields = ['JNSPEL', 'status', 'NOSEP']
 
 
 class DataKlaimCBGFaskesFilter(django_filters.FilterSet):

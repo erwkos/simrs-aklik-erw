@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.utils.decorators import sync_and_async_middleware
 
-from .choices import StatusDataKlaimChoices, StatusRegisterChoices
+from .choices import StatusDataKlaimChoices, StatusRegisterChoices, NamaJenisKlaimChoices
 from .models import DataKlaimCBG, RegisterKlaim
 
 
@@ -47,10 +47,23 @@ class DaftarClaimCount:
                     nomor_register_klaim__startswith=kode_cabang
                 )
                 if request.user.check_permissions(group_list=['verifikator']):
-                    finalisasi = obj.filter(
-                        status=StatusRegisterChoices.VERIFIKASI,
-                        verifikator=request.user
-                    )
+                    request.count_finalisasi = 0
+                    finalisasi_reguler = obj.filter(jenis_klaim__nama=NamaJenisKlaimChoices.CBG_REGULER,
+                                                    status=StatusRegisterChoices.VERIFIKASI,
+                                                    verifikator=request.user,
+                                                    file_data_klaim__isnull=False)
+
+                    for i in finalisasi_reguler:
+                        if i.sisa_klaim == 0:
+                            request.count_finalisasi += 1
+
+                    finalisasi_susulan = obj.filter(jenis_klaim__nama=NamaJenisKlaimChoices.CBG_SUSULAN,
+                                                    status=StatusRegisterChoices.VERIFIKASI,
+                                                    verifikator=request.user)
+
+                    for i in finalisasi_susulan:
+                        if i.sisa_klaim == 0:
+                            request.count_finalisasi += 1
 
                     data_claim = DataKlaimCBG.objects.filter(
                         verifikator=request.user,
@@ -59,11 +72,6 @@ class DaftarClaimCount:
                     ).count()
 
                     request.count_dataclaim = data_claim
-                    
-                    request.count_finalisasi = 0
-                    for fin in finalisasi:
-                        if fin.sisa_klaim == 0:
-                            request.count_finalisasi += 1
 
                     obj = obj.filter(
                         status=StatusRegisterChoices.TERIMA,

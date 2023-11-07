@@ -181,6 +181,8 @@
             </a>
             </li>
               <li class="pc-item"><a class="pc-link" href="{% url 'staff:list_user_verifikator' %}"> Pengaturan Verifikator</a></li>
+              <li class="pc-item"><a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_CBG_stafak' %}"> Monitoring Data Klaim CBG</a></li>
+              <li class="pc-item"><a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG_stafak' %}"> Monitoring Data Klaim CBG Pending/Dispute</a></li>
           </ul>
         </li>
                 {% endif %}
@@ -257,6 +259,8 @@
 {#            </li>#}
             <li class="pc-item"><a class="pc-link" href="{% url 'supervisor:daftar_pembagian_ulang_verifikasi_cbg' %}">Pembagian Ulang Klaim CBG</a></li>
             <li class="pc-item"><a class="pc-link" href="{% url 'supervisor:list_user_verifikator' %}">Pengaturan Verifikator</a></li>
+            <li class="pc-item"><a class="pc-link" href="{% url 'supervisor:list_pengaturan_sla' %}">Pengaturan SLA Verifikasi</a></li>
+            <li class="pc-item"><a class="pc-link" href="{% url 'supervisor:download_data_cbg' %}">Download Data CBG</a></li>
           </ul>
         </li>
                 {% endif %}

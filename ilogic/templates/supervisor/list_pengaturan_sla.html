@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load my_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>
+                    Daftar SLA Verifikasi Data Klaim
+                    <a class="btn btn-primary btn-sm" href="{% url 'supervisor:add_pengaturan_sla' %}">Tambah SLA</a>
+                </h5>
+            </div>
+
+            <div class="container-fluid">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless mb-0 text-center">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Jenis Klaim</th>
+                            <th scope="col">SLA Hari</th>
+                            <th scope="col">Last Update</th>
+                            <th scope="col">Aksi</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for queryset in queryset %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ queryset.jenis_klaim.nama }}</td>
+                                <td>Tgl BA Lengkap + {{ queryset.plus_hari_sla }} hari</td>
+                                <td>{{ queryset.updated_at }}</td>
+                                <td><a class="btn btn-primary" href='{% url "supervisor:edit_pengaturan_sla" queryset.id %}'>EDIT</a></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td></td>
+                                <td colspan="5">Tidak ada data</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

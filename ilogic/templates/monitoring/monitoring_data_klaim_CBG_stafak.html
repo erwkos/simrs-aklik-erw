@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Monitoring Data Klaim CBG</h5>
+        </div>
+    <div id="output" style="margin: 30px;"></div>
+</div>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js" integrity="sha512-XgJh9jgd6gAHu9PcRBBAp0Hda8Tg87zi09Q2639t0tQpFFQhGpeCgaiEFji36Ozijjx9agZxB0w53edOFGCQ0g==" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css" integrity="sha512-BDStKWno6Ga+5cOFT9BUnl9erQFzfj+Qmr5MDnuGqTQ/QYDO1LPdonnF6V6lBO6JI13wg29/XmPsufxmCJ8TvQ==" crossorigin="anonymous" />
+
+<script>
+    // scroller active
+    $('#dashboard_cbg').addClass('active');
+    $('#vk').addClass('active');
+    // pivot table js
+    $(function(){
+    $.getJSON("{% url 'monitoring:api_json_data_klaim_CBG_stafak' %}", function(mps) {
+        $("#output").pivotUI(mps,
+            { rows: ["tgl_SLA", "faskes__nama", "register_klaim__nomor_register_klaim", "JNSPEL", "bupel", ], cols: ["verifikator__username", "status"] },
+            false
+        );
+    });
+ });
+</script>
+{% endblock %}
+

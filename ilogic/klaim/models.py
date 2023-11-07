@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 
 from django.utils.functional import cached_property
 
-from faskes.models import Faskes
+from faskes.models import Faskes, KantorCabang
 from user.models import User
 from verifikator.models import HitungDataKlaim
 from .choices import (
@@ -21,9 +21,21 @@ from faskes.models import (
 class JenisKlaim(models.Model):
     nama = models.CharField(max_length=250, choices=NamaJenisKlaimChoices.choices, unique=True)  # penambahan choices
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f'{self.nama}'
+
+
+class SLA(models.Model):
+    jenis_klaim = models.ForeignKey(JenisKlaim, on_delete=models.CASCADE)
+    kantor_cabang = models.ForeignKey(KantorCabang, on_delete=models.CASCADE)
+    plus_hari_sla = models.PositiveIntegerField(default=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.jenis_klaim} - {self.kantor_cabang} - {str(self.plus_hari_sla)}'
 
 
 class RegisterKlaim(models.Model):
@@ -114,7 +126,7 @@ class RegisterKlaim(models.Model):
     @cached_property
     def sisa_klaim(self):
         data_klaim = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim=self.nomor_register_klaim,
-                                              status=StatusDataKlaimChoices.PROSES)
+                                                 status=StatusDataKlaimChoices.PROSES)
         sisa_klaim = data_klaim.count()
         return sisa_klaim
 
@@ -199,6 +211,8 @@ class DataKlaimCBG(models.Model):
     prosesklaim = models.BooleanField(default=False)
     prosespending = models.BooleanField(default=False)
     prosesdispute = models.BooleanField(default=False)
+    prosestidaklayak = models.BooleanField(default=False)
+
     file_konfirmasi = models.FileField(upload_to='documents/', blank=True, null=True)
     jenis_pending = models.CharField(max_length=200, choices=JenisPendingChoices.choices, blank=True, null=True)
     jenis_dispute = models.CharField(max_length=200, choices=JenisDisputeChoices.choices, blank=True, null=True)
@@ -211,12 +225,17 @@ class DataKlaimCBG(models.Model):
 
     def save(self, *args, **kwargs):
         if self.tgl_SLA is None:
-            if self.register_klaim.tgl_ba_lengkap:
-                self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=6)
-            elif self.register_klaim.tgl_terima:
-                self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
+            sla = SLA.objects.filter(jenis_klaim=self.register_klaim.jenis_klaim,
+                                     kantor_cabang=self.faskes.kantor_cabang).first()
+            if sla:
+                if self.register_klaim.tgl_ba_lengkap:
+                    self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla)
+                elif self.register_klaim.tgl_terima:
+                    self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
+            else:
+                if self.register_klaim.tgl_ba_lengkap:
+                    self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=6)
+                elif self.register_klaim.tgl_terima:
+                    self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
         self.bupel = self.TGLPULANG.replace(day=1)
         super(DataKlaimCBG, self).save(*args, **kwargs)
-
-
-
