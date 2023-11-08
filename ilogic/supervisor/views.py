@@ -14,7 +14,7 @@ from openpyxl.workbook import Workbook
 from faskes.models import KantorCabang
 from klaim.choices import StatusRegisterChoices, StatusDataKlaimChoices, JenisPelayananChoices
 from klaim.filters import RegisterKlaimFaskesFilter
-from klaim.models import DataKlaimCBG, RegisterKlaim, JenisKlaim, SLA
+from klaim.models import DataKlaimCBG, RegisterKlaim, SLA
 from supervisor.forms import PilihVerifikatorRegisterKlaimSupervisorForm, IsActiveForm, SLAUpdateForm, \
     SLACreateForm
 from user.decorators import permissions, check_device

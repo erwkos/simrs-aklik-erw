@@ -26,7 +26,9 @@
                     {% csrf_token %}
                     <input type="file" name="excel">
                     <input type="hidden" name="import" value="import">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-file-upload"><span style="font-size: 15px"> Upload</span></i></button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-file-upload"><span style="font-size: 15px"> Upload</span></i>
+                    </button>
                 </form>
                 <form>
                     <button type="submit" class="btn btn-primary" name="export" value="export"><i
