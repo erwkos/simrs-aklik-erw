@@ -202,6 +202,8 @@ def daftar_data_klaim_pending_dispute_cbg(request):
             'POLI',
             'KDINACBG',
             'BYPENGAJUAN',
+            'jenis_pending',
+            'jenis_dispute',
             'ket_pending',
             'ket_jawaban',
         ]
@@ -238,6 +240,8 @@ def daftar_data_klaim_pending_dispute_cbg(request):
                 queryset.POLI,
                 queryset.KDINACBG,
                 queryset.BYPENGAJUAN,
+                queryset.jenis_pending,
+                queryset.jenis_dispute,
                 ket_pending_disput_queryset,
                 ket_jawaban_pending_queryset,
             ]

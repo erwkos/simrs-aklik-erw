@@ -7,5 +7,6 @@ urlpatterns = [
     path('register/detail/<int:pk>', views.detail_register, name='detail-register'),
     path('list/user/verifikator/', views.list_user_verifikator, name='list_user_verifikator'),
     path('edit/user/verifikator/<int:pk>/', views.edit_user_verifikator, name='edit_user_verifikator'),
+    path('ambil/nosep/cbg', views.ambil_nosep_cbg, name='ambil_nosep_cbg')
     # path('monitoring/data-klaim', views.monitoring_data_klaim, name='monitoring-data-klaim')
 ]

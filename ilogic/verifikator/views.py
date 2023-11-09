@@ -445,6 +445,7 @@ def daftar_data_klaim(request):
             'jenis_pending',
             'jenis_dispute',
             'ket_pending',
+            'ket_jawaban',
         ]
         row_num = 1
 
@@ -460,6 +461,10 @@ def daftar_data_klaim(request):
             ket_pending_disput_queryset = ''
             for x in queryset.ket_pending_dispute.all():
                 ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+            ket_jawaban_pending_queryset = ''
+            for x in queryset.ket_jawaban_pending.all():
+                ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
             # Define the data for each cell in the row
             row = [
@@ -480,6 +485,7 @@ def daftar_data_klaim(request):
                 queryset.jenis_pending,
                 queryset.jenis_dispute,
                 ket_pending_disput_queryset,
+                ket_jawaban_pending_queryset,
             ]
 
             # Assign the data for each cell of the row
@@ -893,6 +899,7 @@ def download_data_cbg(request):
                     'jenis_pending',
                     'jenis_dispute',
                     'ket_pending',
+                    'ket_jawaban',
                 ]
                 row_num = 1
 
@@ -908,6 +915,10 @@ def download_data_cbg(request):
                     ket_pending_disput_queryset = ''
                     for x in queryset.ket_pending_dispute.all():
                         ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
                     # Define the data for each cell in the row
                     row = [
@@ -927,6 +938,7 @@ def download_data_cbg(request):
                         queryset.jenis_pending,
                         queryset.jenis_dispute,
                         ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
                     ]
 
                     # Assign the data for each cell of the row
@@ -963,5 +975,3 @@ class RumahSakitAutocomplete(autocomplete.Select2QuerySetView):
         if self.q:
             qs = qs.filter(nama__icontains=self.q)
         return qs
-
-

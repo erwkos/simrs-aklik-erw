@@ -6,12 +6,13 @@ from django.contrib.auth.models import Group
 
 from faskes.models import KantorCabang
 from klaim.filters import RegisterKlaimFaskesFilter
+from .filters import DataKlaimAmbilNoSepFilter
 from .forms import (
     StatusRegisterKlaimForm,
     PilihVerifikatorRegisterKlaimForm, AlasanDikembalikanForm, IsActiveForm
 )
 from klaim.models import (
-    RegisterKlaim,
+    RegisterKlaim, DataKlaimCBG,
 )
 from user.decorators import permissions, check_device
 from user.models import User
@@ -134,18 +135,43 @@ def edit_user_verifikator(request, pk):
         form = IsActiveForm(data=request.POST, instance=instance)
         if not form.has_changed():
             messages.warning(request, f'Status {instance} tidak ada perubahan')
-            return redirect('supervisor:list_user_verifikator')
+            return redirect('staff:list_user_verifikator')
         elif form.is_valid():
             form.save()
             messages.success(request, f'Status {instance} berhasil diubah')
-            return redirect('supervisor:list_user_verifikator')
+            return redirect('staff:list_user_verifikator')
         else:
             form = IsActiveForm()
             messages.warning(request, f'Status {instance} tidak berhasil diubah')
-
 
     content = {
         'form': form,
         'instance': instance
     }
     return render(request, 'staff/edit_user_verifikator.html', content)
+
+
+@login_required
+@check_device
+@permissions(role=['adminAK'])
+def ambil_nosep_cbg(request):
+    register_klaim = request.GET.get('nomor_register_klaim')
+    queryset = DataKlaimCBG.objects.filter(faskes__kantor_cabang=request.user.kantorcabang_set.all().first(),
+                                           prosesklaim=False, register_klaim__nomor_register_klaim=register_klaim)
+    data = queryset.first()
+    myFilter = DataKlaimAmbilNoSepFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    list_nosep = []
+    for file in queryset:
+        list_nosep.append(file.NOSEP)
+
+    nosep = "|".join(list_nosep)
+
+    context = {
+        'data': data,
+        'myFilter': myFilter,
+        'nosep': nosep,
+    }
+
+    return render(request, 'staff/ambil_nosep_cbg.html', context)

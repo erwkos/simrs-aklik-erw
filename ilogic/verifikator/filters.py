@@ -60,17 +60,33 @@ class DataKlaimCBGFilter(django_filters.FilterSet):
 
 
 class DataKlaimCBGFaskesFilter(django_filters.FilterSet):
-    status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_FASKES)
-    # nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
+    status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_FASKES, label='Status')
+    nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim', label="No Reg")
+    NOSEP = django_filters.CharFilter(field_name='NOSEP', label="No SEP")
     bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month', widget=NumberInput(attrs={'min': 0, 'oninput':
-        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }), label='Bulan Layan')
     bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year', widget=NumberInput(attrs={'min': 0, 'oninput':
-        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }))
+        "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }), label='Tahun Layan')
+    JNSPEL = django_filters.ChoiceFilter(choices=JenisPelayananChoices.choices, label="Jnspel")
+    nama_peserta = django_filters.CharFilter(field_name='NMPESERTA', label="Nama Peserta")
 
-
-    class Meta:
-        model = DataKlaimCBG
-        fields = ['JNSPEL', 'status']
+    o = OrderingFilter(
+        fields=(
+            ('status', 'Status'),
+            ('faskes', 'RS'),
+            ('register_klaim', 'NO REG'),
+            ('NOSEP', 'No SEP'),
+            ('TGLSEP', 'In'),
+            ('TGLPULANG', 'Out'),
+            ('JNSPEL', 'JNS PEL'),
+            ('NOKARTU', 'Noka'),
+            ('NMPESERTA', 'Nama'),
+            ('bupel', 'Bulan Layan'),
+            ('POLI', 'POLI'),
+            ('KDINACBG', 'CBG'),
+            ('BYPENGAJUAN', 'Biaya'),
+        )
+    )
 
 
 class DownloadDataKlaimCBGFilter(django_filters.FilterSet):
