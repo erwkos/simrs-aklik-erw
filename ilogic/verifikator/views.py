@@ -441,7 +441,7 @@ def daftar_data_klaim(request):
             'KDINACBG',
             'BYPENGAJUAN',
             'verifikator',
-            'algoritma',
+            'ALGORITMA',
             'jenis_pending',
             'jenis_dispute',
             'ket_pending',

@@ -4,6 +4,7 @@ from django.forms import NumberInput
 from django_filters import OrderingFilter
 
 from faskes.models import Faskes
+from klaim.choices import JenisPelayananChoices
 from klaim.models import DataKlaimCBG
 from user.models import User
 from django.contrib.auth.models import Group
@@ -25,12 +26,14 @@ STATUS_CHOICES_FASKES = (
 
 
 class DataKlaimCBGFilter(django_filters.FilterSet):
-    status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_VERIFIKATOR)
-    nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim', label="Nomor Register")
+    status = django_filters.ChoiceFilter(choices=STATUS_CHOICES_VERIFIKATOR, label='Status')
+    nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim', label="No Reg")
+    NOSEP = django_filters.CharFilter(field_name='NOSEP', label="No SEP")
     bupel_month = django_filters.NumberFilter(field_name='bupel', lookup_expr='month', widget=NumberInput(attrs={'min': 0, 'oninput':
         "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }), label='Bulan Layan')
     bupel_year = django_filters.NumberFilter(field_name='bupel', lookup_expr='year', widget=NumberInput(attrs={'min': 0, 'oninput':
         "this.value =!!this.value && Math.abs(this.value) >= 0 ? Math.abs(this.value) : null", }), label='Tahun Layan')
+    JNSPEL = django_filters.ChoiceFilter(choices=JenisPelayananChoices.choices, label="Jnspel")
     nama_peserta = django_filters.CharFilter(field_name='NMPESERTA', label="Nama Peserta")
 
     o = OrderingFilter(
@@ -51,9 +54,9 @@ class DataKlaimCBGFilter(django_filters.FilterSet):
         )
     )
 
-    class Meta:
-        model = DataKlaimCBG
-        fields = ['JNSPEL', 'status', 'NOSEP']
+    # class Meta:
+    #     model = DataKlaimCBG
+    #     fields = ['status', 'JNSPEL', 'NOSEP']
 
 
 class DataKlaimCBGFaskesFilter(django_filters.FilterSet):
