@@ -547,7 +547,10 @@ def daftar_data_klaim(request):
         list_jenis_mandatory = [JenisPendingChoices.ADMINISTRASI, JenisPendingChoices.KODING,
                                 JenisPendingChoices.STANDAR_PELAYANAN]
         list_jenis_pending_df = list(dict.fromkeys(dataset['jenis_pending']))
-        list_jenis_pending_df.remove('')
+        for i in list_jenis_pending_df:
+            if i == '':
+                list_jenis_pending_df.remove('')
+
         for jenis in list_jenis_pending_df:
             if jenis not in list_jenis_mandatory:
                 messages.warning(request, f'File yang diimport harus memiliki jenis pending yang sesuai. '
