@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+{% block content %}
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>Detail - Data Klaim Obat</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 m-l-30 mt-4">
+                        <table class="table">
+                            <tbody>
+                            <tr>
+                                <td><b>NO SEP Apotek:</b></td>
+                                <td>{{ data_klaim.NoSEPApotek }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>NO SEP Asal:</b></td>
+                                <td>{{ data_klaim.NoSEPAsalResep }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>NAMA PPKLAYAN</b></td>
+                                <td>{{ data_klaim.faskes.nama }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>BULAN PELAYANAN : </b></td>
+                                <td>{{ data_klaim.bupel | date:'M-y' }}</td>
+                            <tr>
+                                <td><b>NO RESEP : </b></td>
+                                <td>{{ data_klaim.NoResep }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>BIAYA : </b></td>
+                                <td>{{ data_klaim.ByTagApt | intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>KETERANGAN PENDING/DISPUTE : </b></td>
+                                <td>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                Keterangan Pending/Dispute &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                            </th>
+                                        </tr>
+                                        {% for data_klaim in data_klaim.ket_pending_dispute.all %}
+                                            <tr>
+                                                <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                <td><textarea class="form-control" rows="3" cols="200"
+                                                              disabled>{{ data_klaim.ket_pending_dispute }}</textarea>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><b>PEMBAHASAN : </b></td>
+                                <td>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>User Faskes</th>
+                                            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                Jawaban &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                            </th>
+                                        </tr>
+                                        {% for data_klaim in data_klaim.ket_jawaban_pending.all %}
+                                            <tr>
+                                                <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                <td>{{ data_klaim.user_faskes }} </td>
+                                                <td><textarea class="form-control" rows="3" cols="200"
+                                                              disabled>{{ data_klaim.ket_jawaban_pending }}</textarea>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td><b>Status Data Klaim : </b></td>
+                                <td>
+                                    {% if data_klaim.status == 'Pending' %}
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Dispute' %}
+                                        <button type="button"
+                                                class="btn btn-dark btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Pembahasan' %}
+                                        <button type="button"
+                                                class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Tidak Layak' %}
+                                        <button type="button"
+                                                class="btn btn-danger btn-sm">{{ data_klaim.status }}</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            {{ data_klaim_form|crispy }}
+                            {{ jawaban_pending_dispute_form|crispy }}
+                            <input type="hidden" name="next" value="{{ request.GET.next }}">
+                            <button class="btn btn-primary w-100" type="submit">Simpan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

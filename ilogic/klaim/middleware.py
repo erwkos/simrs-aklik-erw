@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.utils.decorators import sync_and_async_middleware
 
 from .choices import StatusDataKlaimChoices, StatusRegisterChoices, NamaJenisKlaimChoices
-from .models import DataKlaimCBG, RegisterKlaim
+from .models import DataKlaimCBG, RegisterKlaim, DataKlaimObat
 
 
 class DaftarClaimCount:
@@ -22,6 +22,7 @@ class DaftarClaimCount:
 
                 obj_rs = RegisterKlaim.objects.filter(faskes=request.user.faskes_set.all().first())
                 obj_data_klaim = DataKlaimCBG.objects.filter(faskes=request.user.faskes_set.all().first())
+                obj_data_klaim_obat = DataKlaimObat.objects.filter(faskes=request.user.faskes_set.all().first())
 
                 if request.user.check_permissions(group_list=['faskes']):
                     obj_rs = obj_rs.filter(
@@ -34,7 +35,12 @@ class DaftarClaimCount:
                     obj_data_klaim_dispute = obj_data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE, prosesklaim=True)
                     obj_data_klaim_pending_dispute = obj_data_klaim_pending.count() + obj_data_klaim_dispute.count()
 
+                    obj_data_klaim_pending_obat = obj_data_klaim_obat.filter(status=StatusDataKlaimChoices.PENDING, prosesklaim=True)
+                    obj_data_klaim_dispute_obat = obj_data_klaim_obat.filter(status=StatusDataKlaimChoices.DISPUTE, prosesklaim=True)
+                    obj_data_klaim_pending_dispute_obat = obj_data_klaim_pending_obat.count() + obj_data_klaim_dispute_obat.count()
+
                     request.count_data_klaim = obj_data_klaim_pending_dispute
+                    request.count_data_klaim_obat = obj_data_klaim_pending_dispute_obat
 
         if hasattr(request.user, 'kantorcabang_set'):
 
@@ -57,11 +63,28 @@ class DaftarClaimCount:
                         if i.sisa_klaim == 0:
                             request.count_finalisasi += 1
 
+                    finalisasi_reguler_obat = obj.filter(jenis_klaim__nama=NamaJenisKlaimChoices.OBAT_REGULER,
+                                                         status=StatusRegisterChoices.VERIFIKASI,
+                                                         verifikator=request.user,
+                                                         file_data_klaim__isnull=False)
+
+                    for i in finalisasi_reguler_obat:
+                        if i.sisa_klaim == 0:
+                            request.count_finalisasi += 1
+
                     finalisasi_susulan = obj.filter(jenis_klaim__nama=NamaJenisKlaimChoices.CBG_SUSULAN,
                                                     status=StatusRegisterChoices.VERIFIKASI,
                                                     verifikator=request.user)
 
                     for i in finalisasi_susulan:
+                        if i.sisa_klaim == 0:
+                            request.count_finalisasi += 1
+
+                    finalisasi_susulan_obat = obj.filter(jenis_klaim__nama=NamaJenisKlaimChoices.OBAT_SUSULAN,
+                                                         status=StatusRegisterChoices.VERIFIKASI,
+                                                         verifikator=request.user)
+
+                    for i in finalisasi_susulan_obat:
                         if i.sisa_klaim == 0:
                             request.count_finalisasi += 1
 
@@ -72,6 +95,14 @@ class DaftarClaimCount:
                     ).count()
 
                     request.count_dataclaim = data_claim
+
+                    data_claim_obat = DataKlaimObat.objects.filter(
+                        verifikator=request.user,
+                        status=StatusDataKlaimChoices.PROSES,
+                        prosesklaim=False,
+                    ).count()
+
+                    request.count_dataclaim_obat = data_claim_obat
 
                     obj = obj.filter(
                         status=StatusRegisterChoices.TERIMA,

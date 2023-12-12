@@ -591,4 +591,3 @@ def edit_user_verifikator_staff(request, pk):
         'instance': instance,
     }
     return render(request, 'staff/edit_user_verifikator.html', content)
-

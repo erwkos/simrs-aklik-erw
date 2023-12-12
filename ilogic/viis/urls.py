@@ -39,7 +39,8 @@ urlpatterns = [
     path('staff/', include(('staff.urls', 'staff'), namespace='staff')),
     path('captcha/', include('captcha.urls')),
     path('monitoring/', include(('monitoring.urls', 'monitoring'), namespace='monitoring')),
-    path('supervisor/', include(('supervisor.urls', 'monitoring'), namespace='supervisor')),
+    path('supervisor/', include(('supervisor.urls', 'supervisor'), namespace='supervisor')),
+    path('dokumentasi/', include(('dokumentasi.urls', 'dokumentasi'), namespace='dokumentasi')),
     path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
     path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
 ]

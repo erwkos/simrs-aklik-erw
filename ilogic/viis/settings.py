@@ -45,12 +45,14 @@ INSTALLED_APPS = [
     'verifikator',
     'staff',
     'monitoring',
+    'dokumentasi',
 
     # modules
     'import_export',
     'crispy_forms',
     'crispy_bootstrap5',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'captcha',
     'django.contrib.humanize',
@@ -116,7 +118,11 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    # 'integrasi': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR + db + 'db.sqlite3',
+    # }
 }
 
 # DATABASES = {
@@ -132,6 +138,11 @@ DATABASES = {
 #             },
 #         },
 #     }
+
+DATABASE_ROUTERS = [
+    "dokumentasi.routers.ProgressVersionRouter",
+    # "dokumentasi.routers.PolaRulesRouter",
+]
 
 # set this to False if you want to turn off pyodbc's connection pooling
 DATABASE_CONNECTION_POOLING = False

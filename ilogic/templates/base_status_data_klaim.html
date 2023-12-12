@@ -1,26 +1,55 @@
-{% if data_klaim.status == 'Proses' %}
+{% if data_klaim.register_klaim.jenis_klaim.nama == 'CBG-Reguler' or data_klaim.register_klaim.jenis_klaim.nama == 'CBG-Susulan-Pending-Dispute' %}
+    {% if data_klaim.status == 'Proses' %}
+            <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+        <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+            </a>
+    {% elif data_klaim.status == 'Pending' %}
         <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
-    <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+            <button type="button" class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
         </a>
-{% elif data_klaim.status == 'Pending' %}
-    <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
-        <button type="button" class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
-    </a>
-{% elif data_klaim.status == 'Tidak Layak' %}
-    <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
-        <button type="button" class="btn btn-danger btn-sm">{{ data_klaim.status }}</button>
-    </a>
-{% elif data_klaim.status == 'Layak' %}
-    <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
-        <button type="button" class="btn btn-success btn-sm">{{ data_klaim.status }}</button>
-    </a>
-{% elif data_klaim.status == 'Dispute' %}
-    <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
-        <button type="button" class="btn btn-dark btn-sm">{{ data_klaim.status }}</button>
-    </a>
-{% elif data_klaim.status == 'Klaim' %}
-    <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.path|urlencode }}">
-        <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
-    </a>
+    {% elif data_klaim.status == 'Tidak Layak' %}
+        <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+            <button type="button" class="btn btn-danger btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% elif data_klaim.status == 'Layak' %}
+        <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+            <button type="button" class="btn btn-success btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% elif data_klaim.status == 'Dispute' %}
+        <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+            <button type="button" class="btn btn-dark btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% elif data_klaim.status == 'Klaim' %}
+        <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.path|urlencode }}">
+            <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% endif %}
+
+{% elif data_klaim.register_klaim.jenis_klaim.nama == 'Obat-Reguler' or data_klaim.register_klaim.jenis_klaim.nama == 'Obat-Susulan-Pending-Dispute' %}
+    {% if data_klaim.status == 'Proses' %}
+            <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+        <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+            </a>
+    {% elif data_klaim.status == 'Pending' %}
+        <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+            <button type="button" class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% elif data_klaim.status == 'Tidak Layak' %}
+        <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+            <button type="button" class="btn btn-danger btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% elif data_klaim.status == 'Layak' %}
+        <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+            <button type="button" class="btn btn-success btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% elif data_klaim.status == 'Dispute' %}
+        <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.get_full_path|urlencode }}">
+            <button type="button" class="btn btn-dark btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% elif data_klaim.status == 'Klaim' %}
+        <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.path|urlencode }}">
+            <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% endif %}
 {% endif %}
 

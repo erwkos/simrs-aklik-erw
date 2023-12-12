@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <style>
+        .OLevelResult {
+            display: none;
+        }
+
+        .OLevelResult.active {
+            display: block;
+        }
+    </style>
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>Detail - Data Klaim</h5>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 m-l-30 mt-4">
+                        <table class="table">
+                            <tbody>
+                            <tr>
+                                <td><b>NO SEP :</b></td>
+                                <td>{{ data_klaim.NOSEP }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>NAMA PPKLAYAN</b></td>
+                                <td>{{ data_klaim.faskes.nama }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>BULAN PELAYANAN : </b></td>
+                                <td>{{ data_klaim.bupel | date:'M-y' }}</td>
+                            <tr>
+                                <td><b>KDINACBG : </b></td>
+                                <td>{{ data_klaim.KDINACBG }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>BIAYA : </b></td>
+                                <td>{{ data_klaim.BYPENGAJUAN }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>ALGORITMA : </b></td>
+                                <td>{{ data_klaim.ALGORITMA }}</td>
+                            </tr>
+                            <tr>
+                                <td><b>KETERANGAN PENDING/DISPUTE : </b></td>
+                                <td>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Verifikator</th>
+                                            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Keterangan Pending/Dispute &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </th>
+                                        </tr>
+                                        {% for data_klaim in data_klaim.ket_pending_dispute.all %}
+                                            <tr>
+                                                <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                <td>{{ data_klaim.verifikator }} </td>
+                                                <td><textarea class="form-control" rows="3" cols="200"
+                                                              disabled>{{ data_klaim.ket_pending_dispute }}</textarea>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                </td>
+                            <tr>
+                                <td><b>PEMBAHASAN : </b></td>
+                                <td>
+                                    <table class="table">
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>User Faskes</th>
+                                            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Jawaban &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </th>
+                                        </tr>
+                                        {% for data_klaim in data_klaim.ket_jawaban_pending.all %}
+                                            <tr>
+                                                <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                <td>{{ data_klaim.user_faskes }} </td>
+                                                <td><textarea class="form-control" rows="3" cols="200"
+                                                              disabled>{{ data_klaim.ket_jawaban_pending }}</textarea>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><b>Status Data Klaim : </b></td>
+                                <td>{% include 'base_status_data_klaim.html' %}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            {{ data_klaim_form|crispy }}
+                            <div id="pending-form">
+                                {{ data_klaim_pending_form|crispy }}
+                            </div>
+                            <input type="hidden" name="next" value="{{ request.GET.next }}">
+                            <button class="btn btn-primary w-100" type="submit">Simpan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function changeOptions(selectEl) {
+            let subForms = document.getElementsByClassName('OLevelResult')
+            if (selectEl === 'Pending') {
+                document.getElementById("div_id_jenis_pending").classList.add("active");
+                document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+                document.getElementById("id_jenis_pending").setAttribute("required", "");
+                document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+
+                document.getElementById("div_id_jenis_dispute").classList.remove("active");
+                document.getElementById("id_jenis_dispute").removeAttribute("required");
+            } else if (selectEl === 'Dispute') {
+                document.getElementById("div_id_jenis_pending").classList.add("active");
+                document.getElementById("div_id_jenis_dispute").classList.add("active");
+                document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+                document.getElementById("id_jenis_pending").setAttribute("required", "");
+                document.getElementById("id_jenis_dispute").setAttribute("required", "");
+                document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+            } else if (selectEl === 'Tidak Layak') {
+                document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+                document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+
+                document.getElementById("div_id_jenis_pending").classList.remove("active");
+                document.getElementById("div_id_jenis_dispute").classList.remove("active");
+                document.getElementById("id_jenis_pending").removeAttribute("required");
+                document.getElementById("id_jenis_dispute").removeAttribute("required");
+            } else {
+                document.getElementById("div_id_jenis_pending").classList.remove("active");
+                document.getElementById("div_id_jenis_dispute").classList.remove("active");
+                document.getElementById("div_id_ket_pending_dispute").classList.remove("active");
+                document.getElementById("id_jenis_pending").removeAttribute("required");
+                document.getElementById("id_jenis_dispute").removeAttribute("required");
+                document.getElementById("id_ket_pending_dispute").removeAttribute("required");
+            }
+        }
+
+
+            document.getElementById("id_status").setAttribute("onchange", "changeOptions(this.value)");
+            document.getElementById("div_id_jenis_pending").classList.add("OLevelResult");
+            document.getElementById("div_id_jenis_dispute").classList.add("OLevelResult");
+            document.getElementById("div_id_ket_pending_dispute").classList.add("OLevelResult");
+    </script>
+
+{% endblock %}

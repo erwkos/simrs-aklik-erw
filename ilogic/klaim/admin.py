@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     JenisKlaim,
     RegisterKlaim,
-    DataKlaimCBG, SLA, KeteranganPendingDispute
+    DataKlaimCBG, SLA, KeteranganPendingDispute, DataKlaimObat
 )
 
 from import_export.admin import ImportExportModelAdmin
@@ -23,8 +23,13 @@ class JenisKlaimAdmin(admin.ModelAdmin):
 
 
 @admin.register(DataKlaimCBG)
-class DataKlaimAdmin(ImportExportModelAdmin):
+class DataKlaimCBGAdmin(ImportExportModelAdmin):
     search_fields = ('NOSEP',)
+
+
+@admin.register(DataKlaimObat)
+class DataKlaimObatAdmin(ImportExportModelAdmin):
+    search_fields = ('NoSEPApotek', 'NoSEPAsalResep',)
 
 
 @admin.register(SLA)

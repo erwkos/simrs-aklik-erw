@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from klaim.models import DataKlaimCBG
+from klaim.models import DataKlaimCBG, DataKlaimObat
 from user.decorators import permissions, check_device
 from django.http import JsonResponse
 
@@ -171,3 +171,116 @@ def api_json_data_klaim_pending_dispute_CBG_stafak(request):
 def monitoring_data_klaim_pending_dispute_CBG_stafak(request):
     context = {}
     return render(request, 'monitoring/monitoring_data_klaim_pending_dispute_CBG_stafak.html', context=context)
+
+
+############################
+# Obat #####################
+############################
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def api_json_data_klaim_obat_verifikator(request):
+    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
+                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False). \
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
+               'KdJenis', 'tgl_SLA')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def monitoring_data_klaim_obat_verifikator(request):
+    context = {}
+    return render(request, 'monitoring/monitoring_data_klaim_obat_verifikator.html', context=context)
+
+
+@login_required
+@check_device
+@permissions(role=['adminAK'])
+def api_json_data_klaim_obat_stafak(request):
+    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
+                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False). \
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
+               'KdJenis', 'tgl_SLA')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['adminAK'])
+def monitoring_data_klaim_obat_stafak(request):
+    context = {}
+    return render(request, 'monitoring/monitoring_data_klaim_obat_stafak.html', context=context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def api_json_data_klaim_obat_supervisor(request):
+    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
+                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False). \
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
+               'KdJenis', 'tgl_SLA')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def monitoring_data_klaim_obat_supervisor(request):
+    context = {}
+    return render(request, 'monitoring/monitoring_data_klaim_obat_supervisor.html', context=context)
+
+
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def api_json_data_klaim_pending_dispute_obat_verifikator(request):
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan')
+    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
+                                            request.user.kantorcabang_set.all().first().kode_cabang,
+                                            prosesklaim=True,
+                                            status__in=status_klaim). \
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
+               'KdJenis', 'tgl_SLA')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def monitoring_data_klaim_pending_dispute_obat_verifikator(request):
+    context = {}
+    return render(request, 'monitoring/monitoring_data_klaim_pending_dispute_obat_verifikator.html', context=context)
+
+
+@login_required
+@check_device
+@permissions(role=['adminAK'])
+def api_json_data_klaim_pending_dispute_obat_stafak(request):
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan')
+    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
+                                            request.user.kantorcabang_set.all().first().kode_cabang,
+                                            prosesklaim=True,
+                                            status__in=status_klaim). \
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
+               'KdJenis', 'tgl_SLA')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['adminAK'])
+def monitoring_data_klaim_pending_dispute_obat_stafak(request):
+    context = {}
+    return render(request, 'monitoring/monitoring_data_klaim_pending_dispute_obat_stafak.html', context=context)

@@ -14,12 +14,12 @@ from openpyxl.workbook import Workbook
 from faskes.models import KantorCabang
 from klaim.choices import StatusRegisterChoices, StatusDataKlaimChoices, JenisPelayananChoices
 from klaim.filters import RegisterKlaimFaskesFilter
-from klaim.models import DataKlaimCBG, RegisterKlaim, SLA
+from klaim.models import DataKlaimCBG, RegisterKlaim, SLA, DataKlaimObat
 from supervisor.forms import PilihVerifikatorRegisterKlaimSupervisorForm, IsActiveForm, SLAUpdateForm, \
     SLACreateForm
 from user.decorators import permissions, check_device
 from user.models import User
-from verifikator.filters import DownloadDataKlaimCBGFilter
+from verifikator.filters import DownloadDataKlaimCBGFilter, DownloadDataKlaimObatFilter
 from verifikator.forms import StatusRegisterKlaimForm
 from collections import Counter
 
@@ -34,7 +34,7 @@ def daftar_register_supervisor(request):
         nomor_register_klaim__startswith=request.user.kantorcabang_set.all().first().kode_cabang).order_by('-tgl_aju')
 
     # filter
-    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset)
+    myFilter = RegisterKlaimFaskesFilter(request.GET, queryset=queryset, request=request)
     queryset = myFilter.qs
 
     # pagination
@@ -419,8 +419,9 @@ def download_data_cbg(request):
     bupel_month = request.GET.get('bupel_month')
     bupel_year = request.GET.get('bupel_year')
     faskes = request.GET.get('faskes')
+    nomor_register = request.GET.get('nomor_register_klaim')
     try:
-        if bupel_month != '' and bupel_year != '' and faskes != '':
+        if nomor_register != '':
             if download == 'download':
                 response = HttpResponse(
                     content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -452,6 +453,7 @@ def download_data_cbg(request):
                     'jenis_pending',
                     'jenis_dispute',
                     'ket_pending',
+                    'ket_jawaban',
                 ]
                 row_num = 1
 
@@ -468,6 +470,9 @@ def download_data_cbg(request):
                     for x in queryset.ket_pending_dispute.all():
                         ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
 
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
                     # Define the data for each cell in the row
                     row = [
@@ -487,6 +492,88 @@ def download_data_cbg(request):
                         queryset.jenis_pending,
                         queryset.jenis_dispute,
                         ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        elif bupel_month != '' and bupel_year != '' and faskes != '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
+
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim CBG'
+
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NOREG',
+                    'NOSEP',
+                    'TGLSEP',
+                    'TGLPULANG',
+                    'JNSPEL',
+                    'NOKARTU',
+                    'NMPESERTA',
+                    'POLI',
+                    'KDINACBG',
+                    'BYPENGAJUAN',
+                    'verifikator',
+                    'jenis_pending',
+                    'jenis_dispute',
+                    'ket_pending',
+                    'ket_jawaban',
+                ]
+                row_num = 1
+
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
+
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
+
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
+                        queryset.NOSEP,
+                        queryset.TGLSEP,
+                        queryset.TGLPULANG,
+                        queryset.JNSPEL,
+                        queryset.NOKARTU,
+                        queryset.NMPESERTA,
+                        queryset.POLI,
+                        queryset.KDINACBG,
+                        queryset.BYPENGAJUAN,
+                        queryset.verifikator.username,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
+                        ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
                     ]
 
                     # Assign the data for each cell of the row
@@ -497,14 +584,14 @@ def download_data_cbg(request):
                 workbook.save(response)
                 return response
         else:
-            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi!')
+            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi atau Nomor Register Klaim harus diisi!')
     except Exception as e:
         messages.warning(request, "Terjadi Kesalahan Dalam Download Data, dengan Keterangan: " + str(e))
 
     context = {
         'myFilter': myFilter,
     }
-    return render(request, 'verifikator/download_data_cbg.html', context)
+    return render(request, 'verifikator/cbg/download_data_cbg.html', context)
 
 
 @login_required
@@ -562,3 +649,197 @@ def edit_pengaturan_sla(request, pk):
     }
 
     return render(request, 'supervisor/edit_pengaturan_sla.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def download_data_obat(request):
+    # initial relasi pada kantor cabang
+    related_kantor_cabang = request.user.kantorcabang_set.all()
+    queryset = DataKlaimObat.objects.filter(verifikator__kantorcabang__in=related_kantor_cabang)
+
+    # filter
+    myFilter = DownloadDataKlaimObatFilter(request.GET, queryset=queryset, request=request)
+    queryset = myFilter.qs
+
+    kantor_cabang = request.user.kantorcabang_set.all().first()
+
+    # fitur download
+    download = request.GET.get('download')
+    bupel_month = request.GET.get('bupel_month')
+    bupel_year = request.GET.get('bupel_year')
+    faskes = request.GET.get('faskes')
+    nomor_register = request.GET.get('nomor_register_klaim')
+    try:
+        if nomor_register != '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
+
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim Obat'
+
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NoReg',
+                    'NoSEPApotek',
+                    'NoSEPAsalResep',
+                    'TglResep',
+                    'KdJenis',
+                    'NoKartu',
+                    'NamaPeserta',
+                    'ByTagApt',
+                    'ByVerApt',
+                    'verifikator',
+                    'rufil',
+                    'jenis_pending',
+                    'jenis_dispute',
+                    'ket_pending',
+                    'ket_jawaban',
+                ]
+                row_num = 1
+
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
+
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
+
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
+                        queryset.NoSEPApotek,
+                        queryset.NoSEPAsalResep,
+                        queryset.TglResep,
+                        queryset.KdJenis,
+                        queryset.NoKartu,
+                        queryset.NamaPeserta,
+                        queryset.ByTagApt,
+                        queryset.ByVerApt,
+                        queryset.verifikator.username,
+                        queryset.rufil,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
+                        ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        if bupel_month != '' and bupel_year != '' and faskes != '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
+
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim Obat'
+
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NoReg',
+                    'NoSEPApotek',
+                    'NoSEPAsalResep',
+                    'TglResep',
+                    'KdJenis',
+                    'NoKartu',
+                    'NamaPeserta',
+                    'ByTagApt',
+                    'ByVerApt',
+                    'verifikator',
+                    'rufil',
+                    'jenis_pending',
+                    'jenis_dispute',
+                    'ket_pending',
+                    'ket_jawaban',
+                ]
+                row_num = 1
+
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
+
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
+
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
+                        queryset.NoSEPApotek,
+                        queryset.NoSEPAsalResep,
+                        queryset.TglResep,
+                        queryset.KdJenis,
+                        queryset.NoKartu,
+                        queryset.NamaPeserta,
+                        queryset.ByTagApt,
+                        queryset.ByVerApt,
+                        queryset.verifikator.username,
+                        queryset.rufil,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
+                        ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        else:
+            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi!')
+    except Exception as e:
+        messages.warning(request, "Terjadi Kesalahan Dalam Download Data, dengan Keterangan: " + str(e))
+
+    context = {
+        'myFilter': myFilter,
+    }
+    return render(request, 'supervisor/download_data_obat.html', context)

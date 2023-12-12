@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <center>
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Import Data Klaim Obat</h5>
+        </div>
+
+<div class="col-12">
+    <div class="card-body">
+        <div class="container-fluid">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+        <div class="card-body">
+            <div class="row mt-4"><center>
+                <div class="col-10">
+
+            <input class="form-control mb-2 mt-2" type="text" name="search" id="input-kodeppk" placeholder="KodePPK / NamaPPK / NO Register">
+            <div id="data-register"></div>
+                    </div></center>
+                    </div>
+        </div>
+        <div class="card-body" id="import-data-klaim" style="display: none;">
+            <div class="row mt-4"><center>
+                <div class="col-10 text-start">
+                    <form method="POST" id="form-import" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{import_form|crispy}}
+                        <input type="hidden" name="action" value="import">
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Isi Password Excel</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Hanya diisi jika File Excel memiliki Password">
+                </div>
+
+                        <button type="submit" class="btn btn-primary w-100">IMPORT</button>
+                    </form>
+                </div></center>
+            </div>
+        </div>
+        <div class="card-body" id="pembagian-data-klaim" style="display: none">
+            <div class="row mt-4"><center>
+                <div class="col-10 text-start">
+            <form method="POST" id="form-import">
+                {% csrf_token %}
+                <div id="verifikator-pembagian-data-klaim" style="width: 18rem; padding: 20px;"></div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Nomor register</label>
+                    <input type="text" class="form-control" id="register" name="register">
+                </div>
+                <input type="hidden" name="action" value="pembagian">
+                <button type="submit" class="btn btn-primary w-100">Bagikan tugas</button>
+            </form>
+                </div></center>
+            </div>
+        </div>
+
+</div>
+    </center>
+</div>
+
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>List Verifikator Active</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">NO</th>
+                            <th scope="col">NAMA VERIFIKATOR</th>
+                            <th scope="col">Status Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for verifikator in verifikator %}
+                        <tr>
+                            <td>{{forloop.counter}}</td>
+                            <td>{{verifikator}}</td>
+                            <td>{{verifikator.is_active}}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script>
+    function getButtonAction(data) {
+        if (data.is_pengajuan_ulang) {
+            return `<button class="btn btn-warning" onclick="PilihRegister('${data.nomor_register_klaim}')">Bagikan tugas</button>`
+        } else {
+            return `<button class="btn btn-primary" onclick="PilihRegisterImport('${data.nomor_register_klaim}')">Pilih Import</button>`
+        }
+    }
+    var kode_ppk = ''
+    var grid = new gridjs.Grid({
+        columns: ["nomor_register_klaim", "status", "bulan_pelayanan", "faskes", "jenis_klaim", "action"],
+        pagination: {
+            limit: 5,
+            server: {
+                url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&search=${kode_ppk}`
+            }
+        },
+        server: {
+            url: '/verifikator/api/register-klaim-obat',
+            then: data => data.results.map(data =>
+                [data.nomor_register_klaim, data.status, data.bulan_pelayanan, data.faskes, data.jenis_klaim,
+                    {#`${data.is_pengajuan_ulang ? "yes" : "no"}`,#}
+                    gridjs.html(getButtonAction(data))
+                ]
+            ),
+            total: data => data.count
+        }
+   })
+   grid.render(document.getElementById("data-register"))
+
+   document.getElementById("input-kodeppk").addEventListener("input", function(e){
+    kode_ppk = e.target.value
+    grid.updateConfig({
+    }).forceRender()
+   })
+
+   function PilihRegisterImport(nomor_register_klaim) {
+    document.getElementById("pembagian-data-klaim").style.display = "none"
+    document.getElementById("import-data-klaim").style.display = "block"
+    document.getElementById("id_register").value = nomor_register_klaim
+   }
+
+   function PilihRegister(nomor_register_klaim) {
+    document.getElementById("import-data-klaim").style.display = "none"
+    document.getElementById("pembagian-data-klaim").style.display = "block"
+    document.getElementById("register").value = nomor_register_klaim
+    document.getElementById("verifikator-pembagian-data-klaim").innerHTML = ""
+
+    fetch(`/verifikator/verifikator?register=${nomor_register_klaim}`)
+    .then(res => {
+        if (res.ok) {
+            return res.json()
+        }
+    }).then(data => {
+        data.forEach(element => {
+            console.log(0)
+            var verifikator_elem = document.createElement('div')
+            var verifikator_str =`<div class="form-check">` +
+                `<input class="form-check-input" type="checkbox" value="${element.id}" name="verifikator" id="flexCheckDefault">` +
+                `<label class="form-check-label" for="flexCheckDefault">` +
+                    `${element.fullname}` +
+                `</label>` +
+            `</div>`
+
+            verifikator_elem.innerHTML = verifikator_str
+
+            document.getElementById("verifikator-pembagian-data-klaim").appendChild(verifikator_elem)
+            console.log(9)
+
+
+        });
+    }).catch(err => {
+
+    })
+   }
+
+
+
+</script>
+
+
+{% endblock %}

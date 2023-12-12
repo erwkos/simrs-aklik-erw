@@ -4,13 +4,13 @@ from django.forms import SelectDateWidget
 from django.utils.translation import gettext_lazy as _
 
 from klaim.models import (
-    RegisterKlaim, DataKlaimCBG, JawabanPendingDispute, JenisKlaim
+    RegisterKlaim, DataKlaimCBG, JawabanPendingDispute, JenisKlaim, DataKlaimObat
 )
 
 YEARS = [x for x in range(2016, 2024)]
 YEARS.reverse()
 
-STATUS_CHOICES_DATA_KLAIM_CBG_FASKES = (
+STATUS_CHOICES_DATA_KLAIM_FASKES = (
     ('Pembahasan', 'Pembahasan'),
     ('Tidak Layak', 'Tidak Layak'),
 )
@@ -98,23 +98,23 @@ class UpdateRegisterKlaimDisableForm(forms.ModelForm):
 
 
 class DataKlaimCBGFaskesForm(forms.ModelForm):
-    status = forms.ChoiceField(choices=STATUS_CHOICES_DATA_KLAIM_CBG_FASKES)
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #
-    #     for field in self.Meta.required:
-    #         self.fields[field].required = True
+    status = forms.ChoiceField(choices=STATUS_CHOICES_DATA_KLAIM_FASKES)
 
     class Meta:
         model = DataKlaimCBG
         fields = [
             'status',
-            # 'ket_jawaban_pending',
         ]
-        # required = [
-        #     'ket_jawaban_pending',
-        # ]
+
+
+class DataKlaimObatFaskesForm(forms.ModelForm):
+    status = forms.ChoiceField(choices=STATUS_CHOICES_DATA_KLAIM_FASKES)
+
+    class Meta:
+        model = DataKlaimObat
+        fields = [
+            'status',
+        ]
 
 
 class JawabanPendingDisputeForm(forms.ModelForm):

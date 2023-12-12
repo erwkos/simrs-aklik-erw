@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load my_tags %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+    <div class="container-fluid">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>
+                    Tugas Verifikasi Data Klaim Obat <span class="badge bg-danger">{{ request.count_dataclaim_obat }}</span>
+                </h5>
+
+                <form>
+                    <button type="submit" class="btn btn-primary" name="export" value="export"><i
+                            class="fas fa-file-download"><span style="font-size: 15px"> Download</span></i></button>
+                </form>
+            </div>
+
+            <div class="card-body">
+                <form class="row row-cols-md-auto g-3 align-items-center">
+                    {{ myFilter.form | crispy }}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-xs table-hover table-borderless mb-0" id="data-table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Status</th>
+                        <th scope="col">RS</th>
+                        <th scope="col">NO REG</th>
+                        <th scope="col">Rufil</th>
+                        <th scope="col">NO SEP Apotek</th>
+                        <th scope="col">NO SEP Asal</th>
+                        <th scope="col">NO Resep</th>
+                        <th scope="col">Tgl Resep</th>
+                        <th scope="col">KdJenis</th>
+                        <th scope="col">NO Kartu</th>
+                        <th scope="col">Nama</th>
+                        <th scope="col">Biaya</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for data_klaim in data_klaim %}
+                        <tr style="font-weight: bolder">
+                            <td>
+                                {% include 'base_status_data_klaim.html' %}
+                            </td>
+                            <td>{{ data_klaim.faskes.nama }}</td>
+                            <td>{{ data_klaim.register_klaim.nomor_register_klaim }}</td>
+                            <td>{{ data_klaim.rufil }}</td>
+                            <td>{{ data_klaim.NoSEPApotek }}</td>
+                            <td>{{ data_klaim.NoSEPAsalResep }}</td>
+                            <td>{{ data_klaim.NoResep }}</td>
+                            <td>{{ data_klaim.TglResep | date:'d-m-Y' }}</td>
+                            <td>{{ data_klaim.KdJenis }}</td>
+                            <td>{{ data_klaim.NoKartu }}</td>
+                            <td>{{ data_klaim.NamaPeserta }}</td>
+                            <td style="text-align: right">{{ data_klaim.ByTagApt|intcomma }}</td>
+                        </tr>
+                    {% empty %}
+                        <td colspan="12" class="text-center">Tidak ada data</td>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if data_klaim.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if data_klaim.previous_page_number != 1 %}
+                <a href="?{% param_replace page=data_klaim.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ data_klaim.number }} of {{ data_klaim.paginator.num_pages }}
+
+        {% if data_klaim.has_next %}
+            {% if data_klaim.next_page_number != paginator.num_pages %}
+                <a href="?{% param_replace page=data_klaim.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=data_klaim.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>Data Klaim {{ data_klaim.start_index }} - {{ data_klaim.end_index }} </p>
+    </span>
+    </div>
+{% endblock %}

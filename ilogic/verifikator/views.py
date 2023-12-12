@@ -32,10 +32,10 @@ from faskes.models import Faskes
 from klaim.filters import RegisterKlaimFaskesFilter
 from klaim.models import (
     RegisterKlaim,
-    DataKlaimCBG, KeteranganPendingDispute, SLA
+    DataKlaimCBG, KeteranganPendingDispute, SLA, DataKlaimObat
 )
 from klaim.resources import DataKlaimCBGResource
-from .filters import DataKlaimCBGFilter, DownloadDataKlaimCBGFilter
+from .filters import DataKlaimCBGFilter, DownloadDataKlaimCBGFilter, DataKlaimObatFilter, DownloadDataKlaimObatFilter
 from .forms import (
     StatusRegisterKlaimForm,
     ImportDataKlaimForm,
@@ -102,8 +102,11 @@ def detail_register(request, pk):
 
             # jika tgl ba lengkap diubah, maka tgl SLA verifikasi juga berubah
             if 'tgl_ba_lengkap' in status_form.changed_data:
-                data_klaim = DataKlaimCBG.objects.filter(
-                    register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
+                data_klaim = None
+                if instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN:
+                    data_klaim = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
+                elif instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
+                    data_klaim = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
                 if data_klaim:
                     sla = SLA.objects.filter(jenis_klaim=instance.jenis_klaim,
                                              kantor_cabang=request.user.kantorcabang_set.all().first()).first()
@@ -116,10 +119,30 @@ def detail_register(request, pk):
                             tgl_sla = instance.tgl_ba_lengkap + datetime.timedelta(days=6)
                             data_klaim.update(tgl_SLA=tgl_sla)
 
-            if instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
+            if instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN:
                 data_klaim = DataKlaimCBG.objects.filter(faskes=instance.faskes,
                                                          bupel=instance.bulan_pelayanan,
                                                          status=StatusDataKlaimChoices.PEMBAHASAN)
+                for data_klaim in data_klaim:
+                    data_klaim.register_klaim = instance
+                    data_klaim.tgl_SLA = None
+                    data_klaim.status = StatusDataKlaimChoices.PROSES
+                    data_klaim.prosesklaim = False
+                    data_klaim.is_hitung = False
+                    data_klaim.save()
+
+                # status Tidak Layak tidak dapat diubah lagi status nya oleh Faskes
+                data_klaim_tidak_layak = DataKlaimCBG.objects.filter(faskes=instance.faskes,
+                                                                     bupel=instance.bulan_pelayanan,
+                                                                     status=StatusDataKlaimChoices.TIDAK_LAYAK)
+                for data_klaim_tidak_layak in data_klaim_tidak_layak:
+                    data_klaim_tidak_layak.prosestidaklayak = True
+                    data_klaim_tidak_layak.save()
+
+            elif instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
+                data_klaim = DataKlaimObat.objects.filter(faskes=instance.faskes,
+                                                          bupel=instance.bulan_pelayanan,
+                                                          status=StatusDataKlaimChoices.PEMBAHASAN)
                 for data_klaim in data_klaim:
                     data_klaim.register_klaim = instance
                     data_klaim.tgl_SLA = None
@@ -238,7 +261,7 @@ def import_data_klaim(request):
                 df_invalid = pd.DataFrame.from_records(invalid_data.values())
                 total_data_invalid = len(df_invalid)
                 transaction.set_rollback(True)
-            return render(request, 'verifikator/preview_data_import.html',
+            return render(request, 'verifikator/cbg/preview_data_import_cbg.html',
                           {'preview_data_valid': df_valid,
                            'total_data_valid': total_data_valid,
                            'preview_data_invalid': df_invalid,
@@ -390,24 +413,14 @@ def import_data_klaim(request):
         'import_form': import_form,
         'verifikator': verifikator,
     }
-    return render(request, 'verifikator/import_data_klaim.html', context)
+    return render(request, 'verifikator/cbg/import_data_klaim_cbg.html', context)
 
 
 @login_required
 @check_device
 @permissions(role=['verifikator'])
 def daftar_data_klaim(request):
-    # a = DataKlaimCBG.objects.filter(jenis_pending='nan').update(jenis_pending='')
-    # b = DataKlaimCBG.objects.filter(jenis_dispute='nan').update(jenis_dispute='')
-    # c = KeteranganPendingDispute.objects.filter(ket_pending_dispute='nan').update(ket_pending_dispute='')
-    # d = KeteranganPendingDispute.objects.filter(ket_pending_dispute='').delete()
     queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NMPESERTA', 'TGLSEP')
-    # i = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP='0038R0910423V017114')
-    # # i = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP='0038R0910423V017407')
-    # if i.exists():
-    #     print('ada object' + str(i))
-    # else:
-    #     print('tidak ada object' + str(i))
 
     # filter
     myFilter = DataKlaimCBGFilter(request.GET, queryset=queryset)
@@ -526,6 +539,13 @@ def daftar_data_klaim(request):
                 messages.warning(request, f'File yang diimport harus memiliki kolom {list_kolom_mandatory}')
                 return redirect(request.headers.get('Referer'))
 
+        # cek sep tersebut berstatus bukan proses
+        for status in dataset['status']:
+            if status == 'Proses':
+                messages.warning(request, 'File yang diimport harus berstatus "Layak", "Pending, '
+                                          '"Dispute", "Tidak Layak"')
+                return redirect(request.headers.get('Referer'))
+
         # cek status klaim
         list_status_mandatory = [StatusDataKlaimChoices.LAYAK, StatusDataKlaimChoices.PENDING,
                                  StatusDataKlaimChoices.TIDAK_LAYAK, StatusDataKlaimChoices.DISPUTE]
@@ -536,12 +556,6 @@ def daftar_data_klaim(request):
                                           f'Mohon dapat dicek kembali.')
                 return redirect(request.headers.get('Referer'))
 
-        # cek sep tersebut berstatus bukan proses
-        for status in dataset['status']:
-            if status == 'Proses':
-                messages.warning(request, 'File yang diimport harus berstatus "Layak", "Pending, '
-                                          '"Dispute", "Tidak Layak"')
-                return redirect(request.headers.get('Referer'))
 
         # cek jenis pending
         list_jenis_mandatory = [JenisPendingChoices.ADMINISTRASI, JenisPendingChoices.KODING,
@@ -647,20 +661,20 @@ def daftar_data_klaim(request):
         'myFilter': myFilter,
     }
 
-    return render(request, 'verifikator/daftar_data_klaim.html', context)
+    return render(request, 'verifikator/cbg/daftar_data_klaim_cbg.html', context)
 
 
-@login_required
-@check_device
-@permissions(role=['verifikator'])
-def detail_data_klaim(request, pk):
-    dataklaimcbg = DataKlaimCBG.objects.filter(verifikator=request.user).get(id=pk)
-    listchoicestatus = STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR
-    context = {
-        "dataklaimcbg": dataklaimcbg,
-        "listchoicestatus": listchoicestatus,
-    }
-    return render(request, 'verifikator/detail_data_klaim.html', context)
+# @login_required
+# @check_device
+# @permissions(role=['verifikator'])
+# def detail_data_klaim(request, pk):
+#     dataklaimcbg = DataKlaimCBG.objects.filter(verifikator=request.user).get(id=pk)
+#     listchoicestatus = STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR
+#     context = {
+#         "dataklaimcbg": dataklaimcbg,
+#         "listchoicestatus": listchoicestatus,
+#     }
+#     return render(request, 'verifikator/detail_data_klaim_cbg.html', context)
 
 
 # def edit_detail_data_klaim(request):
@@ -725,7 +739,7 @@ def detail_data_klaim(request, pk):
         'data_klaim_form': data_klaim_form,
         'data_klaim_pending_form': data_klaim_pending_form,
     }
-    return render(request, 'verifikator/detail_data_klaim.html', context)
+    return render(request, 'verifikator/cbg/detail_data_klaim_cbg.html', context)
 
 
 @login_required
@@ -763,27 +777,64 @@ def update_finalisasi_data_klaim(request, pk):
     instance = queryset.get(id=pk)
 
     # count
-    data_klaim = DataKlaimCBG.objects.filter(register_klaim=instance)
-    jumlah_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).count()
-    jumlah_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).count()
-    jumlah_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).count()
-    jumlah_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).count()
-    jumlah_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).count()
-    jumlah_klaim = data_klaim.filter(status=StatusDataKlaimChoices.KLAIM).count()
-    total_klaim = data_klaim.count()
+    data_klaim = None
+    jumlah_proses = 0
+    jumlah_layak = 0
+    jumlah_pending = 0
+    jumlah_dispute = 0
+    jumlah_tidak_layak = 0
+    jumlah_klaim = 0
+    total_klaim = 0
+    biaya_proses = 0
+    biaya_layak = 0
+    biaya_pending = 0
+    biaya_dispute = 0
+    biaya_tidak_layak = 0
+    biaya_klaim = 0
+    try:
+        if instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN:
+            data_klaim = DataKlaimCBG.objects.filter(register_klaim=instance)
+            jumlah_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).count()
+            jumlah_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).count()
+            jumlah_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).count()
+            jumlah_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).count()
+            jumlah_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).count()
+            jumlah_klaim = data_klaim.filter(status=StatusDataKlaimChoices.KLAIM).count()
+            total_klaim = data_klaim.count()
 
-    # biaya
-    biaya_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_klaim = data_klaim.aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
+            biaya_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).aggregate(Sum('BYPENGAJUAN'))[
+                'BYPENGAJUAN__sum']
+            biaya_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).aggregate(Sum('BYPENGAJUAN'))[
+                'BYPENGAJUAN__sum']
+            biaya_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).aggregate(Sum('BYPENGAJUAN'))[
+                'BYPENGAJUAN__sum']
+            biaya_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).aggregate(Sum('BYPENGAJUAN'))[
+                'BYPENGAJUAN__sum']
+            biaya_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('BYPENGAJUAN'))[
+                'BYPENGAJUAN__sum']
+            biaya_klaim = data_klaim.aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
+        elif instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
+            data_klaim = DataKlaimObat.objects.filter(register_klaim=instance)
+            jumlah_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).count()
+            jumlah_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).count()
+            jumlah_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).count()
+            jumlah_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).count()
+            jumlah_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).count()
+            jumlah_klaim = data_klaim.filter(status=StatusDataKlaimChoices.KLAIM).count()
+            total_klaim = data_klaim.count()
+            biaya_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).aggregate(Sum('ByVerApt'))[
+                'ByVerApt__sum']
+            biaya_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).aggregate(Sum('ByVerApt'))[
+                'ByVerApt__sum']
+            biaya_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).aggregate(Sum('ByVerApt'))[
+                'ByVerApt__sum']
+            biaya_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).aggregate(Sum('ByVerApt'))[
+                'ByVerApt__sum']
+            biaya_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('ByVerApt'))[
+                'ByVerApt__sum']
+            biaya_klaim = data_klaim.aggregate(Sum('ByVerApt'))['ByVerApt__sum']
+    except Exception as e:
+        HttpResponse(content=e)
 
     status_form = FinalisasiVerifikatorForm(instance=instance)
     if request.method == 'POST' and request.POST.get('action') == 'update_status':
@@ -869,8 +920,90 @@ def download_data_cbg(request):
     bupel_month = request.GET.get('bupel_month')
     bupel_year = request.GET.get('bupel_year')
     faskes = request.GET.get('faskes')
+    nomor_register = request.GET.get('nomor_register_klaim')
     try:
-        if bupel_month != '' and bupel_year != '' and faskes != '':
+        if nomor_register != '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
+
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim CBG'
+
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NOREG',
+                    'NOSEP',
+                    'TGLSEP',
+                    'TGLPULANG',
+                    'JNSPEL',
+                    'NOKARTU',
+                    'NMPESERTA',
+                    'POLI',
+                    'KDINACBG',
+                    'BYPENGAJUAN',
+                    'verifikator',
+                    'jenis_pending',
+                    'jenis_dispute',
+                    'ket_pending',
+                    'ket_jawaban',
+                ]
+                row_num = 1
+
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
+
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
+
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
+                        queryset.NOSEP,
+                        queryset.TGLSEP,
+                        queryset.TGLPULANG,
+                        queryset.JNSPEL,
+                        queryset.NOKARTU,
+                        queryset.NMPESERTA,
+                        queryset.POLI,
+                        queryset.KDINACBG,
+                        queryset.BYPENGAJUAN,
+                        queryset.verifikator.username,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
+                        ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        elif bupel_month != '' and bupel_year != '' and faskes != '':
             if download == 'download':
                 response = HttpResponse(
                     content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -952,14 +1085,14 @@ def download_data_cbg(request):
                 workbook.save(response)
                 return response
         else:
-            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi!')
+            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi atau Nomor Register Klaim harus diisi!')
     except Exception as e:
         messages.warning(request, "Terjadi Kesalahan Dalam Download Data, dengan Keterangan: " + str(e))
 
     context = {
         'myFilter': myFilter,
     }
-    return render(request, 'verifikator/download_data_cbg.html', context)
+    return render(request, 'verifikator/cbg/download_data_cbg.html', context)
 
 
 class RumahSakitAutocomplete(autocomplete.Select2QuerySetView):
@@ -978,3 +1111,543 @@ class RumahSakitAutocomplete(autocomplete.Select2QuerySetView):
         if self.q:
             qs = qs.filter(nama__icontains=self.q)
         return qs
+
+
+#######################
+# VERIFIKASI KLAIM OBAT
+#######################
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def import_data_klaim_obat(request):
+    storage = TemporaryStorage()
+    import_form = ImportDataKlaimForm()
+    verifikator = User.objects.filter(kantorcabang__in=request.user.kantorcabang_set.all(),
+                                      groups__name='verifikator',
+                                      is_active=True,
+                                      is_staff=True)
+    if request.method == 'POST' and request.POST.get('action') == 'import':
+        import_form = ImportDataKlaimForm(files=request.FILES, data=request.POST)
+        if import_form.is_valid():
+            list_data_import = ['KdJenis', 'No SEP Apotek', 'No SEP Asal Resep', 'No Kartu', 'Nama Peserta', 'No Resep',
+                                'Tgl Resep', 'By Tag Apt', 'By Ver Apt', 'rufil']
+            nomor_register_klaim = import_form.cleaned_data.get('register')
+            register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
+            file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
+            storage.save(name=file_name, content=import_form.cleaned_data.get('file'))
+            get_password = request.POST.get('password')
+            if get_password != '':
+                unlocked_file = io.BytesIO()
+                try:
+                    with open(storage.path(name=file_name), "rb") as file:
+                        excel_file = msoffcrypto.OfficeFile(file)
+                        excel_file.load_key(password=get_password)
+                        excel_file.decrypt(unlocked_file)
+                    data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
+                except InvalidKeyError:
+                    messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
+                    return redirect('/verifikator/import-data-klaim-obat')
+                except DecryptionError:
+                    messages.warning(request,  'File Excel seharusnya tidak memiliki password!')
+                    return redirect('/verifikator/import-data-klaim-obat')
+                except Exception as e:
+                    messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
+                    return redirect('/verifikator/import-data-klaim-obat')
+            else:
+                try:
+                    data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+                except XLRDError:
+                    messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+                    return redirect('/verifikator/import-data-klaim-obat')
+                except Exception as e:
+                    messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+                    return redirect('/verifikator/import-data-klaim-obat')
+                # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import, engine='openpyxl', password='Qwerty1!')
+            data_frame = data_frame.replace(np.nan, None)
+            data_frame['register_klaim'] = register
+            data_frame['faskes'] = register.faskes
+            data_frame['Tgl Resep'] = pd.to_datetime(data_frame['Tgl Resep'])
+            data_frame['bupel'] = data_frame['Tgl Resep'].dt.to_period('M').dt.to_timestamp()
+            data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
+            data_frame = data_frame.rename(columns={'No SEP Apotek': 'NoSEPApotek',
+                                                    'No SEP Asal Resep': 'NoSEPAsalResep',
+                                                    'No Kartu': 'NoKartu',
+                                                    'Nama Peserta': 'NamaPeserta',
+                                                    'No Resep': 'NoResep',
+                                                    'Tgl Resep': 'TglResep',
+                                                    'By Tag Apt': 'ByTagApt',
+                                                    'By Ver Apt': 'ByVerApt'
+                                                    })
+            register.password_file_excel = get_password
+            register.save()
+
+            with transaction.atomic():
+                try:
+                    obj_list = []
+                    for _, row in data_frame.iterrows():
+                        data_klaim = DataKlaimObat()
+                        try:
+                            data_klaim = DataKlaimObat(**dict(row))
+                            data_klaim.full_clean()  # Validate the object
+                            obj_list.append(data_klaim)
+                        except TypeError as e:
+                            messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+                            return redirect('/verifikator/import-data-klaim-obat')
+                        except Exception as e:
+                            messages.warning(request, f'Kesalahan terjadi pada No SEP Apotek : {data_klaim.NoSEPApotek}. Keterangan error : {e}')
+                            return redirect('/verifikator/import-data-klaim-obat')
+                    DataKlaimObat.objects.bulk_create(obj_list)
+                except IntegrityError:
+                    messages.info(request, 'Terjadi kesalahan saat mencoba menyimpan data.')
+                    return redirect('/verifikator/import-data-klaim-obat')
+                except Exception as e:
+                    messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')
+                    return redirect('/verifikator/import-data-klaim-obat')
+
+                valid_data = DataKlaimObat.objects.filter(id__in=[obj.id for obj in obj_list
+                                                                  if
+                                                                  obj.NoSEPAsalResep[:8] == register.faskes.kode_ppk and
+                                                                  obj.bupel.month == register.bulan_pelayanan.month and
+                                                                  obj.bupel.year == register.bulan_pelayanan.year])
+                invalid_data = DataKlaimObat.objects.filter(id__in=[obj.id for obj in obj_list
+                                                                    if obj.NoSEPAsalResep[
+                                                                       :8] != register.faskes.kode_ppk or
+                                                                    obj.bupel.month != register.bulan_pelayanan.month or
+                                                                    obj.bupel.year != register.bulan_pelayanan.year])
+
+                df_valid = pd.DataFrame.from_records(valid_data.values())
+                total_data_valid = len(df_valid)
+                df_invalid = pd.DataFrame.from_records(invalid_data.values())
+                total_data_invalid = len(df_invalid)
+                transaction.set_rollback(True)
+            return render(request, 'verifikator/obat/preview_data_import_obat.html',
+                          {'preview_data_valid': df_valid,
+                           'total_data_valid': total_data_valid,
+                           'preview_data_invalid': df_invalid,
+                           'total_data_invalid': total_data_invalid,
+                           'file_name': file_name,
+                           'register': nomor_register_klaim,
+                           'password': get_password})
+
+    if request.method == 'POST' and request.POST.get('action') == 'confirm':
+        list_data_import = ['KdJenis', 'No SEP Apotek', 'No SEP Asal Resep', 'No Kartu', 'Nama Peserta', 'No Resep',
+                            'Tgl Resep', 'By Tag Apt', 'By Ver Apt', 'rufil']
+        file_name = request.POST.get('file_name')
+        nomor_register_klaim = request.POST.get('register')
+        get_password = request.POST.get('password')
+        register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
+        if get_password != '':
+            unlocked_file = io.BytesIO()
+            try:
+                with open(storage.path(name=file_name), "rb") as file:
+                    excel_file = msoffcrypto.OfficeFile(file)
+                    excel_file.load_key(password=request.POST.get('password'))
+                    excel_file.decrypt(unlocked_file)
+                data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
+            except InvalidKeyError:
+                messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
+                return redirect('/verifikator/import-data-klaim-obat')
+            except DecryptionError:
+                messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
+                return redirect('/verifikator/import-data-klaim-obat')
+            except Exception as e:
+                messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
+                return redirect('/verifikator/import-data-klaim-obat')
+        else:
+            try:
+                data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+            except XLRDError:
+                messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+                return redirect('/verifikator/import-data-klaim-obat')
+            except Exception as e:
+                messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+                return redirect('/verifikator/import-data-klaim-obat')
+
+        # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+        data_frame = data_frame.replace(np.nan, None)
+        data_frame['register_klaim'] = register
+        data_frame['faskes'] = register.faskes
+        data_frame['Tgl Resep'] = pd.to_datetime(data_frame['Tgl Resep'])
+        data_frame['bupel'] = data_frame['Tgl Resep'].dt.to_period('M').dt.to_timestamp()
+        data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
+        data_frame = data_frame.rename(columns={'No SEP Apotek': 'NoSEPApotek',
+                                                'No SEP Asal Resep': 'NoSEPAsalResep',
+                                                'No Kartu': 'NoKartu',
+                                                'Nama Peserta': 'NamaPeserta',
+                                                'No Resep': 'NoResep',
+                                                'Tgl Resep': 'TglResep',
+                                                'By Tag Apt': 'ByTagApt',
+                                                'By Ver Apt': 'ByVerApt'
+                                                })
+        with transaction.atomic():
+            register.has_import_data = True
+            register.save()
+            obj_list = DataKlaimObat.objects.bulk_create(
+                [DataKlaimObat(**dict(row[1])) for row in data_frame.iterrows()]
+            )
+
+            queryset = DataKlaimObat.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.BELUM_VER)
+
+            # Obat Kronis
+            index = random.randrange(verifikator.count())
+            for obj in queryset.filter(KdJenis=2):
+                obj.verifikator = verifikator[index]
+                obj.status = StatusDataKlaimChoices.PROSES
+                obj.save()
+                if index == verifikator.count() - 1:
+                    index = 0
+                else:
+                    index += 1
+
+            # obat kemoterapi
+            for obj in queryset.filter(KdJenis=3):
+                obj.verifikator = verifikator[index]
+                obj.status = StatusDataKlaimChoices.PROSES
+                obj.save()
+                if index == verifikator.count() - 1:
+                    index = 0
+                else:
+                    index += 1
+            messages.success(request, "Data Berhasil Di-import")
+    context = {
+        'import_form': import_form,
+        'verifikator': verifikator,
+    }
+    return render(request, 'verifikator/obat/import_data_klaim_obat.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def daftar_data_klaim_obat(request):
+    queryset = DataKlaimObat.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NamaPeserta', 'TglResep')
+
+    # filter
+    myFilter = DataKlaimObatFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+    export = request.GET.get('export')
+    if export == 'export':
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+            date=datetime.datetime.now().strftime('%Y-%m-%d'),
+        )
+        workbook = Workbook()
+
+        # Get active worksheet/tab
+        worksheet = workbook.active
+        worksheet.title = 'Data Klaim Obat'
+
+        # Define the titles for columns
+        columns = [
+            'namars',
+            'status',
+            'NoReg',
+            'NoSEPApotek',
+            'NoSEPAsalResep',
+            'TglResep',
+            'KdJenis',
+            'NoKartu',
+            'NamaPeserta',
+            'ByTagApt',
+            'ByVerApt',
+            'verifikator',
+            'rufil',
+            'jenis_pending',
+            'jenis_dispute',
+            'ket_pending',
+            'ket_jawaban',
+        ]
+        row_num = 1
+
+        # Assign the titles for each cell of the header
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+
+        # Iterate through all
+        for queryset in queryset:
+            row_num += 1
+
+            ket_pending_disput_queryset = ''
+            for x in queryset.ket_pending_dispute.all():
+                ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+            ket_jawaban_pending_queryset = ''
+            for x in queryset.ket_jawaban_pending.all():
+                ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
+            # Define the data for each cell in the row
+            row = [
+                queryset.faskes.nama,
+                queryset.status,
+                queryset.register_klaim.nomor_register_klaim,
+                queryset.NoSEPApotek,
+                queryset.NoSEPAsalResep,
+                queryset.TglResep,
+                queryset.KdJenis,
+                queryset.NoKartu,
+                queryset.NamaPeserta,
+                queryset.ByTagApt,
+                queryset.ByVerApt,
+                queryset.verifikator.username,
+                queryset.rufil,
+                queryset.jenis_pending,
+                queryset.jenis_dispute,
+                ket_pending_disput_queryset,
+                ket_jawaban_pending_queryset,
+            ]
+
+            # Assign the data for each cell of the row
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+
+        workbook.save(response)
+        return response
+
+    # pagination
+    paginator = Paginator(queryset, 10)
+    page_number = request.GET.get('page')
+    queryset = paginator.get_page(page_number)
+
+    context = {
+        'data_klaim': queryset,
+        'myFilter': myFilter,
+    }
+
+    return render(request, 'verifikator/obat/daftar_data_klaim_obat.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def detail_data_klaim_obat(request, pk):
+    queryset = DataKlaimObat.objects.filter(verifikator=request.user)
+    instance = queryset.get(pk=pk)
+    data_klaim_form = DataKlaimVerifikatorForm(instance=instance)
+    data_klaim_pending_form = KeteranganPendingForm()
+
+    if request.method == 'POST':
+        data_klaim_form = DataKlaimVerifikatorForm(instance=instance, data=request.POST)
+        keterangan = KeteranganPendingForm(request.POST or None)
+        if data_klaim_form.is_valid():
+            if instance.is_hitung is False:
+                HitungDataKlaim.objects.create(nomor_register_klaim=instance.register_klaim.nomor_register_klaim,
+                                               jenis_klaim=instance.register_klaim.jenis_klaim,
+                                               verifikator=instance.verifikator)
+                instance.is_hitung = True
+                instance.save()
+            if instance.status != StatusDataKlaimChoices.LAYAK:
+                obj_keterangan = keterangan.save()
+                obj_keterangan.verifikator = instance.verifikator
+                obj_keterangan.save()
+                instance.ket_pending_dispute.add(obj_keterangan)
+            data_klaim_form.save()
+            next = request.POST.get('next', '/')
+            messages.success(request, f'NO SEP {instance.NoSEPApotek} berhasil diupdate.')
+            return HttpResponseRedirect(next)
+
+    context = {
+        'data_klaim': instance,
+        'data_klaim_form': data_klaim_form,
+        'data_klaim_pending_form': data_klaim_pending_form,
+    }
+    return render(request, 'verifikator/obat/detail_data_klaim_obat.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def download_data_obat(request):
+    # initial relasi pada kantor cabang
+    related_kantor_cabang = request.user.kantorcabang_set.all()
+    queryset = DataKlaimObat.objects.filter(verifikator__kantorcabang__in=related_kantor_cabang)
+
+    # filter
+    myFilter = DownloadDataKlaimObatFilter(request.GET, queryset=queryset, request=request)
+    queryset = myFilter.qs
+
+    kantor_cabang = request.user.kantorcabang_set.all().first()
+
+    # fitur download
+    download = request.GET.get('download')
+    bupel_month = request.GET.get('bupel_month')
+    bupel_year = request.GET.get('bupel_year')
+    faskes = request.GET.get('faskes')
+    nomor_register = request.GET.get('nomor_register_klaim')
+    try:
+        if nomor_register != '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
+
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim Obat'
+
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NoReg',
+                    'NoSEPApotek',
+                    'NoSEPAsalResep',
+                    'TglResep',
+                    'KdJenis',
+                    'NoKartu',
+                    'NamaPeserta',
+                    'ByTagApt',
+                    'ByVerApt',
+                    'verifikator',
+                    'rufil',
+                    'jenis_pending',
+                    'jenis_dispute',
+                    'ket_pending',
+                    'ket_jawaban',
+                ]
+                row_num = 1
+
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
+
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
+
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
+                        queryset.NoSEPApotek,
+                        queryset.NoSEPAsalResep,
+                        queryset.TglResep,
+                        queryset.KdJenis,
+                        queryset.NoKartu,
+                        queryset.NamaPeserta,
+                        queryset.ByTagApt,
+                        queryset.ByVerApt,
+                        queryset.verifikator.username,
+                        queryset.rufil,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
+                        ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        elif bupel_month != '' and bupel_year != '' and faskes != '':
+            if download == 'download':
+                response = HttpResponse(
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+                response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+                    date=datetime.datetime.now().strftime('%Y-%m-%d'),
+                )
+                workbook = Workbook()
+
+                # Get active worksheet/tab
+                worksheet = workbook.active
+                worksheet.title = 'Data Klaim Obat'
+
+                # Define the titles for columns
+                columns = [
+                    'namars',
+                    'status',
+                    'NoReg',
+                    'NoSEPApotek',
+                    'NoSEPAsalResep',
+                    'TglResep',
+                    'KdJenis',
+                    'NoKartu',
+                    'NamaPeserta',
+                    'ByTagApt',
+                    'ByVerApt',
+                    'verifikator',
+                    'rufil',
+                    'jenis_pending',
+                    'jenis_dispute',
+                    'ket_pending',
+                    'ket_jawaban',
+                ]
+                row_num = 1
+
+                # Assign the titles for each cell of the header
+                for col_num, column_title in enumerate(columns, 1):
+                    cell = worksheet.cell(row=row_num, column=col_num)
+                    cell.value = column_title
+
+                # Iterate through all movies
+                for queryset in queryset:
+                    row_num += 1
+
+                    ket_pending_disput_queryset = ''
+                    for x in queryset.ket_pending_dispute.all():
+                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+                    ket_jawaban_pending_queryset = ''
+                    for x in queryset.ket_jawaban_pending.all():
+                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+
+                    # Define the data for each cell in the row
+                    row = [
+                        queryset.faskes.nama,
+                        queryset.status,
+                        queryset.register_klaim.nomor_register_klaim,
+                        queryset.NoSEPApotek,
+                        queryset.NoSEPAsalResep,
+                        queryset.TglResep,
+                        queryset.KdJenis,
+                        queryset.NoKartu,
+                        queryset.NamaPeserta,
+                        queryset.ByTagApt,
+                        queryset.ByVerApt,
+                        queryset.verifikator.username,
+                        queryset.rufil,
+                        queryset.jenis_pending,
+                        queryset.jenis_dispute,
+                        ket_pending_disput_queryset,
+                        ket_jawaban_pending_queryset,
+                    ]
+
+                    # Assign the data for each cell of the row
+                    for col_num, cell_value in enumerate(row, 1):
+                        cell = worksheet.cell(row=row_num, column=col_num)
+                        cell.value = cell_value
+
+                workbook.save(response)
+                return response
+        else:
+            messages.warning(request, 'Bulan, Tahun, dan Faskes harus diisi atau Nomor Register Klaim harus isi!')
+    except Exception as e:
+        messages.warning(request, "Terjadi Kesalahan Dalam Download Data, dengan Keterangan: " + str(e))
+
+    context = {
+        'myFilter': myFilter,
+    }
+    return render(request, 'verifikator/obat/download_data_obat.html', context)

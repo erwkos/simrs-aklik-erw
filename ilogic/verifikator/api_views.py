@@ -46,6 +46,26 @@ class RegisterKlaimViewSet(GenericViewSet):
         return self.get_paginated_response(pagination)
 
 
+class RegisterKlaimObatViewSet(GenericViewSet):
+    list_jenis_klaim = [NamaJenisKlaimChoices.OBAT_REGULER, NamaJenisKlaimChoices.OBAT_SUSULAN]
+    queryset = RegisterKlaim.objects.filter(status=StatusRegisterChoices.VERIFIKASI, jenis_klaim__nama__in=list_jenis_klaim).order_by('-tgl_aju')
+    serializer_class = RegisterKlaimSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['faskes__kode_ppk', 'faskes__nama', 'nomor_register_klaim']
+
+    def get_queryset(self):
+        if self.action == 'list':
+            queryset_kc = self.queryset.filter(nomor_register_klaim__startswith=self.request.user.kantorcabang_set.all().first().kode_cabang)
+            return queryset_kc  # filter(Q(file_data_klaim=None) | Q(file_data_klaim=''))
+        return super(RegisterKlaimViewSet, self).get_queryset()
+
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many=True)
+        pagination = self.paginate_queryset(serializer.data)
+        return self.get_paginated_response(pagination)
+
+
 class DataKlaimViewSet(GenericViewSet):
     queryset = DataKlaimCBG.objects.all()
     serializer_class = DataKlaimSerializer

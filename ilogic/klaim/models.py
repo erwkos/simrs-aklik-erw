@@ -125,9 +125,15 @@ class RegisterKlaim(models.Model):
 
     @cached_property
     def sisa_klaim(self):
-        data_klaim = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim=self.nomor_register_klaim,
-                                                 status=StatusDataKlaimChoices.PROSES)
-        sisa_klaim = data_klaim.count()
+        sisa_klaim = None
+        if self.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or self.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN:
+            data_klaim = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim=self.nomor_register_klaim,
+                                                     status=StatusDataKlaimChoices.PROSES)
+            sisa_klaim = data_klaim.count()
+        elif self.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER or self.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
+            data_klaim = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim=self.nomor_register_klaim,
+                                                      status=StatusDataKlaimChoices.PROSES)
+            sisa_klaim = data_klaim.count()
         return sisa_klaim
 
 
@@ -185,7 +191,6 @@ class JawabanPendingDispute(models.Model):
 
 class DataKlaimCBG(models.Model):
     register_klaim = models.ForeignKey(RegisterKlaim, on_delete=models.CASCADE)
-    # data_klaim_self = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
     faskes = models.ForeignKey(Faskes, on_delete=models.CASCADE)
     verifikator = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 
@@ -239,3 +244,60 @@ class DataKlaimCBG(models.Model):
                     self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
         self.bupel = self.TGLPULANG.replace(day=1)
         super(DataKlaimCBG, self).save(*args, **kwargs)
+
+
+class DataKlaimObat(models.Model):
+    register_klaim = models.ForeignKey(RegisterKlaim, on_delete=models.CASCADE)
+    faskes = models.ForeignKey(Faskes, on_delete=models.CASCADE)
+    verifikator = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+
+    KdJenis = models.CharField(max_length=1, blank=True, null=True)
+    NoSEPApotek = models.CharField(max_length=19, blank=True, null=True, unique=True)
+    NoSEPAsalResep = models.CharField(max_length=19, blank=True, null=True)
+    NoKartu = models.CharField(max_length=15, blank=True, null=True)
+    NamaPeserta = models.CharField(max_length=200, blank=True, null=True)
+    NoResep = models.CharField(max_length=15, blank=True, null=True)
+    TglResep = models.DateField(blank=True, null=True)
+    ByTagApt = models.IntegerField(default=0)
+    ByVerApt = models.IntegerField(default=0)
+    rufil = models.CharField(max_length=200, blank=True)
+
+    status = models.CharField(max_length=20, default=StatusDataKlaimChoices.BELUM_VER, choices=StatusDataKlaimChoices.choices)
+    bupel = models.DateField(blank=True, null=True)
+    tgl_SLA = models.DateField(blank=True, null=True)
+
+    ket_pending_dispute = models.ManyToManyField(KeteranganPendingDispute)
+    ket_jawaban_pending = models.ManyToManyField(JawabanPendingDispute)
+
+    prosesklaim = models.BooleanField(default=False)
+    prosespending = models.BooleanField(default=False)
+    prosesdispute = models.BooleanField(default=False)
+    prosestidaklayak = models.BooleanField(default=False)
+
+    file_konfirmasi = models.FileField(upload_to='documents/', blank=True, null=True)
+    jenis_pending = models.CharField(max_length=200, choices=JenisPendingChoices.choices, blank=True, null=True)
+    jenis_dispute = models.CharField(max_length=200, choices=JenisDisputeChoices.choices, blank=True, null=True)
+    klasifikasi_dispute = models.CharField(max_length=200, blank=True, null=True)
+    keterangan_dispute = models.CharField(max_length=500, blank=True, null=True)
+    proses_klasifikasi_dispute = models.BooleanField(default=False)
+    is_hitung = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if self.tgl_SLA is None:
+            sla = SLA.objects.filter(jenis_klaim=self.register_klaim.jenis_klaim,
+                                     kantor_cabang=self.faskes.kantor_cabang).first()
+            if sla:
+                if self.register_klaim.tgl_ba_lengkap:
+                    self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla)
+                elif self.register_klaim.tgl_terima:
+                    self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
+            else:
+                if self.register_klaim.tgl_ba_lengkap:
+                    self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=6)
+                elif self.register_klaim.tgl_terima:
+                    self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
+        self.bupel = self.TglResep.replace(day=1)
+        super(DataKlaimObat, self).save(*args, **kwargs)

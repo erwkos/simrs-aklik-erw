@@ -21,4 +21,7 @@ urlpatterns = [
     path('add/pengaturan/sla', views.add_pengaturan_sla, name='add_pengaturan_sla'),
     path('edit/pengaturan/sla/<int:pk>', views.edit_pengaturan_sla, name='edit_pengaturan_sla'),
 
+    # obat
+    path('download/obat/', views.download_data_obat, name='download_data_obat'),
+
 ]
