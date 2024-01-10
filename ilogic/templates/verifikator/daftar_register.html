@@ -3,6 +3,30 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
+<style>
+.select2-container {
+    width: 100% !important;
+}
+
+.select {
+        word-wrap: normal !important;
+    }
+.select2-selection--single {
+    /* Existing options: */
+    background-color: #fff;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    /* HACK: new option to make padding right: */
+    padding-bottom: 36px;
+}
+
+/* HACK: make default django-autocomplete-light arrow go away (so bootstrap shows): */
+.select2-selection__arrow {
+    visibility: hidden;
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+
 <div class="col-xl-12 col-md-12 mb-4 mt-4">
     <div class="card table-card">
         <div class="card-header d-flex align-items-center justify-content-between">
@@ -12,16 +36,16 @@
             </h5>
         </div>
 
-        <div class="container">
+        <div class="container-fluid">
             <br>
             <div class="card-body">
               <form class="row row-cols-md-auto g-3 align-items-center">
-                    {{ myFilter.form | crispy }}
+                  {{ myFilter.form | crispy }}
                 <button type="submit" class="btn btn-primary">Submit</button>
               </form>
             </div>
         </div>
-
+{{ myFilter.form.media }}
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover table-borderless mb-0">

@@ -7,7 +7,11 @@ from klaim.models import (
     RegisterKlaim, DataKlaimCBG, JawabanPendingDispute, JenisKlaim, DataKlaimObat
 )
 
-YEARS = [x for x in range(2016, 2024)]
+import datetime
+
+tahun_hari_ini = datetime.datetime.today().year
+
+YEARS = [x for x in range(2016, tahun_hari_ini+1)]
 YEARS.reverse()
 
 STATUS_CHOICES_DATA_KLAIM_FASKES = (

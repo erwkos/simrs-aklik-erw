@@ -141,9 +141,9 @@
               </svg>
             </span>
                         <span class="pc-mtext">Dashboard</span>
-{#                        <span class="pc-badge">2</span>#}
                     </a>
                 </li>
+
                 {% for x in request.user.groups.all %}
 
                 {% if x.name == 'faskes' %}
@@ -411,9 +411,9 @@
                             <li class="pc-item"><a class="pc-link"
                                                    href="{% url 'monitoring:monitoring_data_klaim_obat_verifikator' %}">Monitoring
                                 Data Klaim Obat</a></li>
-{#                            <li class="pc-item"><a class="pc-link"#}
-{#                                                   href="{% url 'monitoring:monitoring_data_klaim_CBG_verifikator' %}">Monitoring#}
-{#                                Tugas Verifikator Klaim CBG</a></li>#}
+                            <li class="pc-item"><a class="pc-link"
+                                                   href="{% url 'monitoring:monitoring_data_klaim_CBG_verifikator' %}">Monitoring
+                                Tugas Verifikator Klaim CBG</a></li>
 {#                            <li class="pc-item"><a class="pc-link"#}
 {#                                                   href="{% url 'monitoring:monitoring_data_klaim_hitung_verifikator' %}">Monitoring#}
 {#                                Hitung Klaim</a></li>#}

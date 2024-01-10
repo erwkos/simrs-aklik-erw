@@ -8,7 +8,7 @@ from .models import (
 from import_export.admin import ImportExportModelAdmin
 
 @admin.register(RegisterKlaim)
-class RegisterKlaimAdmin(admin.ModelAdmin):
+class RegisterKlaimAdmin(ImportExportModelAdmin):
     search_fields = ['nomor_register_klaim']
 
 
