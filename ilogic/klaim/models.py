@@ -125,7 +125,7 @@ class RegisterKlaim(models.Model):
 
     @cached_property
     def sisa_klaim(self):
-        sisa_klaim = None
+        sisa_klaim = 0
         if self.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or self.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN:
             data_klaim = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim=self.nomor_register_klaim,
                                                      status=StatusDataKlaimChoices.PROSES)

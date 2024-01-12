@@ -849,10 +849,14 @@ def update_finalisasi_data_klaim(request, pk):
             if instance.is_final is False:
                 instance.is_final = True
                 instance.save()
-            data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).update(status=StatusDataKlaimChoices.KLAIM)
-            data_klaim.filter(status=StatusDataKlaimChoices.PENDING).update(prosespending=True)
-            data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).update(prosespending=True, prosesdispute=True)
-            data_klaim.update(prosesklaim=True)
+            if (instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER
+                    or instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN
+                    or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER
+                    or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN):
+                data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).update(status=StatusDataKlaimChoices.KLAIM)
+                data_klaim.filter(status=StatusDataKlaimChoices.PENDING).update(prosespending=True)
+                data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).update(prosespending=True, prosesdispute=True)
+                data_klaim.update(prosesklaim=True)
             messages.success(request, "Register dan Data Klaim berhasil difinalisasi. Terima Kasih.")
             return redirect(request.headers.get('Referer'))
 

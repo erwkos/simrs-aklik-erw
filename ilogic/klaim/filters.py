@@ -22,6 +22,8 @@ class RegisterKlaimFaskesFilter(django_filters.FilterSet):
                                                            "this.value =!!this.value && Math.abs(this.value) >= 1 ? Math.abs(this.value) : null", }),
                                                        label='Tahun Bupel')
 
+    nomor_register_klaim = django_filters.CharFilter(field_name='nomor_register_klaim', lookup_expr='icontains',
+                                                     label='No REG')
     class Meta:
         model = RegisterKlaim
         fields = ['faskes',
@@ -54,6 +56,8 @@ class RegisterKlaimKhususFaskesFilter(django_filters.FilterSet):
     tgl_aju_lte = django_filters.DateFilter(field_name='tgl_aju', lookup_expr='date__lte',
                                             widget=DateInput(attrs={'type': 'date'}), label='Tgl Aju Sampai')
 
+    nomor_register_klaim = django_filters.CharFilter(field_name='nomor_register_klaim', lookup_expr='icontains',
+                                                     label='No REG')
     class Meta:
         model = RegisterKlaim
         fields = ['jenis_klaim',

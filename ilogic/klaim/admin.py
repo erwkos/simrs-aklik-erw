@@ -24,7 +24,7 @@ class JenisKlaimAdmin(admin.ModelAdmin):
 
 @admin.register(DataKlaimCBG)
 class DataKlaimCBGAdmin(ImportExportModelAdmin):
-    search_fields = ('NOSEP',)
+    search_fields = ('NOSEP', 'register_klaim__nomor_register_klaim',)
 
 
 @admin.register(DataKlaimObat)
