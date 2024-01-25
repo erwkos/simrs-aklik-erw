@@ -24,6 +24,7 @@ class RegisterKlaimFaskesFilter(django_filters.FilterSet):
 
     nomor_register_klaim = django_filters.CharFilter(field_name='nomor_register_klaim', lookup_expr='icontains',
                                                      label='No REG')
+
     class Meta:
         model = RegisterKlaim
         fields = ['faskes',
@@ -38,8 +39,9 @@ class RegisterKlaimFaskesFilter(django_filters.FilterSet):
 
         if request and request.user.is_authenticated:
             # Filter queryset berdasarkan request.user jika pengguna terautentikasi
-            self.filters['verifikator'].field.queryset = User.objects.filter(kantorcabang__in=request.user.kantorcabang_set.all(),
-                                                                             groups__in=Group.objects.filter(name='verifikator'))
+            self.filters['verifikator'].field.queryset = User.objects.filter(
+                kantorcabang__in=request.user.kantorcabang_set.all(),
+                groups__in=Group.objects.filter(name='verifikator'))
 
 
 class RegisterKlaimKhususFaskesFilter(django_filters.FilterSet):
@@ -58,6 +60,7 @@ class RegisterKlaimKhususFaskesFilter(django_filters.FilterSet):
 
     nomor_register_klaim = django_filters.CharFilter(field_name='nomor_register_klaim', lookup_expr='icontains',
                                                      label='No REG')
+
     class Meta:
         model = RegisterKlaim
         fields = ['jenis_klaim',

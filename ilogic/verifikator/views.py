@@ -471,13 +471,23 @@ def daftar_data_klaim(request):
         for queryset in queryset:
             row_num += 1
 
-            ket_pending_disput_queryset = ''
-            for x in queryset.ket_pending_dispute.all():
-                ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+            if queryset.ket_pending_dispute.last() is None:
+                ket_pending_disput_queryset = ''
+            else:
+                ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
 
-            ket_jawaban_pending_queryset = ''
-            for x in queryset.ket_jawaban_pending.all():
-                ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+            if queryset.ket_jawaban_pending.last() is None:
+                ket_jawaban_pending_queryset = ''
+            else:
+                ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+
+            # ket_pending_disput_queryset = ''
+            # for x in queryset.ket_pending_dispute.all():
+            #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+
+            # ket_jawaban_pending_queryset = ''
+            # for x in queryset.ket_jawaban_pending.all():
+            #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
             # Define the data for each cell in the row
             row = [
@@ -971,13 +981,23 @@ def download_data_cbg(request):
                 for queryset in queryset:
                     row_num += 1
 
-                    ket_pending_disput_queryset = ''
-                    for x in queryset.ket_pending_dispute.all():
-                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    if queryset.ket_pending_dispute.last() is None:
+                        ket_pending_disput_queryset = ''
+                    else:
+                        ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
 
-                    ket_jawaban_pending_queryset = ''
-                    for x in queryset.ket_jawaban_pending.all():
-                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+                    if queryset.ket_jawaban_pending.last() is None:
+                        ket_jawaban_pending_queryset = ''
+                    else:
+                        ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+
+                    # ket_pending_disput_queryset = ''
+                    # for x in queryset.ket_pending_dispute.all():
+                    #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    #
+                    # ket_jawaban_pending_queryset = ''
+                    # for x in queryset.ket_jawaban_pending.all():
+                    #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
                     # Define the data for each cell in the row
                     row = [
@@ -1052,13 +1072,23 @@ def download_data_cbg(request):
                 for queryset in queryset:
                     row_num += 1
 
-                    ket_pending_disput_queryset = ''
-                    for x in queryset.ket_pending_dispute.all():
-                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    if queryset.ket_pending_dispute.last() is None:
+                        ket_pending_disput_queryset = ''
+                    else:
+                        ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
 
-                    ket_jawaban_pending_queryset = ''
-                    for x in queryset.ket_jawaban_pending.all():
-                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+                    if queryset.ket_jawaban_pending.last() is None:
+                        ket_jawaban_pending_queryset = ''
+                    else:
+                        ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+
+                    # ket_pending_disput_queryset = ''
+                    # for x in queryset.ket_pending_dispute.all():
+                    #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    #
+                    # ket_jawaban_pending_queryset = ''
+                    # for x in queryset.ket_jawaban_pending.all():
+                    #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
                     # Define the data for each cell in the row
                     row = [
@@ -1376,13 +1406,23 @@ def daftar_data_klaim_obat(request):
         for queryset in queryset:
             row_num += 1
 
-            ket_pending_disput_queryset = ''
-            for x in queryset.ket_pending_dispute.all():
-                ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+            if queryset.ket_pending_dispute.last() is None:
+                ket_pending_disput_queryset = ''
+            else:
+                ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
 
-            ket_jawaban_pending_queryset = ''
-            for x in queryset.ket_jawaban_pending.all():
-                ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+            if queryset.ket_jawaban_pending.last() is None:
+                ket_jawaban_pending_queryset = ''
+            else:
+                ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+
+            # ket_pending_disput_queryset = ''
+            # for x in queryset.ket_pending_dispute.all():
+            #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+            #
+            # ket_jawaban_pending_queryset = ''
+            # for x in queryset.ket_jawaban_pending.all():
+            #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
             # Define the data for each cell in the row
             row = [
@@ -1529,13 +1569,23 @@ def download_data_obat(request):
                 for queryset in queryset:
                     row_num += 1
 
-                    ket_pending_disput_queryset = ''
-                    for x in queryset.ket_pending_dispute.all():
-                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    if queryset.ket_pending_dispute.last() is None:
+                        ket_pending_disput_queryset = ''
+                    else:
+                        ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
 
-                    ket_jawaban_pending_queryset = ''
-                    for x in queryset.ket_jawaban_pending.all():
-                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+                    if queryset.ket_jawaban_pending.last() is None:
+                        ket_jawaban_pending_queryset = ''
+                    else:
+                        ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+
+                    # ket_pending_disput_queryset = ''
+                    # for x in queryset.ket_pending_dispute.all():
+                    #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    #
+                    # ket_jawaban_pending_queryset = ''
+                    # for x in queryset.ket_jawaban_pending.all():
+                    #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
                     # Define the data for each cell in the row
                     row = [
@@ -1610,13 +1660,23 @@ def download_data_obat(request):
                 for queryset in queryset:
                     row_num += 1
 
-                    ket_pending_disput_queryset = ''
-                    for x in queryset.ket_pending_dispute.all():
-                        ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    if queryset.ket_pending_dispute.last() is None:
+                        ket_pending_disput_queryset = ''
+                    else:
+                        ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
 
-                    ket_jawaban_pending_queryset = ''
-                    for x in queryset.ket_jawaban_pending.all():
-                        ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+                    if queryset.ket_jawaban_pending.last() is None:
+                        ket_jawaban_pending_queryset = ''
+                    else:
+                        ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+
+                    # ket_pending_disput_queryset = ''
+                    # for x in queryset.ket_pending_dispute.all():
+                    #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+                    #
+                    # ket_jawaban_pending_queryset = ''
+                    # for x in queryset.ket_jawaban_pending.all():
+                    #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
                     # Define the data for each cell in the row
                     row = [
