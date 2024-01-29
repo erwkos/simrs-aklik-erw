@@ -584,7 +584,10 @@ def daftar_data_klaim(request):
         # cek jenis dispute
         list_jenis_dispute_mandatory = [JenisDisputeChoices.MEDIS, JenisDisputeChoices.KODING, JenisDisputeChoices.COB]
         list_jenis_dispute_df = list(dict.fromkeys(dataset['jenis_dispute']))
-        list_jenis_dispute_df.remove('')
+        for i in list_jenis_dispute_df:
+            if i == '':
+                list_jenis_dispute_df.remove('')
+
         for jenis in list_jenis_dispute_df:
             if jenis not in list_jenis_dispute_mandatory:
                 messages.warning(request, f'File yang diimport harus memiliki jenis dispute yang sesuai. '

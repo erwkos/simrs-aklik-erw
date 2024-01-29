@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'staff',
     'monitoring',
     'dokumentasi',
+    'supervisor',
+    'supervisorkp',
 
     # modules
     'import_export',
