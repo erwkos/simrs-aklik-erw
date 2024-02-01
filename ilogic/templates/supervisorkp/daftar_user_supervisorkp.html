@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load my_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Manajemen User
+                <a class="btn btn-primary" href="{% url 'supervisorkp:add_user_supervisorkp' %}">Add User</a>
+            </h5>
+        </div>
+    <div class="container-fluid">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+    </div>
+
+        <div class="container-fluid">
+            <br>
+            <div class="card-body">
+                <form class="row row-cols-md-auto g-3 align-items-center">
+                    {{ myFilter.form | crispy }}
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+        {{ myFilter.form.media }}
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <td>#</td>
+                            <td>Username</td>
+                            <td>First Name</td>
+                            <td>Last Name</td>
+                            <td>NPP</td>
+                            <td>Group</td>
+                            <td>Active</td>
+                            <td>Date Joined</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for obj in register_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ obj.username }}</td>
+                            <td>{{ obj.first_name }}</td>
+                            <td>{{ obj.last_name }}</td>
+                            <td>{{ obj.npp }}</td>
+                            <td>{{ obj.groups.all.0.name }}</td>
+                            <td>{{ obj.is_active }}</td>
+                            <td>{{ obj.date_joined }}</td>
+                            <td>
+                                <a href="{% url 'supervisorkp:update_user_supervisorkp' obj.id %}" class="btn btn-secondary">
+                                    Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td></td>
+                            <td colspan="7">Tidak ada data</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+    
+<!-- Pagination -->
+<div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if register_list.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if register_list.previous_page_number != 1 %}
+            <a href="?{% param_replace page=register_list.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ register_list.number }} of {{ register_list.paginator.num_pages }}
+
+        {% if register_list.has_next %}
+            {% if register_list.next_page_number != paginator.num_pages %}
+            <a href="?{% param_replace page=register_list.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=register_list.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>Register Klaim {{ register_list.start_index }} - {{ register_list.end_index }} </p>
+    </span>
+</div>
+{% endblock %}

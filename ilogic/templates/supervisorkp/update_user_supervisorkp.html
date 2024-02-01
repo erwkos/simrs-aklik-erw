@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Edit Status User :  {{ instance }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-6 m-l-30 mt-3">
+                <h6>Nama User : {{ instance.first_name }} {{ instance.last_name }}</h6>
+                <br>
+{#            {% if messages %}#}
+{#                {% for message in messages %}#}
+{#                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">#}
+{#                        {{ message }}#}
+{#                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>#}
+{#                    </div>#}
+{#                {% endfor %}#}
+{#            {% endif %}#}
+
+            <form method="POST">
+                {% csrf_token %}
+                {{form|crispy}}
+                <input type="hidden" name="action" value="update_status">
+                <button class="btn btn-primary w-100" type="submit">Simpan</button>
+            </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
