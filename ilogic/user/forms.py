@@ -32,7 +32,7 @@ class FormGroupChange(forms.ModelForm):
 
 class FormGroupNew(forms.ModelForm):
     groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB')),
+        queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB', 'supervisorkp')),
         widget=forms.CheckboxSelectMultiple
     )
 

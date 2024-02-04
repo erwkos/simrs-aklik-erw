@@ -170,7 +170,7 @@ class RegisterKlaim(models.Model):
 
 
 class KeteranganPendingDispute(models.Model):
-    ket_pending_dispute = models.CharField(max_length=500)
+    ket_pending_dispute = models.CharField(max_length=1000)
     verifikator = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -180,7 +180,7 @@ class KeteranganPendingDispute(models.Model):
 
 
 class JawabanPendingDispute(models.Model):
-    ket_jawaban_pending = models.CharField(max_length=500)
+    ket_jawaban_pending = models.CharField(max_length=1000)
     user_faskes = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

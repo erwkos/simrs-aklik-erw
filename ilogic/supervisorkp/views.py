@@ -1,16 +1,20 @@
+import datetime
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm, AdminPasswordChangeForm
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from openpyxl.workbook import Workbook
 
 from faskes.models import KantorCabang
-from klaim.models import RegisterKlaim
+from klaim.models import RegisterKlaim, DataKlaimCBG
 from supervisorkp.filters import UserSupervisorkpFilter
 from supervisorkp.forms import EditUserSupervisorkpForm, CreateUserSupervisorkpForm
 from user.decorators import check_device, permissions
 from user.models import User
+from verifikator.filters import DataKlaimCBGFilter
 
 
 @login_required
@@ -87,14 +91,18 @@ def add_user_supervisorkp(request):
                     fm = form.save()
                     add_kc.user.add(fm)
                     messages.success(request, 'Data user berhasil ditambahkan')
+                    return redirect(request.headers.get('Referer'))
                 except Exception as e:
                     messages.warning(request, 'Terdapat error pada saat penambahan user :', str(e))
+                    return redirect(request.headers.get('Referer'))
             elif add_kc is None:
                 try:
                     form.save()
                     messages.success(request, 'Data user berhasil ditambahkan')
+                    return redirect(request.headers.get('Referer'))
                 except Exception as e:
                     messages.warning(request, 'Terdapat error pada saat penambahan user :', str(e))
+                    return redirect(request.headers.get('Referer'))
         else:
             form = CreateUserSupervisorkpForm()
             messages.warning(request, 'Data user tidak berhasil ditambahkan')
@@ -124,5 +132,84 @@ def reset_password_supervisorkp(request, pk):
                'instance': user
                }
     return render(request, 'supervisorkp/reset_password_supervisorkp.html', context=context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisorkp'])
+def daftar_data_klaim_cbg(request):
+    queryset = DataKlaimCBG.objects.filter(status='Klaim',
+                                           prosesklaim=True,
+                                           prosespending=True)
+    # filter
+    myFilter = DataKlaimCBGFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    # export excel
+    export = request.GET.get('export')
+    if export == 'export':
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+            date=datetime.datetime.now().strftime('%Y-%m-%d'),
+        )
+        workbook = Workbook()
+
+        # Get active worksheet/tab
+        worksheet = workbook.active
+        worksheet.title = 'Data Klaim CBG'
+
+        # Define the titles for columns
+        columns = [
+            'id',
+            'namars',
+            'Status',
+            'NOSEP',
+            'prosesklaim',
+            'prosespending',
+            'prosesdispute',
+        ]
+        row_num = 1
+
+        # Assign the titles for each cell of the header
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+
+        # Iterate through all movies
+        for queryset in queryset:
+            row_num += 1
+
+            # Define the data for each cell in the row
+            row = [
+                queryset.id,
+                queryset.faskes.nama,
+                queryset.status,
+                queryset.NOSEP,
+                queryset.prosesklaim,
+                queryset.prosespending,
+                queryset.prosesdispute,
+            ]
+
+            # Assign the data for each cell of the row
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+
+        workbook.save(response)
+        return response
+
+    # pagination
+    paginator = Paginator(queryset, 10)
+    page_number = request.GET.get('page')
+    queryset = paginator.get_page(page_number)
+
+    context = {
+        'data_klaim': queryset,
+        'myFilter': myFilter,
+    }
+
+    return render(request, 'supervisorkp/daftar_data_klaim_cbg.html', context)
 
 

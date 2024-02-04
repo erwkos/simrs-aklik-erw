@@ -137,3 +137,8 @@ class HitungDataKlaimForm(forms.ModelForm):
             'nomor_register_klaim',
             'jenis_klaim',
         ]
+
+
+class UploadDataKlaimForm(forms.Form):
+    file = forms.FileField(label='Upload File Excel', required=True,
+                           help_text='Hanya menerima file dengan ekstensi `.xlsx` dan ukuran maksimal 2MB')

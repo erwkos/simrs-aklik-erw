@@ -40,7 +40,7 @@ from .forms import (
     StatusRegisterKlaimForm,
     ImportDataKlaimForm,
     DataKlaimVerifikatorForm, FinalisasiVerifikatorForm, HitungDataKlaimForm, KeteranganPendingForm,
-    STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR
+    STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR, UploadDataKlaimForm
 )
 from user.decorators import permissions, check_device
 from user.models import User
@@ -520,7 +520,14 @@ def daftar_data_klaim(request):
         return response
     if request.POST.get('import'):
         # ambil file excel dan buat menjadi dataframe
-        file = request.FILES['excel']
+        try:
+            file = request.FILES['excel']
+            if file.name.split('.')[-1] != 'xlsx':
+                raise ValidationError('Hanya menerima file dengan ekstensi `.xlsx`')
+        except Exception as e:
+            messages.warning(request, f'Terdapat Error dalam proses upload dengan keterangan: {e}')
+            return redirect(request.headers.get('Referer'))
+
         df_raw = pd.read_excel(file)
 
         # replace nan dengan kosong
@@ -852,11 +859,17 @@ def update_finalisasi_data_klaim(request, pk):
     status_form = FinalisasiVerifikatorForm(instance=instance)
     if request.method == 'POST' and request.POST.get('action') == 'update_status':
         status_form = FinalisasiVerifikatorForm(instance=instance, data=request.POST)
+        print(instance.no_ba_lengkap)
         if instance.verifikator != request.user:
             return HttpResponse(content="Anda Tidak Memiliki Hak Akses, Harap Menghubungi Admin!", status=403)
-        if instance.sisa_klaim > 0:
+        if instance.sisa_klaim > 0 and instance.no_ba_lengkap is None:
+            messages.warning(request, "Tidak dapat difinalisasi! Masih ada sisa klaim yang belum diverifikasi "
+                                      "dan BA Lengkap belum diupdate. Terima Kasih.")
+        elif instance.sisa_klaim > 0:
             messages.warning(request, "Tidak dapat difinalisasi! Masih ada sisa klaim yang belum diverifikasi. "
                                       "Terima Kasih.")
+        elif instance.no_ba_lengkap is None:
+            messages.warning(request, "Tidak dapat difinalisasi! BA Lengkap belum diupdate. Terima Kasih.")
         elif status_form.is_valid() and instance.sisa_klaim == 0:
             status_form.save()
             if instance.is_final is False:
@@ -866,7 +879,9 @@ def update_finalisasi_data_klaim(request, pk):
                     or instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN
                     or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER
                     or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN):
-                data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).update(status=StatusDataKlaimChoices.KLAIM)
+                data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).update(status=StatusDataKlaimChoices.KLAIM,
+                                                                              prosespending=False,
+                                                                              prosesdispute=False)
                 data_klaim.filter(status=StatusDataKlaimChoices.PENDING).update(prosespending=True)
                 data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).update(prosespending=True, prosesdispute=True)
                 data_klaim.update(prosesklaim=True)
