@@ -207,6 +207,12 @@
                                     Daftar Register Klaim
                                 </a>
                             </li>
+                            <li class="pc-item">
+                                <a class="pc-link" href="{% url 'staff:daftar_proses_boa' %}">
+                                    <span class="pc-badge bg-danger">{{ request.count_registerklaim_belum_boa }}</span>
+                                    Proses BOA Register Klaim
+                                </a>
+                            </li>
                         </ul>
                     </li>
 
@@ -532,6 +538,14 @@
                             <li class="pc-item">
                                 <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_obat_supervisor' %}">
                                     Monitoring Data Klaim Obat</a>
+                            </li>
+                            <li class="pc-item">
+                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG_supervisor' %}">
+                                    Monitoring Data Klaim Pending/Dispute CBG</a>
+                            </li>
+                            <li class="pc-item">
+                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_obat_supervisor' %}">
+                                    Monitoring Data Klaim Pending/Dispute Obat</a>
                             </li>
 {#                            <li class="pc-item">#}
 {#                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_hitung_supervisor' %}">#}

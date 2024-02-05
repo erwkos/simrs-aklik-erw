@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load my_tags %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+  <h2>Form Edit Data Pola Rules</h2>
+  <form method="POST" action="">
+      {% csrf_token %}
+      <div class="row">
+    <div class="col-12 mb-2">
+      <label for="nama_rules" class="form-label">Nama Rules*:</label>
+      <input type="text" class="form-control" id="nama_rules" name="nama_rules" value="{{ polarules.nama_rules }}" required>
+    </div>
+
+<div class="col-6 mb-2">
+  <label for="diagnosis_utama" class="form-label">Diagnosis Utama: <b style="color: #000000;">{{ polarules.diagnosis_utama }}</b></label>
+  <div id="diagnosis-utama-container">
+    <div class="input-group mb-2">
+      <input type="text" class="form-control" name="diagnosis_utama">
+      <button type="button" class="btn btn-success" onclick="tambahDiagnosisUtama()">+</button>
+    </div>
+  </div>
+  <!-- Input tersembunyi untuk menyimpan nilai gabungan -->
+  <input type="hidden" id="diagnosis_utama_combined" name="diagnosis_utama_combined">
+</div>
+<!-- Di dalam form -->
+<div class="col-6 mb-2">
+  <label for="diagnosis_sekunder" class="form-label">Diagnosis Sekunder: <b style="color: #000000;">{{ polarules.diagnosis_sekunder }}</b></label>
+  <div id="diagnosis-sekunder-container">
+    <div class="input-group mb-2">
+      <input type="text" class="form-control" name="diagnosis_sekunder">
+      <button type="button" class="btn btn-success" onclick="tambahDiagnosisSekunder()">+</button>
+    </div>
+  </div>
+  <!-- Input tersembunyi untuk menyimpan nilai gabungan -->
+  <input type="hidden" id="diagnosis_sekunder_combined" name="diagnosis_sekunder_combined">
+</div>
+<div class="col-12 mb-2">
+  <label for="prosedur" class="form-label">Prosedur: <b style="color: #000000;">{{ polarules.prosedur }}</b></label>
+  <div id="prosedur-container">
+    <div class="input-group mb-2">
+      <input type="text" class="form-control" name="prosedur">
+      <button type="button" class="btn btn-success" onclick="tambahProsedur()">+</button>
+    </div>
+  </div>
+  <!-- Input tersembunyi untuk menyimpan nilai gabungan -->
+  <input type="hidden" id="prosedur_combined" name="prosedur_combined">
+</div>
+    <div class="col-4 mb-2">
+      <label for="jenis_pelayanan" class="form-label">Jenis Pelayanan: </label>
+      <input type="text" class="form-control" id="jenis_pelayanan" name="jenis_pelayanan" value="{{ polarules.jenis_pelayanan }}">
+    </div>
+    <div class="col-4 mb-2">
+      <label for="cmg" class="form-label">CMG: </label>
+      <input type="text" class="form-control" id="cmg" name="cmg" value="{{ polarules.cmg }}">
+    </div>
+    <div class="col-4 mb-2">
+        <label for="los" class="form-label">LOS: <b style="color: #000000;">{{ polarules.los }}</b></label>
+      <input type="number" class="form-control" id="los" name="los" value="{{ polarules.los }}">
+    </div>
+    <div class="col-4 mb-2">
+      <label for="cbg" class="form-label">CBG: </label>
+      <input type="text" class="form-control" id="cbg" name="cbg" value="{{ polarules.cbg }}">
+    </div>
+    <div class="col-4 mb-2">
+      <label for="severity_level" class="form-label">Severity Level: </label>
+      <input type="text" class="form-control" id="severity_level" name="severity_level" value="{{ polarules.severity_level }}">
+    </div>
+    <div class="col-4 mb-2">
+      <label for="jenis_kelamin" class="form-label">Jenis Kelamin: </label>
+      <input type="text" class="form-control" id="jenis_kelamin" name="jenis_kelamin" value="{{ polarules.jenis_kelamin }}">
+    </div>
+    <div class="col-4 mb-3">
+      <label for="models_polarules" class="form-label">Models:</label>
+      <input type="text" class="form-control" id="models" name="models_polarules" value="{{ polarules.models_polarules }}">
+    </div>
+    <div class="col-4 mb-2">
+        <label for="usia" class="form-label">Usia: <b style="color: #000000;">{{ polarules.usia }}</b></label>
+      <input type="number" class="form-control" id="usia" name="usia" value="{{ polarules.usia }}">
+    </div>
+    <div class="mb-2">
+      <label for="pesan" class="form-label">Pesan*:</label>
+        <textarea class="form-control" id="pesan" name="pesan" required>{{ polarules.pesan }}</textarea>
+    </div>
+      </div>
+    <button type="submit" class="btn btn-primary" onclick="updateCombinedValue(), updateProsedurCombinedValue(), updateCombinedDiagnosisUtamaValue()">Edit Entry Logic</button>
+  </form>
+</div>
+
+<!-- Tambahkan Bootstrap JS dan Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{#    diagnosis utama#}
+    <script>
+  function tambahDiagnosisUtama() {
+    // Mendapatkan container diagnosis sekunder
+    const diagnosisUtamaContainer = document.getElementById('diagnosis-utama-container');
+
+    // Mendapatkan semua input diagnosis sekunder
+    const inputs = diagnosisUtamaContainer.querySelectorAll('input[name="diagnosis_utama"]');
+
+    // Menghilangkan nilai yang kosong dari input
+    const nonEmptyValues = Array.from(inputs).map(input => input.value.trim()).filter(value => value !== '');
+
+    // Menggabungkan nilai dari semua input menjadi satu string, dipisahkan dengan titik koma dan spasi
+    const combinedValue = nonEmptyValues.join(';');
+
+    // Setel nilai kombinasi ke input tersembunyi
+    document.getElementById('diagnosis_utama_combined').value = combinedValue;
+
+    // Membuat elemen input baru
+    const newInput = document.createElement('div');
+    newInput.className = 'input-group mb-2';
+    newInput.innerHTML = `
+      <input type="text" class="form-control" name="diagnosis_utama" required>
+      <button type="button" class="btn btn-danger" onclick="hapusDiagnosisUtama(this)">-</button>
+    `;
+    diagnosisUtamaContainer.appendChild(newInput);
+
+    // Memanggil kembali fungsi untuk memperbarui nilai combined setelah menambahkan input
+    updateCombinedDiagnosisUtamaValue();
+  }
+
+  function hapusDiagnosisUtama(element) {
+    // Mendapatkan container diagnosis sekunder
+    const diagnosisSekunderContainer = document.getElementById('diagnosis-utama-container');
+
+    // Menghapus elemen input yang terkait dengan tombol hapus
+    diagnosisSekunderContainer.removeChild(element.parentElement);
+
+    // Memanggil kembali fungsi untuk memperbarui nilai combined setelah menghapus input
+    updateCombinedDiagnosisUtamaValue();
+  }
+
+  function updateCombinedDiagnosisUtamaValue() {
+    // Mendapatkan container diagnosis sekunder
+    const diagnosisUtamaContainer = document.getElementById('diagnosis-utama-container');
+
+    // Mendapatkan semua input diagnosis sekunder
+    const inputs = diagnosisUtamaContainer.querySelectorAll('input[name="diagnosis_utama"]');
+
+    // Menghilangkan nilai yang kosong dari input
+    const nonEmptyValues = Array.from(inputs).map(input => input.value.trim()).filter(value => value !== '');
+
+    // Menggabungkan nilai dari semua input menjadi satu string, dipisahkan dengan titik koma dan spasi
+    const combinedValue = nonEmptyValues.join(';');
+
+    // Setel nilai kombinasi ke input tersembunyi
+    document.getElementById('diagnosis_utama_combined').value = combinedValue;
+  }
+</script>
+{#    diagnosis utama#}
+{#    diagnosis sekunder#}
+    <script>
+  function tambahDiagnosisSekunder() {
+    // Mendapatkan container diagnosis sekunder
+    const diagnosisSekunderContainer = document.getElementById('diagnosis-sekunder-container');
+
+    // Mendapatkan semua input diagnosis sekunder
+    const inputs = diagnosisSekunderContainer.querySelectorAll('input[name="diagnosis_sekunder"]');
+
+    // Menghilangkan nilai yang kosong dari input
+    const nonEmptyValues = Array.from(inputs).map(input => input.value.trim()).filter(value => value !== '');
+
+    // Menggabungkan nilai dari semua input menjadi satu string, dipisahkan dengan titik koma dan spasi
+    const combinedValue = nonEmptyValues.join('; ');
+
+    // Setel nilai kombinasi ke input tersembunyi
+    document.getElementById('diagnosis_sekunder_combined').value = combinedValue;
+
+    // Membuat elemen input baru
+    const newInput = document.createElement('div');
+    newInput.className = 'input-group mb-2';
+    newInput.innerHTML = `
+      <input type="text" class="form-control" name="diagnosis_sekunder" required>
+      <button type="button" class="btn btn-danger" onclick="hapusDiagnosisSekunder(this)">-</button>
+    `;
+
+    // Menambahkan elemen input baru ke dalam container
+    diagnosisSekunderContainer.appendChild(newInput);
+
+    // Memanggil kembali fungsi untuk memperbarui nilai combined setelah menambahkan input
+    updateCombinedValue();
+  }
+
+  function hapusDiagnosisSekunder(element) {
+    // Mendapatkan container diagnosis sekunder
+    const diagnosisSekunderContainer = document.getElementById('diagnosis-sekunder-container');
+
+    // Menghapus elemen input yang terkait dengan tombol hapus
+    diagnosisSekunderContainer.removeChild(element.parentElement);
+
+    // Memanggil kembali fungsi untuk memperbarui nilai combined setelah menghapus input
+    updateCombinedValue();
+  }
+
+  function updateCombinedValue() {
+    // Mendapatkan container diagnosis sekunder
+    const diagnosisSekunderContainer = document.getElementById('diagnosis-sekunder-container');
+
+    // Mendapatkan semua input diagnosis sekunder
+    const inputs = diagnosisSekunderContainer.querySelectorAll('input[name="diagnosis_sekunder"]');
+
+    // Menghilangkan nilai yang kosong dari input
+    const nonEmptyValues = Array.from(inputs).map(input => input.value.trim()).filter(value => value !== '');
+
+    // Menggabungkan nilai dari semua input menjadi satu string, dipisahkan dengan titik koma dan spasi
+    const combinedValue = nonEmptyValues.join(';');
+
+    // Setel nilai kombinasi ke input tersembunyi
+    document.getElementById('diagnosis_sekunder_combined').value = combinedValue;
+  }
+</script>
+{#    diagnosis sekunder#}
+{#    prosedur#}
+    <script>
+  function tambahProsedur() {
+    const diagnosisSekunderContainer = document.getElementById('prosedur-container');
+    const inputs = diagnosisSekunderContainer.querySelectorAll('input[name="prosedur"]');
+    const nonEmptyValues = Array.from(inputs).map(input => input.value.trim()).filter(value => value !== '');
+    const combinedValue = nonEmptyValues.join(';');
+    document.getElementById('prosedur_combined').value = combinedValue;
+    const newInput = document.createElement('div');
+    newInput.className = 'input-group mb-2';
+    newInput.innerHTML = `
+      <input type="text" class="form-control" name="prosedur" required>
+      <button type="button" class="btn btn-danger" onclick="hapusProsedur(this)">-</button>
+    `;
+    diagnosisSekunderContainer.appendChild(newInput);
+    updateProsedurCombinedValue();
+  }
+
+  function hapusProsedur(element) {
+    const ProsedurContainer = document.getElementById('prosedur-container');
+    ProsedurContainer.removeChild(element.parentElement);
+    updateProsedurCombinedValue();
+  }
+
+  function updateProsedurCombinedValue() {
+    const ProsedurContainer = document.getElementById('prosedur-container');
+    const inputs = ProsedurContainer.querySelectorAll('input[name="prosedur"]');
+    const nonEmptyValues = Array.from(inputs).map(input => input.value.trim()).filter(value => value !== '');
+    const combinedValue = nonEmptyValues.join(';');
+    document.getElementById('prosedur_combined').value = combinedValue;
+  }
+</script>
+{#    prosedur#}
+{% endblock %}

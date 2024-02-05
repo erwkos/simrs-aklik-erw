@@ -119,5 +119,9 @@ class DaftarClaimCount:
 
                     request.count_registerclaim = count_pengajuan
 
+                    # hitung berapa register klaim yang final belum di BOA
+                    registerklaim_belum_boa = obj.filter(status=StatusRegisterChoices.SELESAI, prosesboa=False)
+                    request.count_registerklaim_belum_boa = registerklaim_belum_boa.count()
+
         response = self.get_response(request)
         return response

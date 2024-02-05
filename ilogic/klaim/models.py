@@ -73,6 +73,9 @@ class RegisterKlaim(models.Model):
     tgl_aju = models.DateTimeField(blank=True, null=True) # ganti jadi date time
     nomor_surat_pengajuan_rs = models.CharField(max_length=50) # default nya di hapus saja
     is_final = models.BooleanField(default=False)
+    prosesboa = models.BooleanField(default=False)
+    tgl_boa = models.DateField(blank=True, null=True)
+    is_potongklaim = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

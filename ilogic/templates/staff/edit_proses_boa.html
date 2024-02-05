@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+    .OLevelResult {
+        display: none;
+    }
+
+    .OLevelResult.active {
+        display: block;
+    }
+</style>
+<div class="col-12">
+    <div class="card-body">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>Detail - Register Klaim</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 m-l-30 mt-4">
+                        {% include 'base_detail_register_klaim.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header">
+            <h5>Aksi Staf Administrasi Klaim</h5>
+          </div>
+          <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <input type="hidden" name="action" value="update_status">
+                <button class="btn btn-primary w-100" type="submit">Simpan</button>
+            </form>
+          </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

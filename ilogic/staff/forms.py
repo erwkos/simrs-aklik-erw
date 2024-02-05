@@ -25,10 +25,18 @@ class DateInputMaxToday(forms.DateInput):
 
 class StatusRegisterKlaimForm(forms.ModelForm):
     status = forms.ChoiceField(choices=STATUS_CHOICES_TERIMA_REGISTER_STAFAK)
+    tgl_terima = forms.DateField(widget=DateInputMaxToday, required=False)
+    no_ba_terima = forms.CharField(required=False, min_length=5)
+    verifikator = forms.ModelChoiceField(queryset=User.objects.all(), required=False)
+    keterangan = forms.CharField(min_length=5, required=False)
 
     class Meta:
         model = RegisterKlaim
-        fields = ['status']
+        fields = ['status',
+                  'tgl_terima',
+                  'no_ba_terima',
+                  'verifikator',
+                  'keterangan']
 
 
 class PilihVerifikatorRegisterKlaimForm(forms.ModelForm):
@@ -57,3 +65,10 @@ class IsActiveForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['is_staff']
+
+
+class ProsesBOAForm(forms.ModelForm):
+    tgl_boa = forms.DateField(widget=DateInputMaxToday, required=True)
+    class Meta:
+        model = RegisterKlaim
+        fields = ['tgl_boa']

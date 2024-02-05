@@ -8,9 +8,9 @@ class StatusRegisterChoices(models.TextChoices):
     VERIFIKASI = 'Verifikasi', _('Verifikasi')
     SELESAI = 'Selesai', _('Selesai')
     DIKEMBALIKAN = 'Dikembalikan', _('Dikembalikan')
-    PROSES_FPK = 'Proses FPK', _('Proses FPK')  # FPHV (formulir persetujuan hasil verifikasi)
-    PROSES_BOA = 'Proses BOA', _('Proses BOA')
-    PEMBAYARAN = 'Pembayaran', _('Pembayaran')
+    # PROSES_FPK = 'Proses FPK', _('Proses FPK')  # FPHV (formulir persetujuan hasil verifikasi)
+    # PROSES_BOA = 'Proses BOA', _('Proses BOA')
+    # PEMBAYARAN = 'Pembayaran', _('Pembayaran')
 
 
 class JenisDisputeChoices(models.TextChoices):

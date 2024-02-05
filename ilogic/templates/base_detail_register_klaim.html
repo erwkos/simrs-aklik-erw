@@ -2,7 +2,7 @@
 <tbody>
   <tr>
     <td><b>NO REG</b></td>
-    <td><button type="button" class="btn btn-primary btn-sm">{{register.nomor_register_klaim}}</button></td>
+    <td>{{register.nomor_register_klaim}}</td>
   </tr>
   <tr>
     <td><b>JENIS KLAIM</b></td>
@@ -68,6 +68,22 @@
   <tr>
     <td><b>TANGGAL BAHV</b></td>
     <td>{{ register.tgl_ba_verif | date:'d-M-Y' }}</td>
+  </tr>
+  <tr>
+    <td><b>Proses BOA</b></td>
+      {% if register.prosesboa == True %}
+    <td><button class="btn btn-sm btn-success"><i class="fas fa-check"></i></button></td>
+      {% elif register.prosesboa == False %}
+    <td><button class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button></td>
+      {% endif %}
+  </tr>  
+  <tr>
+    <td><b>Potong Klaim</b></td>
+      {% if register.is_potongklaim == True %}
+    <td><button class="btn btn-sm btn-success"><i class="fas fa-cut"></i></button></td>
+      {% elif register.is_potongklaim == False %}
+    <td><i class="fas fa-ellipsis-h"></i></td>
+      {% endif %}
   </tr>
 </tbody>
 </table>

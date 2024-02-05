@@ -111,7 +111,7 @@ def monitoring_data_klaim_hitung_supervisor(request):
 @check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_pending_dispute_CBG(request):
-    status_klaim = ('Pending', 'Dispute', 'Pembahasan')
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
                                            request.user.kantorcabang_set.all().first().kode_cabang,
                                            prosesklaim=True,
@@ -154,11 +154,11 @@ def monitoring_data_klaim_CBG_stafak(request):
 @check_device
 @permissions(role=['adminAK'])
 def api_json_data_klaim_pending_dispute_CBG_stafak(request):
-    status_klaim = ('Pending', 'Dispute', 'Pembahasan')
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
     queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
                                            request.user.kantorcabang_set.all().first().kode_cabang,
                                            prosesklaim=True,
-                                           status__in=status_klaim).\
+                                               status__in=status_klaim).\
         values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
                'tgl_SLA')
     data = list(queryset)
@@ -171,6 +171,29 @@ def api_json_data_klaim_pending_dispute_CBG_stafak(request):
 def monitoring_data_klaim_pending_dispute_CBG_stafak(request):
     context = {}
     return render(request, 'monitoring/monitoring_data_klaim_pending_dispute_CBG_stafak.html', context=context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def api_json_data_klaim_pending_dispute_CBG_supervisor(request):
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
+    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
+                                           request.user.kantorcabang_set.all().first().kode_cabang,
+                                           prosesklaim=True,
+                                           status__in=status_klaim).\
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
+               'tgl_SLA')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def monitoring_data_klaim_pending_dispute_CBG_supervisor(request):
+    context = {}
+    return render(request, 'monitoring/monitoring_data_klaim_pending_dispute_CBG_supervisor.html', context=context)
 
 
 ############################
@@ -244,7 +267,7 @@ def monitoring_data_klaim_obat_supervisor(request):
 @check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_pending_dispute_obat_verifikator(request):
-    status_klaim = ('Pending', 'Dispute', 'Pembahasan')
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
     queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
                                             request.user.kantorcabang_set.all().first().kode_cabang,
                                             prosesklaim=True,
@@ -267,7 +290,7 @@ def monitoring_data_klaim_pending_dispute_obat_verifikator(request):
 @check_device
 @permissions(role=['adminAK'])
 def api_json_data_klaim_pending_dispute_obat_stafak(request):
-    status_klaim = ('Pending', 'Dispute', 'Pembahasan')
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
     queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
                                             request.user.kantorcabang_set.all().first().kode_cabang,
                                             prosesklaim=True,
@@ -284,3 +307,26 @@ def api_json_data_klaim_pending_dispute_obat_stafak(request):
 def monitoring_data_klaim_pending_dispute_obat_stafak(request):
     context = {}
     return render(request, 'monitoring/monitoring_data_klaim_pending_dispute_obat_stafak.html', context=context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def api_json_data_klaim_pending_dispute_obat_supervisor(request):
+    status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
+    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
+                                            request.user.kantorcabang_set.all().first().kode_cabang,
+                                            prosesklaim=True,
+                                            status__in=status_klaim). \
+        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
+               'KdJenis', 'tgl_SLA')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisor'])
+def monitoring_data_klaim_pending_dispute_obat_supervisor(request):
+    context = {}
+    return render(request, 'monitoring/monitoring_data_klaim_pending_dispute_obat_supervisor.html', context=context)

@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block content %}
+{% if messages %}
+<div class="col-12">
+    <div class="card-body">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+    </div>
+</div>
+{% endif %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            {% if progressversion.is_aju is False and progressversion.open_edit is False %}
+            <h5>Daftar Entry Logic Version: 1.{{ version_selected }} &nbsp;
+                {% if saya_entrilogik %}
+                <a href="/dokumentasi/list/pola-rules/add" class="btn btn-primary">Add</a> </h5>
+                <form method="POST" action="/dokumentasi/list/pola-rules/ajukan/{{ progressversion.id }}"  onsubmit="return confirm('Apakah Anda yakin ingin mengajukan Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-primary">Ajukan</button></form>
+                {% else %}
+                    </h5>
+                {% endif %}
+            {% elif progressversion.is_aju is False and progressversion.open_edit is True %}
+            <h5>Daftar Entry Logic Version: 1.{{ version_selected }} &nbsp;
+                {% if saya_entrilogik %}
+                    <a href="/dokumentasi/list/pola-rules/add/same-version" class="btn btn-primary">Add Data to Same Version</a> </h5>
+                    <form method="POST" action="/dokumentasi/list/pola-rules/ajukan/{{ progressversion.id }}"  onsubmit="return confirm('Apakah Anda yakin ingin menerapkan dan mengajukan ulang Versi Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-success">Ajukan Ulang</button></form>
+                {% else %}
+                    </h5>
+                {% endif %}
+        {% endif %}
+            {% if progressversion.is_aju is True and progressversion.is_approved_asdep is False %}
+                <h5>Daftar Entry Logic Version: 1.{{ version_selected }}
+                {% if saya_asdep %}
+                <a href="/dokumentasi/list/pola-rules/reject" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin MENOLAK PENGAJUAN Entry Logic ini?')">Tolak Pengajuan</a>
+                </h5>
+                <form method="POST" action="/dokumentasi/list/pola-rules/approved/asdep/{{ progressversion.id }}"  onsubmit="return confirm('Apakah Anda yakin ingin menyetujui Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-success">Approve</button></form>
+                    {% endif %}
+            {% endif %}
+            {% if progressversion.is_aju is True and progressversion.is_approved_asdep is True and progressversion.is_approved_depdirbid is False %}
+                <h5>Daftar Entry Logic Version: 1.{{ version_selected }}
+
+                {% if saya_depdirbid %}
+                <a href="/dokumentasi/list/pola-rules/reject" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin MENOLAK PENGAJUAN Entry Logic ini?')">Tolak Pengajuan</a>
+                </h5>
+                <form method="POST" action="/dokumentasi/list/pola-rules/approved/depdirbid/{{ progressversion.id }}"  onsubmit="return confirm('Apakah Anda yakin ingin menyetujui Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-info">Approve</button></form>
+                    {% endif %}
+            {% endif %}
+
+            {% if progressversion.is_aju is True and progressversion.is_approved_asdep is True and progressversion.is_approved_depdirbid is True %}
+            <h5>Daftar Entry Logic Version: 1.{{ version_selected }} &nbsp;
+                {% if progressversion.open_edit is False %}
+                    <a href="/dokumentasi/list/pola-rules/add" class="btn btn-primary">Add</a> </h5>
+                <form method="POST" action="/dokumentasi/list/pola-rules/edit/open"  onsubmit="return confirm('Apakah Anda Yakin untuk memasuki Mode Open Edit? Segala Perubahan Tidak Dapat Di-Undo dan Version Harus Diajukan Ulang.')">{% csrf_token %}<button type="submit" class="btn btn-success">Open Edit Last Version</button></form>
+                {% else %}
+                    <a href="/dokumentasi/list/pola-rules/add/same-version" class="btn btn-primary">Add Data to Same Version</a> </h5>
+                    <form method="POST" action="/dokumentasi/list/pola-rules/ajukan/{{ progressversion.id }}"  onsubmit="return confirm('Apakah Anda yakin ingin menerapkan dan mengajukan ulang Versi Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-success">Ajukan Ulang</button></form>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">ACTION</th>
+                        <th scope="col">NAMA RULES</th>
+                        <th scope="col">DIAGNOSIS UTAMA</th>
+                        <th scope="col">DIAGNOSIS SEKUNDER</th>
+                        <th scope="col">PROSEDUR</th>
+                        <th scope="col">JENIS PELAYANAN</th>
+                        <th scope="col">CMG</th>
+                        <th scope="col">LOS</th>
+                        <th scope="col">CBG</th>
+                        <th scope="col">SEVERITY LEVEL</th>
+                        <th scope="col">JENIS KELAMIN</th>
+                        <th scope="col">MODELS</th>
+                        <th scope="col">USIA</th>
+                        <th scope="col">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PESAN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <th scope="col">WAKTU DIAJUKAN</th>
+                        <th scope="col">WAKTU DIUPDATE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% if progressversion.is_aju is False %}
+                    {% for x in queryset %}
+                    <tr><td>{{ forloop.counter }}</td>
+                        <td><div class="row"> <div class="col-6"> <form method="POST" action="/dokumentasi/list/pola-rules/delete/{{ x.id }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-danger">X</button></form></div>
+                        <div class="col-6"> <a href="/dokumentasi/list/pola-rules/edit/{{ x.id }}" class="btn btn-success">EDIT</a></div></div></td>
+                        <td>{{ x.nama_rules }}</td>
+                        <td>{{ x.diagnosis_utama }}</td>
+                        <td>{{ x.diagnosis_sekunder }}</td>
+                        <td>{{ x.prosedur }}</td>
+                        <td>{{ x.jenis_pelayanan }}</td>
+                        <td>{{ x.cmg }}</td>
+                        <td>{{ x.los }}</td>
+                        <td>{{ x.cbg }}</td>
+                        <td>{{ x.severity_level }}</td>
+                        <td>{{ x.jenis_kelamin }}</td><td>{{ x.models_polarules }}<td>
+                        <td>{{ x.usia }}</td>
+                        <td><textarea class="form-control"  rows="4" cols="50" disabled>{{ x.pesan }}</textarea></td>
+                        <td>{{ x.created_at }}</td>
+                        <td>{{ x.updated_at }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% elif progressversion.is_aju is True and progressversion.is_approved_asdep is True and progressversion.is_approved_depdirbid is True and progressversion.open_edit is True %}
+                        <tr>
+                        <td colspan="16" class="bg-success text-light">Currently in Open Edit Mode | Entry Logic Current Running Version: 1.{{ progressversion.version }}</td>
+                        </tr>
+
+                    {% for x in queryset %}
+                    <tr>
+{#                        <td>{% if x.is_aju %}Diajukan{% else %}Belum Diajukan{% endif %}{% if x.is_approved_asdep %}, Approved by Asdep{% endif %}{% if x.is_approved_depdirbid %}, Approved by Depdirbid{% endif %}</td> {# Nanti dimasukan isian dari models polarules #}
+                        <td>{{ forloop.counter }}</td>
+                        <td><div class="row"> <div class="col-6"> <form method="POST" action="/dokumentasi/list/pola-rules/delete/{{ x.id }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-danger">X</button></form></div>
+                        <div class="col-6"> <a href="/dokumentasi/list/pola-rules/edit/{{ x.id }}" class="btn btn-success">EDIT</a></div></div></td>
+                        <td>{{ x.nama_rules }}</td>
+                        <td>{{ x.diagnosis_utama }}</td>
+                        <td>{{ x.diagnosis_sekunder }}</td>
+                        <td>{{ x.prosedur }}</td>
+                        <td>{{ x.jenis_pelayanan }}</td>
+                        <td>{{ x.cmg }}</td>
+                        <td>{{ x.los }}</td>
+                        <td>{{ x.cbg }}</td>
+                        <td>{{ x.severity_level }}</td>
+                        <td>{{ x.jenis_kelamin }}</td><td>{{ x.models_polarules }}<td>
+                        <td>{{ x.usia }}</td>
+                        <td><textarea class="form-control"  rows="4" cols="50" disabled>{{ x.pesan }}</textarea></td>
+                        <td>{{ x.created_at }}</td>
+                        <td>{{ x.updated_at }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% elif progressversion.is_aju is True and progressversion.is_approved_asdep is True and progressversion.is_approved_depdirbid is True %}
+                        <tr>
+                        <td colspan="16" class="bg-primary text-light">Entry Logic Current Running Version: 1.{{ progressversion.version }}</td>
+                        </tr>
+
+                    {% for x in queryset %}
+                    <tr>
+{#                        <td>{% if x.is_aju %}Diajukan{% else %}Belum Diajukan{% endif %}{% if x.is_approved_asdep %}, Approved by Asdep{% endif %}{% if x.is_approved_depdirbid %}, Approved by Depdirbid{% endif %}</td> {# Nanti dimasukan isian dari models polarules #}
+                        <td>{{ forloop.counter }}</td>
+                        <td>View Only (Version : 1.{{ x.progress_version.version }})</td>
+                        <td>{{ x.nama_rules }}</td>
+                        <td>{{ x.diagnosis_utama }}</td>
+                        <td>{{ x.diagnosis_sekunder }}</td>
+                        <td>{{ x.prosedur }}</td>
+                        <td>{{ x.jenis_pelayanan }}</td>
+                        <td>{{ x.cmg }}</td>
+                        <td>{{ x.los }}</td>
+                        <td>{{ x.cbg }}</td>
+                        <td>{{ x.severity_level }}</td>
+                        <td>{{ x.jenis_kelamin }}</td><td>{{ x.models_polarules }}<td>
+                        <td>{{ x.usia }}</td>
+                        <td><textarea class="form-control"  rows="4" cols="50" disabled>{{ x.pesan }}</textarea></td>
+                        <td>{{ x.created_at }}</td>
+                        <td>{{ x.updated_at }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% elif progressversion.is_aju is True and progressversion.is_approved_asdep is True and progressversion.is_approved_depdirbid is False %}
+                        <tr>
+                        <td colspan="16" class="bg-success text-light">Sedang Menunggu Approval Dari Depdirbid</td>
+                        </tr>
+
+                    {% for x in queryset %}
+                    <tr>
+{#                        <td>{% if x.is_aju %}Diajukan{% else %}Belum Diajukan{% endif %}{% if x.is_approved_asdep %}, Approved by Asdep{% endif %}{% if x.is_approved_depdirbid %}, Approved by Depdirbid{% endif %}</td> {# Nanti dimasukan isian dari models polarules #}
+                        <td>{{ forloop.counter }}</td>
+                        <td>View Only (Version : 1.{{ x.progress_version.version }})</td>
+                        <td>{{ x.nama_rules }}</td>
+                        <td>{{ x.diagnosis_utama }}</td>
+                        <td>{{ x.diagnosis_sekunder }}</td>
+                        <td>{{ x.prosedur }}</td>
+                        <td>{{ x.jenis_pelayanan }}</td>
+                        <td>{{ x.cmg }}</td>
+                        <td>{{ x.los }}</td>
+                        <td>{{ x.cbg }}</td>
+                        <td>{{ x.severity_level }}</td>
+                        <td>{{ x.jenis_kelamin }}</td><td>{{ x.models_polarules }}<td>
+                        <td>{{ x.usia }}</td>
+                        <td><textarea class="form-control"  rows="4" cols="50" disabled>{{ x.pesan }}</textarea></td>
+                        <td>{{ x.created_at }}</td>
+                        <td>{{ x.updated_at }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% elif progressversion.is_aju is True %}
+                        <tr>
+                        <td colspan="16" class="bg-warning text-light">Sedang Diajukan - Menunggu Konfirmasi Asdep</td>
+                        </tr>
+                    {% for x in queryset %}
+                    <tr>
+{#                        <td>{% if x.is_aju %}Diajukan{% else %}Belum Diajukan{% endif %}{% if x.is_approved_asdep %}, Approved by Asdep{% endif %}{% if x.is_approved_depdirbid %}, Approved by Depdirbid{% endif %}</td> {# Nanti dimasukan isian dari models polarules #}
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>View Only (Version : 1.{{ x.progress_version.version }})</td>
+                        <td>{{ x.nama_rules }}</td>
+                        <td>{{ x.diagnosis_utama }}</td>
+                        <td>{{ x.diagnosis_sekunder }}</td>
+                        <td>{{ x.prosedur }}</td>
+                        <td>{{ x.jenis_pelayanan }}</td>
+                        <td>{{ x.cmg }}</td>
+                        <td>{{ x.los }}</td>
+                        <td>{{ x.cbg }}</td>
+                        <td>{{ x.severity_level }}</td>
+                        <td>{{ x.jenis_kelamin }}</td><td>{{ x.models_polarules }}<td>
+                        <td>{{ x.usia }}</td>
+                        <td><textarea class="form-control"  rows="4" cols="50" disabled>{{ x.pesan }}</textarea></td>
+                        <td>{{ x.created_at }}</td>
+                        <td>{{ x.updated_at }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                        <tr>
+                        <td colspan="16" class="bg-primary text-light">Tambahkan Entry Logic</td>
+                        </tr>
+                    {% for x in queryset %}
+                    <tr>
+{#                        <td>{% if x.is_aju %}Diajukan{% else %}Belum Diajukan{% endif %}{% if x.is_approved_asdep %}, Approved by Asdep{% endif %}{% if x.is_approved_depdirbid %}, Approved by Depdirbid{% endif %}</td> {# Nanti dimasukan isian dari models polarules #}
+                        <td>{{ forloop.counter }}</td>
+
+                        <td><div class="row"> <div class="col-6"> <form method="POST" action="/dokumentasi/list/pola-rules/delete/{{ x.id }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Entry Logic ini?')">{% csrf_token %}<button type="submit" class="btn btn-danger">X</button></form></div>
+                        <div class="col-6"> <a href="/dokumentasi/list/pola-rules/edit/{{ x.id }}" class="btn btn-success">EDIT</a></div></div></td>
+                        <td>{{ x.nama_rules }}</td>
+                        <td>{{ x.diagnosis_utama }}</td>
+                        <td>{{ x.diagnosis_sekunder }}</td>
+                        <td>{{ x.prosedur }}</td>
+                        <td>{{ x.jenis_pelayanan }}</td>
+                        <td>{{ x.cmg }}</td>
+                        <td>{{ x.los }}</td>
+                        <td>{{ x.cbg }}</td>
+                        <td>{{ x.severity_level }}</td>
+                        <td>{{ x.jenis_kelamin }}</td><td>{{ x.models_polarules }}<td>
+                        <td>{{ x.usia }}</td>
+                        <td><textarea class="form-control"  rows="4" cols="50" disabled>{{ x.pesan }}</textarea></td>
+                        <td>{{ x.created_at }}</td>
+                        <td>{{ x.updated_at }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
