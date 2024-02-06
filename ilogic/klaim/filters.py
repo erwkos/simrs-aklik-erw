@@ -1,11 +1,24 @@
 import django_filters
 from dal import autocomplete
 from django.forms import NumberInput, DateInput
+from django_filters.widgets import BooleanWidget
 
 from faskes.models import Faskes
 from klaim.models import RegisterKlaim
 from user.models import User
 from django.contrib.auth.models import Group
+
+
+class CustomBooleanBOAWidget(BooleanWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.choices = (("", ("-----")), ("true", ("Sudah")), ("false", ("Belum")))
+
+
+class CustomBooleanPotongKlaimWidget(BooleanWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.choices = (("", ("-----")), ("true", ("Ya")), ("false", ("Tidak")))
 
 
 class RegisterKlaimFaskesFilter(django_filters.FilterSet):
@@ -24,6 +37,8 @@ class RegisterKlaimFaskesFilter(django_filters.FilterSet):
 
     nomor_register_klaim = django_filters.CharFilter(field_name='nomor_register_klaim', lookup_expr='icontains',
                                                      label='No REG')
+    prosesboa = django_filters.BooleanFilter(widget=CustomBooleanBOAWidget, label='Proses BOA')
+    is_potongklaim = django_filters.BooleanFilter(widget=CustomBooleanPotongKlaimWidget, label='Potong Klaim')
 
     class Meta:
         model = RegisterKlaim

@@ -76,6 +76,7 @@ class RegisterKlaim(models.Model):
     prosesboa = models.BooleanField(default=False)
     tgl_boa = models.DateField(blank=True, null=True)
     is_potongklaim = models.BooleanField(default=False)
+    keterangan_potongklaim = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

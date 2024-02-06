@@ -142,3 +142,11 @@ class HitungDataKlaimForm(forms.ModelForm):
 class UploadDataKlaimForm(forms.Form):
     file = forms.FileField(label='Upload File Excel', required=True,
                            help_text='Hanya menerima file dengan ekstensi `.xlsx` dan ukuran maksimal 2MB')
+
+
+class PotongKlaimForm(forms.ModelForm):
+    is_potongklaim = forms.BooleanField(label='Potong Klaim', required=True)
+    keterangan_potongklaim = forms.CharField(label='Keterangan Potong Klaim', required=True, min_length=5)
+    class Meta:
+        model = RegisterKlaim
+        fields = ['is_potongklaim', 'keterangan_potongklaim']

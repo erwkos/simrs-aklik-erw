@@ -2,18 +2,18 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="col-12">
-    <div class="card-body">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+    <div class="col-12">
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
     </div>
-</div>
 
 <div class="row">
     <div class="col-lg-6">
@@ -31,48 +31,60 @@
         </div>
     </div>
 
-        {% if register.status == 'Selesai' %}
+    {% if register.status == 'Selesai' and register.verifikator == request.user %}
+        <div class="col-lg-6">
+        <div class="card">
+        <div class="card-header">
+            <h5>Aksi Verifikator</h5>
+        </div>
 
-        {% elif register.status != 'Pengajuan' and register.verifikator == request.user %}
-            <div class="col-lg-6">
-            <div class="card">
-            <div class="card-header">
-                <h5>Aksi Verifikator</h5>
-            </div>
+        <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            {{ potongklaim_form|crispy }}
+            <input type="hidden" name="action" value="potong_klaim">
+            <button class="btn btn-primary w-100" type="submit">Simpan</button>
+        </form>
+    {% elif register.status == 'Selesai' %}
+        
+    {% elif register.status != 'Pengajuan' and register.verifikator == request.user %}
+        <div class="col-lg-6">
+        <div class="card">
+        <div class="card-header">
+            <h5>Aksi Verifikator</h5>
+        </div>
 
-            <div class="card-body">
+        <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            {{ status_form|crispy }}
+            <input type="hidden" name="action" value="update_status">
+            <button class="btn btn-primary w-100" type="submit">Simpan</button>
+        </form>
+
+    {% elif user.groups.all.0.name == 'supervisor' %}
+        <div class="col-lg-6">
+        <div class="card">
+        <div class="card-header">
+            <h5>Aksi Supervisor</h5>
+        </div>
+        <div class="card-body">
             <form method="POST">
                 {% csrf_token %}
                 {{ status_form|crispy }}
                 <input type="hidden" name="action" value="update_status">
                 <button class="btn btn-primary w-100" type="submit">Simpan</button>
             </form>
-
-        {% elif user.groups.all.0.name == 'supervisor' %}
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Aksi Supervisor</h5>
-                    </div>
-            <div class="card-body">
-                <form method="POST">
-                    {% csrf_token %}
-                    {{ status_form|crispy }}
-                    <input type="hidden" name="action" value="update_status">
-                    <button class="btn btn-primary w-100" type="submit">Simpan</button>
-                </form>
-            </div>
-        {% endif %}
-
-            </div>
         </div>
-    </div>
+    {% endif %}
+
+</div>
 </div>
 
-<script>
-    document.getElementById("id_tgl_ba_lengkap").setAttribute("min", "{{ register.tgl_terima | date:'Y-m-d' }}");
-    document.getElementById("id_tgl_ba_lengkap").setAttribute("max", "{{ register.tgl_ba_lengkap_seharusnya | date:'Y-m-d' }}");
-</script>
+    <script>
+        document.getElementById("id_tgl_ba_lengkap").setAttribute("min", "{{ register.tgl_terima | date:'Y-m-d' }}");
+        document.getElementById("id_tgl_ba_lengkap").setAttribute("max", "{{ register.tgl_ba_lengkap_seharusnya | date:'Y-m-d' }}");
+    </script>
 {% endblock %}
 
 

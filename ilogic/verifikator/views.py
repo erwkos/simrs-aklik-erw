@@ -40,7 +40,7 @@ from .forms import (
     StatusRegisterKlaimForm,
     ImportDataKlaimForm,
     DataKlaimVerifikatorForm, FinalisasiVerifikatorForm, HitungDataKlaimForm, KeteranganPendingForm,
-    STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR, UploadDataKlaimForm
+    STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR, UploadDataKlaimForm, PotongKlaimForm
 )
 from user.decorators import permissions, check_device
 from user.models import User
@@ -92,6 +92,18 @@ def detail_register(request, pk):
     queryset = RegisterKlaim.objects.filter(nomor_register_klaim__startswith=kantor_cabang.kode_cabang)
     instance = queryset.get(id=pk)
     status_form = StatusRegisterKlaimForm(instance=instance)
+    potongklaim_form = PotongKlaimForm(instance=instance)
+
+    if request.method == 'POST' and request.POST.get('action') == 'potong_klaim':
+        potongklaim_form = PotongKlaimForm(request.POST, instance=instance)
+        if potongklaim_form.is_valid():
+            potongklaim_form.save()
+            messages.success(request, 'Update Flaging Potong Klaim Berhasil')
+            return redirect(request.headers.get('Referer'))
+        else:
+            messages.warning(request, 'Update Flaging Potong Klaim Gagal')
+            return redirect(request.headers.get('Referer'))
+
     if request.method == 'POST' and request.POST.get('action') == 'update_status':
         status_form = StatusRegisterKlaimForm(instance=instance, data=request.POST)
         if instance.verifikator != request.user:
@@ -163,7 +175,8 @@ def detail_register(request, pk):
 
     context = {
         'register': instance,
-        'status_form': status_form
+        'status_form': status_form,
+        'potongklaim_form': potongklaim_form,
     }
     return render(request, 'verifikator/detail_register.html', context)
 

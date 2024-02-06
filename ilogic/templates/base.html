@@ -582,52 +582,52 @@
                     </li>
                 {% endif %}
                     
-                {% if x.name == 'supervisorkp' %}
-                    <!-- Monitoring Register --> 
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
-                            <span class="pc-micon">
-                              <svg class="pc-icon">
-                                <use xlink:href="#custom-fatrows"></use>
-                              </svg>
-                            </span>
-                            <span class="pc-mtext">Monitoring</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisorkp:monitoring_register_supervisorkp' %}">
-                                    Monitoring Register</a>
-                            </li>
-                        </ul>
-
-                    </li>                    
-
-                    <!-- Manajemen User -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
-                            <span class="pc-micon">
-                              <svg class="pc-icon">
-                                <use xlink:href="#custom-user-square"></use>
-                              </svg>
-                            </span>
-                            <span class="pc-mtext">Manajemen User</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisorkp:daftar_user_supervisorkp' %}">Daftar User Nasional</a>
-                            </li>
-                        </ul>
-                    </li>
-                {% endif %}
+{#                {% if x.name == 'supervisorkp' %}#}
+{#                    <!-- Monitoring Register -->#}
+{#                    <li class="pc-item pc-hasmenu">#}
+{#                        <a href="#!" class="pc-link">#}
+{#                            <span class="pc-micon">#}
+{#                              <svg class="pc-icon">#}
+{#                                <use xlink:href="#custom-fatrows"></use>#}
+{#                              </svg>#}
+{#                            </span>#}
+{#                            <span class="pc-mtext">Monitoring</span><span class="pc-arrow"><svg#}
+{#                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"#}
+{#                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"#}
+{#                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline#}
+{#                                points="9 18 15 12 9 6"></polyline></svg></span>#}
+{#                        </a>#}
+{##}
+{#                        <ul class="pc-submenu" style="display: none;">#}
+{#                            <li class="pc-item">#}
+{#                                <a class="pc-link" href="{% url 'supervisorkp:monitoring_register_supervisorkp' %}">#}
+{#                                    Monitoring Register</a>#}
+{#                            </li>#}
+{#                        </ul>#}
+{##}
+{#                    </li>#}
+{##}
+{#                    <!-- Manajemen User -->#}
+{#                    <li class="pc-item pc-hasmenu">#}
+{#                        <a href="#!" class="pc-link">#}
+{#                            <span class="pc-micon">#}
+{#                              <svg class="pc-icon">#}
+{#                                <use xlink:href="#custom-user-square"></use>#}
+{#                              </svg>#}
+{#                            </span>#}
+{#                            <span class="pc-mtext">Manajemen User</span><span class="pc-arrow"><svg#}
+{#                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"#}
+{#                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"#}
+{#                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline#}
+{#                                points="9 18 15 12 9 6"></polyline></svg></span>#}
+{#                        </a>#}
+{#                        <ul class="pc-submenu" style="display: none;">#}
+{#                            <li class="pc-item">#}
+{#                                <a class="pc-link" href="{% url 'supervisorkp:daftar_user_supervisorkp' %}">Daftar User Nasional</a>#}
+{#                            </li>#}
+{#                        </ul>#}
+{#                    </li>#}
+{#                {% endif %}#}
 
                 {% endfor %}
             </ul>
