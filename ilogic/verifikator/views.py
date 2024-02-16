@@ -253,8 +253,8 @@ def import_data_klaim(request):
                             messages.warning(request, f'Kesalahan terjadi pada No SEP : {data_klaim.NOSEP}. Keterangan error : {e}')
                             return redirect('/verifikator/import-data-klaim')
                     DataKlaimCBG.objects.bulk_create(obj_list)
-                except IntegrityError:
-                    messages.info(request, 'Terjadi kesalahan saat mencoba menyimpan data.')
+                except IntegrityError as e:
+                    messages.info(request, f'Terjadi kesalahan saat mencoba menyimpan data : {e}')
                     return redirect('/verifikator/import-data-klaim')
                 except Exception as e:
                     messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')

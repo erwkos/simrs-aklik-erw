@@ -5,9 +5,9 @@
 {% elif register.status == 'Verifikasi' %}
     <button type="button" class="btn btn-danger btn-sm">{{ register.status }}</button>
 {% elif register.status == 'Selesai' and register.prosesboa == True %}
-    <button type="button" class="btn btn-success btn-sm">{{ register.status }}</button>
+    <button type="button" class="btn btn-info btn-sm">{{ register.status }}</button>
 {% elif register.status == 'Selesai' %}
-    <button type="button" class="btn btn-success btn-sm" disabled>{{ register.status }}</button>
+    <button type="button" class="btn btn-success btn-sm">{{ register.status }}</button>
 {% elif register.status == 'Dikembalikan' %}
     <button type="button" class="btn btn-dark btn-sm">{{ register.status }}</button>
 {% elif register.status == 'Proses FPK' %}
