@@ -233,19 +233,19 @@ class DataKlaimCBG(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        if self.tgl_SLA is None:
-            sla = SLA.objects.filter(jenis_klaim=self.register_klaim.jenis_klaim,
-                                     kantor_cabang=self.faskes.kantor_cabang).first()
-            if sla:
-                if self.register_klaim.tgl_ba_lengkap:
-                    self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla)
-                elif self.register_klaim.tgl_terima:
-                    self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
-            else:
-                if self.register_klaim.tgl_ba_lengkap:
-                    self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=6)
-                elif self.register_klaim.tgl_terima:
-                    self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
+        # if self.tgl_SLA is None:
+        #     sla = SLA.objects.filter(jenis_klaim=self.register_klaim.jenis_klaim,
+        #                              kantor_cabang=self.faskes.kantor_cabang).first()
+        #     if sla:
+        #         if self.register_klaim.tgl_ba_lengkap:
+        #             self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla)
+        #         elif self.register_klaim.tgl_terima:
+        #             self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
+        #     else:
+        #         if self.register_klaim.tgl_ba_lengkap:
+        #             self.tgl_SLA = self.register_klaim.tgl_ba_lengkap + timedelta(days=6)
+        #         elif self.register_klaim.tgl_terima:
+        #             self.tgl_SLA = self.register_klaim.tgl_terima + timedelta(days=15)
         self.bupel = self.TGLPULANG.replace(day=1)
         super(DataKlaimCBG, self).save(*args, **kwargs)
 

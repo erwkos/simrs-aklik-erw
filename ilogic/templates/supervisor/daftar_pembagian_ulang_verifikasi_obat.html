@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load my_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Daftar Register Klaim Obat
+                {% if request.count_registerclaim %}
+                <span class="badge bg-danger">{{ request.count_registerclaim }}</span>
+                {% endif %}
+            </h5>
+        </div>
+
+        <div class="container">
+            <br>
+            <div class="card-body">
+              <form class="row row-cols-md-auto g-3 align-items-center">
+                  {{ myFilter.form | crispy }}
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </form>
+            </div>
+        </div>
+
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="col">DETAIL</th>
+                        <th scope="col">NO REG</th>
+                        <th scope="col">JENIS KLAIM</th>
+                        <th scope="col">NAMA RS</th>
+                        <th scope="col">BUPEL</th>
+                        <th scope="col">STATUS</th>
+                        <th scope="col">TANGGAL AJU</th>
+                        <th scope="col">TANGGAL TERIMA</th>
+                        <th scope="col">TANGGAL LENGKAP</th>
+                        <th scope="col">H+10</th>
+                        <th scope="col">SISA HARI</th>
+                        <th scope="col">JATUH TEMPO</th>
+                        <th scope="col">PIC</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for register in register_list %}
+                    <tr>
+                        <td><a href="{% url 'supervisor:update_pembagian_ulang_verifikasi_cbg' register.id %}" type="button" class="btn btn-primary">DETAIL</a></td>
+                        <td>{{register.nomor_register_klaim}}</td>
+                        <td>{{register.jenis_klaim}}</td>
+                        <td>{{register.faskes}}</td>
+                        <td>{{register.bulan_pelayanan | date:'M-y'}}</td>
+                        <td>{% include 'base_status_register_klaim.html' %}</td>
+                        <td>{{ register.tgl_aju|date:'d-m-y' }}</td>
+                        <td>{{ register.tgl_terima|date:'d-m-y' }}</td>
+                        <td>{{ register.tgl_ba_lengkap|date:'d-m-y' }}</td>
+                        {% if register.tgl_ba_lengkap != Null %}
+                        <td>{{ register.tgl_selesai_verif|date:'d-m-y' }}</td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
+                        {% if register.status == "Proses FPK" or register.status == "Proses BOA" or register.status == "Pembayaran"  %}
+                        <td></td>
+                        {% elif register.tgl_ba_lengkap != Null and register.status != "Selesai" %}
+                        <td>{{ register.sisa_hari.days }}</td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
+                        {% if register.tgl_ba_lengkap != Null %}
+                        <td> {{ register.tgl_jatuh_tempo|date:'d-m-y' }}</td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
+                        <td>{{register.verifikator}}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if register_list.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if register_list.previous_page_number != 1 %}
+            <a href="?{% param_replace page=register_list.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ register_list.number }} of {{ register_list.paginator.num_pages }}
+
+        {% if register_list.has_next %}
+            {% if register_list.next_page_number != paginator.num_pages %}
+            <a href="?{% param_replace page=register_list.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=register_list.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>Register Klaim {{ register_list.start_index }} - {{ register_list.end_index }} </p>
+    </span>
+</div>
+
+{% endblock %}

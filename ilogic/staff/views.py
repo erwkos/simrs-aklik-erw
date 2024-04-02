@@ -17,6 +17,7 @@ from klaim.models import (
 )
 from user.decorators import permissions, check_device
 from user.models import User
+from datetime import timedelta
 
 
 @login_required
@@ -66,6 +67,9 @@ def detail_register(request, pk):
         status_form = StatusRegisterKlaimForm(instance=instance, data=request.POST)
         if status_form.is_valid():
             status_form.save()
+            # dari model dipindah ke sini untuk pembuatan tgl ba lengkap
+            # instance.tgl_ba_lengkap = instance.tgl_terima + timedelta(days=9)
+            # instance.save()
             if instance.status == 'Terima':
                 messages.warning(request, "Klaim berhasil diterima. Selanjutnya dapat memberikan informasi "
                                           "ke PIC Klaim. Terima Kasih")

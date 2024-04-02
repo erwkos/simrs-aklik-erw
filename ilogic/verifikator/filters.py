@@ -25,6 +25,7 @@ STATUS_CHOICES_FASKES = (
 )
 
 KODE_JENIS_OBAT = (
+    ('1', 'PRB'),
     ('2', 'Kronis'),
     ('3', 'Kemoterapi'),
 )

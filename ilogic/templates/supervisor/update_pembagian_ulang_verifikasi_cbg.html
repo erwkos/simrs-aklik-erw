@@ -3,114 +3,195 @@
 {% load humanize %}
 
 {% block content %}
-<div class="col-12">
-    <div class="card-body">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
-                {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-6">
-        <div class="card table-card">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h5>Detail - Register Klaim</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-6 m-l-30 mt-4">
-                        <table class="table">
-                            <tbody>
-                              <tr>
-                                <td><b>NO REG :</b></td>
-                                <td><button type="button" class="btn btn-primary btn-sm">{{register.nomor_register_klaim}}</button></td>
-                              </tr>
-                              <tr>
-                                <td><b>JENIS KLAIM :</b></td>
-                                <td>{{register.jenis_klaim}}</td>
-                              </tr>
-                              <tr>
-                                <td><b>NAMA PPKLAYAN</b></td>
-                                <td>{{register.faskes.nama}}</td>
-                              </tr>
-                              <tr>
-                                <td><b>BULAN PELAYANAN : </b></td>
-                                <td>{{register.bulan_pelayanan | date:'M-Y'}}</td>
-                              </tr>
-                              <tr>
-                                <td><b>STATUS : </b></td>
-                                <td>{% include 'base_status_register_klaim.html' %}</td>
-                              </tr>
-                              <tr>
-                                <td><b>JUMLAH PROSES : </b></td>
-                                <td>{{ jumlah_proses }} | Rp{{ biaya_proses | default_if_none:0 | intcomma:'.00'}}</td>
-                              </tr>
-                              {% if register.status == 'Verifikasi' %}
-                              <tr>
-                                <td><b>JUMLAH LAYAK : </b></td>
-                                <td>{{ jumlah_layak }} | Rp{{ biaya_layak | default_if_none:0 | intcomma:'.00' }}</td>
-                              </tr>
-                              {% else %}
-                              <tr>
-                                <td><b>JUMLAH LAYAK : </b></td>
-                                <td>{{ jumlah_klaim }} | Rp{{ biaya_klaim | default_if_none:0 | intcomma:'.00' }}</td>
-                              </tr>
-
-                              {% endif %}
-                              <tr>
-                                <td><b>JUMLAH PENDING : </b></td>
-                                <td>{{ jumlah_pending }} | Rp{{ biaya_pending | default_if_none:0 | intcomma:'.00' }}</td>
-                              </tr>
-                              <tr>
-                                <td><b>JUMLAH DISPUTE : </b></td>
-                                <td>{{ jumlah_dispute }} | Rp{{ biaya_dispute | default_if_none:0 | intcomma:'.00' }}</td>
-                              </tr>
-                              <tr>
-                                <td><b>JUMLAH TIDAK LAYAK : </b></td>
-                                <td>{{ jumlah_tidak_layak }} | Rp{{ biaya_tidak_layak | default_if_none:0 | intcomma:'.00'  }}</td>
-                              </tr>
-                              <tr>
-                                <td><b>TOTAL KLAIM : </b></td>
-                                <td>{{ total_klaim }} | Rp{{ biaya_klaim | default_if_none:0 | intcomma:'.00' }}</td>
-                              </tr>
-                            </tbody>
-                        </table>
-            </div>
-            </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="card">
-          <div class="card-header">
-            <h5>List Verifikator</h5>
-          </div>
-          <div class="card-body">
-            <form method="POST">
-            <div class="form-group row">
-              <label class="col-sm-3 col-form-label">Pilih Verifikator</label>
-              <div class="col-sm-9">
-                {% csrf_token %}
-                {% for ver in verifikator %}
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" id="ver" name="{{ ver }}" value="{{ ver.id }}" checked="">
-                  <label class="form-check-label" for="ver"> {{ ver.first_name }} </label>
-                </div>
+    <div class="col-12">
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 {% endfor %}
-              </div>
-            </div>
-            <input type="hidden" name="action" value="bagi_ulang">
-            <button class="btn btn-primary w-100" type="submit">Bagi Ulang</button>
-            </form>
-          </div>
+            {% endif %}
         </div>
     </div>
-</div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card table-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5>Detail - Register Klaim</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 m-l-30 mt-4">
+                            <table class="table">
+                                <tbody>
+                                <tr>
+                                    <td><b>NO REG :</b></td>
+                                    <td>{{ register.nomor_register_klaim }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>JENIS KLAIM :</b></td>
+                                    <td>{{ register.jenis_klaim }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>NAMA PPKLAYAN</b></td>
+                                    <td>{{ register.faskes.nama }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>BULAN PELAYANAN : </b></td>
+                                    <td>{{ register.bulan_pelayanan | date:'M-Y' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>STATUS : </b></td>
+                                    <td>{% include 'base_status_register_klaim.html' %}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>JUMLAH PROSES : </b></td>
+                                    <td>{{ jumlah_proses }} |
+                                        Rp{{ biaya_proses | default_if_none:0 | intcomma:'.00' }}</td>
+                                </tr>
+                                {% if register.status == 'Verifikasi' %}
+                                    <tr>
+                                        <td><b>JUMLAH LAYAK : </b></td>
+                                        <td>{{ jumlah_layak }} |
+                                            Rp{{ biaya_layak | default_if_none:0 | intcomma:'.00' }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td><b>JUMLAH LAYAK : </b></td>
+                                        <td>{{ jumlah_klaim }} |
+                                            Rp{{ biaya_klaim | default_if_none:0 | intcomma:'.00' }}</td>
+                                    </tr>
+
+                                {% endif %}
+                                <tr>
+                                    <td><b>JUMLAH PENDING : </b></td>
+                                    <td>{{ jumlah_pending }} |
+                                        Rp{{ biaya_pending | default_if_none:0 | intcomma:'.00' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>JUMLAH DISPUTE : </b></td>
+                                    <td>{{ jumlah_dispute }} |
+                                        Rp{{ biaya_dispute | default_if_none:0 | intcomma:'.00' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>JUMLAH TIDAK LAYAK : </b></td>
+                                    <td>{{ jumlah_tidak_layak }} |
+                                        Rp{{ biaya_tidak_layak | default_if_none:0 | intcomma:'.00' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>TOTAL KLAIM : </b></td>
+                                    <td>{{ total_klaim }} |
+                                        Rp{{ biaya_klaim | default_if_none:0 | intcomma:'.00' }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{#        <div id="bagi_ulang" class="hidden-div">#}
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>List Verifikator</h5>
+                </div>
+                <div class="card-header">
+                    <button onclick="toggleVisibilitySemua()" type="button" class="btn btn-light-secondary"
+                            id="btnBagi">
+                        Bagi Ulang Semua
+                    </button>
+                    <div id="bagi_ulang" class="card-body hidden">
+                        <form method="POST">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Pilih Verifikator</label>
+                                <div class="col-sm-9">
+                                    {% csrf_token %}
+                                    {% for ver in verifikator %}
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="ver" name="{{ ver }}"
+                                                   value="{{ ver.id }}" checked="">
+                                            <label class="form-check-label" for="ver"> {{ ver.first_name }} </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <input type="hidden" name="action" value="bagi_ulang">
+                            <button class="btn btn-primary w-100" type="submit">Bagi Ulang</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-header">
+                    <button onclick="toggleVisibilityPerVerifikator()" type="button" class="btn btn-light-info"
+                            id="btnBagi">Bagi Ulang Per Verifikator
+                    </button>
+                    <div id="bagi_per_verifikator" class="card-body hidden">
+                        <form method="POST">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Pilih Verifikator Awal</label>
+                                <div class="col-sm-9">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <select class="select form-select" name="verifikator_terpilih">
+                                            <option selected>Pilih Nama Verifikator</option>
+                                            {% for ver in verifikator %}
+                                                <option value="{{ ver.id }}">{{ ver.first_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <label class="col-sm-3 col-form-label">Pilih Verifikator Akhir</label>
+                                <div class="col-sm-9">
+                                    {% csrf_token %}
+                                    {% for ver in verifikator %}
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="ver" name="{{ ver }}"
+                                                   value="{{ ver.id }}" checked="">
+                                            <label class="form-check-label" for="ver"> {{ ver.first_name }} </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <input type="hidden" name="action" value="bagi_ulang_per_verifikator">
+                            <button class="btn btn-primary w-100" type="submit">Bagi Ulang</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<style>
+    .hidden {
+        display: none;
+    }
+
+    .hidden-div {
+    display: none;
+}
+
+</style>
+
+<script>
+    function toggleVisibilitySemua() {
+        let div = document.getElementById("bagi_ulang");
+        div.classList.toggle("hidden");
+        
+        let div_bagi_per_verifikator = document.getElementById("bagi_per_verifikator");
+        div_bagi_per_verifikator.classList.add("hidden")
+    }
+    function toggleVisibilityPerVerifikator() {
+        let div = document.getElementById("bagi_per_verifikator");
+        div.classList.toggle("hidden");
+        
+        let div_bagi_ulang = document.getElementById("bagi_ulang");
+        div_bagi_ulang.classList.add("hidden")
+    }
+</script>
+
+
 {% endblock %}

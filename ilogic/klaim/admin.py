@@ -1,3 +1,5 @@
+from functools import reduce
+
 from django.contrib import admin
 from .models import (
     JenisKlaim,
@@ -5,7 +7,11 @@ from .models import (
     DataKlaimCBG, SLA, KeteranganPendingDispute, DataKlaimObat
 )
 
+from operator import or_
+from django.db.models import Q
+
 from import_export.admin import ImportExportModelAdmin
+
 
 @admin.register(RegisterKlaim)
 class RegisterKlaimAdmin(ImportExportModelAdmin):
@@ -26,10 +32,21 @@ class JenisKlaimAdmin(admin.ModelAdmin):
 class DataKlaimCBGAdmin(ImportExportModelAdmin):
     search_fields = ('NOSEP', 'register_klaim__nomor_register_klaim',)
 
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super(DataKlaimCBGAdmin, self).get_search_results(
+            request, queryset, search_term)
+        search_words = search_term.split()
+        if search_words:
+            q_objects = [Q(**{field + '__icontains': word})
+                         for field in self.search_fields
+                         for word in search_words]
+            queryset |= self.model.objects.filter(reduce(or_, q_objects))
+        return queryset, use_distinct
+
 
 @admin.register(DataKlaimObat)
 class DataKlaimObatAdmin(ImportExportModelAdmin):
-    search_fields = ('NoSEPApotek', 'NoSEPAsalResep',)
+    search_fields = ('NoSEPApotek', 'NoSEPAsalResep', 'register_klaim__nomor_register_klaim')
 
 
 @admin.register(SLA)
@@ -39,4 +56,4 @@ class SLAAdmin(ImportExportModelAdmin):
 
 @admin.register(KeteranganPendingDispute)
 class KeteranganPendingDisputeAdmin(ImportExportModelAdmin):
-    search_fields = ('verifikator', )
+    search_fields = ('verifikator',)
