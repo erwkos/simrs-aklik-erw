@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'dokumentasi',
     'supervisor',
     'supervisorkp',
+    'vpkaak',
 
     # modules
     'import_export',

@@ -319,7 +319,6 @@ def user_logout(request):
 @permissions(role=['adminWEB'])
 def create_user_kantor_cabang(request):
     """create user
-    
     User dengan group `adminWEB` membuat user baru.
     User yang baru dibuat akan tambahkan ke model yang sesuai.
     """

@@ -14,10 +14,11 @@ def permissions(role=[]):
             if request.user.is_anonymous:
                 messages.info(request, 'Anda telah logout.')
                 return redirect('/')
-            elif request.user.check_permissions(group_list=role):
+            user = request.user
+            user_groups = user.groups.values_list('name', flat=True)
+            if any(group in user_groups for group in role):
                 return func(request, *args, **kwargs)
-            else:
-                return HttpResponse(content="Anda Tidak Memiliki Hak Akses, Harap Menghubungi Admin!", status=403)
+            return HttpResponse(content="Anda Tidak Memiliki Hak Akses, Harap Menghubungi Admin!", status=403)
         return _decorator
     return decorator
 
