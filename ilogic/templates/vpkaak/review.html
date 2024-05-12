@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load my_tags %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+    <div class="container-fluid">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>
+                    Review Sampling Data Post Klaim <span class="badge bg-danger">{{ request.count_sampling_data_klaim_cbg }}</span>
+                </h5>
+                {#                <form method="post" action="" enctype="multipart/form-data">#}
+                {#                    {% csrf_token %}#}
+                {#                    <input type="file" name="excel">#}
+                {#                    <input type="hidden" name="import" value="import">#}
+                {#                    <button type="submit" class="btn btn-primary">#}
+                {#                        <i class="fas fa-file-upload"><span style="font-size: 15px"> Upload</span></i>#}
+                {#                    </button>#}
+                {#                </form>#}
+                <form>
+                    <button type="submit" class="btn btn-primary" name="export" value="export"><i
+                            class="fas fa-file-download"><span style="font-size: 15px"> Download</span></i></button>
+                </form>
+            </div>
+
+            <div class="card-body">
+                <form class="row row-cols-md-auto g-3 align-items-center">
+                    {{ myFilter.form | crispy }}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-xs table-hover table-borderless mb-0" id="data-table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Status</th>
+                        <th scope="col">No Register</th>
+                        <th scope="col">Jenis Audit</th>
+                        <th scope="col">Nosep</th>
+                        <th scope="col">In</th>
+                        <th scope="col">Out</th>
+                        <th scope="col">NmTKP</th>
+                        <th scope="col">Nokapst</th>
+                        <th scope="col">CBG</th>
+                        <th scope="col">Biaya Verifikasi</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for queryset in data_klaim %}
+                        <tr style="font-weight: bolder">
+                            <td>
+                                {% if queryset.status == 'Belum Review' %}
+                                    <a href="{% url 'vpkaak:update-review' queryset.id %}?next={{ request.get_full_path|urlencode }}">
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ queryset.status }}</button>
+                                    </a>
+                                {% elif queryset.status == 'Sesuai' %}
+                                    <a href="{% url 'vpkaak:update-review' queryset.id %}?next={{ request.get_full_path|urlencode }}">
+                                        <button type="button"
+                                                class="btn btn-success btn-sm">{{ queryset.status }}</button>
+                                    </a>
+                                {% elif queryset.status == 'Tidak Sesuai' %}
+                                    <a href="{% url 'vpkaak:update-review' queryset.id %}?next={{ request.get_full_path|urlencode }}">
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm">{{ queryset.status }}</button>
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>{{ queryset.register.nomor_register }}</td>
+                            <td>{{ queryset.register.jenis_audit }}</td>
+                            <td>{{ queryset.Nosjp }}</td>
+                            <td>{{ queryset.Tgldtgsjp|date:'d/m/Y' }}</td>
+                            <td>{{ queryset.Tglplgsjp|date:'d/m/Y' }}</td>
+                            <td>{{ queryset.Nmtkp }}</td>
+                            <td>{{ queryset.Nokapst }}</td>
+                            <td>{{ queryset.Kdinacbgs }}</td>
+                            <td style="text-align: right">{{ queryset.Biayaverifikasi | intcomma }}</td>
+                        </tr>
+                    {% empty %}
+                        <td colspan="10" class="text-center">Tidak ada data</td>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if data_klaim.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if data_klaim.previous_page_number != 1 %}
+                <a href="?{% param_replace page=data_klaim.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ data_klaim.number }} of {{ data_klaim.paginator.num_pages }}
+
+        {% if data_klaim.has_next %}
+            {% if data_klaim.next_page_number != paginator.num_pages %}
+                <a href="?{% param_replace page=data_klaim.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=data_klaim.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>Data Klaim {{ data_klaim.start_index }} - {{ data_klaim.end_index }} </p>
+    </span>
+    </div>
+
+{% endblock %}

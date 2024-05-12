@@ -21,7 +21,7 @@ class CaptchaForm(forms.Form):
 
 class FormGroupChange(forms.ModelForm):
     groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB')),
+        queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB', 'supervisorkp')),
         widget=forms.CheckboxSelectMultiple
     )
 
@@ -45,7 +45,7 @@ class FormNewUser(UserCreationForm):
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=False)
     groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB')),
+        queryset=Group.objects.all().exclude(name__in=('faskes', 'adminWEB', 'supervisorkp')),
         widget=forms.CheckboxSelectMultiple
     )
 

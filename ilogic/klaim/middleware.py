@@ -1,6 +1,8 @@
 from django.db.models import Q
 from django.utils.decorators import sync_and_async_middleware
 
+from vpkaak.choices import StatusReviewChoices, StatusChoices
+from vpkaak.models import RegisterPostKlaim, SamplingDataKlaimCBG
 from .choices import StatusDataKlaimChoices, StatusRegisterChoices, NamaJenisKlaimChoices
 from .models import DataKlaimCBG, RegisterKlaim, DataKlaimObat
 
@@ -8,7 +10,7 @@ from .models import DataKlaimCBG, RegisterKlaim, DataKlaimObat
 class DaftarClaimCount:
     def __init__(self, get_response):
         self.get_response = get_response
-    
+
     @sync_and_async_middleware
     def __call__(self, request):
         request.count_registerclaim = 0
@@ -31,12 +33,16 @@ class DaftarClaimCount:
                     request.count_registerclaim = obj_rs.count()
 
                 if request.user.check_permissions(group_list=['faskes']):
-                    obj_data_klaim_pending = obj_data_klaim.filter(status=StatusDataKlaimChoices.PENDING, prosesklaim=True)
-                    obj_data_klaim_dispute = obj_data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE, prosesklaim=True)
+                    obj_data_klaim_pending = obj_data_klaim.filter(status=StatusDataKlaimChoices.PENDING,
+                                                                   prosesklaim=True)
+                    obj_data_klaim_dispute = obj_data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE,
+                                                                   prosesklaim=True)
                     obj_data_klaim_pending_dispute = obj_data_klaim_pending.count() + obj_data_klaim_dispute.count()
 
-                    obj_data_klaim_pending_obat = obj_data_klaim_obat.filter(status=StatusDataKlaimChoices.PENDING, prosesklaim=True)
-                    obj_data_klaim_dispute_obat = obj_data_klaim_obat.filter(status=StatusDataKlaimChoices.DISPUTE, prosesklaim=True)
+                    obj_data_klaim_pending_obat = obj_data_klaim_obat.filter(status=StatusDataKlaimChoices.PENDING,
+                                                                             prosesklaim=True)
+                    obj_data_klaim_dispute_obat = obj_data_klaim_obat.filter(status=StatusDataKlaimChoices.DISPUTE,
+                                                                             prosesklaim=True)
                     obj_data_klaim_pending_dispute_obat = obj_data_klaim_pending_obat.count() + obj_data_klaim_dispute_obat.count()
 
                     request.count_data_klaim = obj_data_klaim_pending_dispute
@@ -49,10 +55,20 @@ class DaftarClaimCount:
                 request.is_cabang = True
 
                 kode_cabang = request.user.kantorcabang_set.all().first().kode_cabang
+
+                # object register klaim
                 obj = RegisterKlaim.objects.filter(
                     nomor_register_klaim__startswith=kode_cabang
                 )
+
+                # object post klaim
+                obj_register_post_klaim = RegisterPostKlaim.objects.filter(
+                    user__kantorcabang=request.user.kantorcabang_set.all().first())
+                obj_sampling_data_klaim_cbg = SamplingDataKlaimCBG.objects.filter(
+                    register__user__kantorcabang=request.user.kantorcabang_set.all().first())
+
                 if request.user.check_permissions(group_list=['verifikator']):
+                    # register klaim verifikator
                     request.count_finalisasi = 0
                     finalisasi_reguler = obj.filter(jenis_klaim__nama=NamaJenisKlaimChoices.CBG_REGULER,
                                                     status=StatusRegisterChoices.VERIFIKASI,
@@ -111,9 +127,22 @@ class DaftarClaimCount:
 
                     request.count_registerclaim = obj.count()
 
+                    # register postklaim verifikator
+                    obj_register_post_klaim = obj_register_post_klaim.filter(
+                        status__in=[StatusChoices.Register, StatusChoices.Verifikasi],
+                    )
+                    request.count_register_post_klaim = obj_register_post_klaim.count()
+
+                    # sampling data postklaim verifikator
+                    obj_sampling_data_klaim_cbg = obj_sampling_data_klaim_cbg.filter(
+                        status=StatusReviewChoices.Belum
+                    )
+
+                    request.count_sampling_data_klaim_cbg = obj_sampling_data_klaim_cbg.count()
+
                 if request.user.check_permissions(group_list=['adminAK']):
                     pengajuan = obj
-                    obj_terima = pengajuan.filter(Q(status=StatusRegisterChoices.TERIMA) & Q(verifikator__isnull = True))
+                    obj_terima = pengajuan.filter(Q(status=StatusRegisterChoices.TERIMA) & Q(verifikator__isnull=True))
                     obj_pengajuan = pengajuan.filter(status=StatusRegisterChoices.PENGAJUAN)
                     count_pengajuan = obj_terima.count() + obj_pengajuan.count()
 
@@ -122,6 +151,13 @@ class DaftarClaimCount:
                     # hitung berapa register klaim yang final belum di BOA
                     registerklaim_belum_boa = obj.filter(status=StatusRegisterChoices.SELESAI, prosesboa=False)
                     request.count_registerklaim_belum_boa = registerklaim_belum_boa.count()
+
+                if request.user.check_permissions(group_list=['stafupk']):
+                    # register postklaim stafupk
+                    obj_register_post_klaim = obj_register_post_klaim.filter(
+                        status__in=[StatusChoices.Register, StatusChoices.Verifikasi],
+                    )
+                    request.count_register_post_klaim = obj_register_post_klaim.count()
 
         response = self.get_response(request)
         return response

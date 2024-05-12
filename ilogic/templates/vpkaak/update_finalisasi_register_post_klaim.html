@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+{% block content %}
+    <div class="col-12">
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card table-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5>Detail - Register Post Klaim</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 m-l-30 mt-4">
+                            <table class="table">
+                                <tbody>
+                                <tr>
+                                    <td><b>NO REG :</b></td>
+                                    <td>{{ instance.nomor_register }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>TGL REGISTER :</b></td>
+                                    <td>{{ instance.created_at }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>JENIS AUDIT :</b></td>
+                                    <td>{{ instance.jenis_audit }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>STATUS</b></td>
+                                    <td>{{ instance.status }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>PERIDOE : </b></td>
+                                    <td>{{ instance.periode_awal | date:'d/m/Y' }}
+                                        - {{ instance.periode_akhir | date:'d/m/Y' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>BULAN BEBAN : </b></td>
+                                    <td>{{ instance.bulan_beban | date:'M-Y'|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>JUMLAH BELUM REVIEW : </b></td>
+                                    <td>{{ jumlah_belum_review }} |
+                                        Rp{{ biaya_belum_review | default_if_none:0 | intcomma:'.00' }}</td>
+                                <tr>
+                                <tr>
+                                    <td><b>JUMLAH SESUAI : </b></td>
+                                    <td>{{ jumlah_sesuai }} |
+                                        Rp{{ biaya_sesuai | default_if_none:0 | intcomma:'.00' }}</td>
+                                <tr>
+                                    <td><b>JUMLAH TIDAK SESUAI : </b></td>
+                                    <td>{{ jumlah_tidak_sesuai }} |
+                                        Rp{{ biaya_tidak_sesuai | default_if_none:0 | intcomma:'.00' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>JUMLAH SAMPLING KLAIM : </b></td>
+                                    <td>{{ total_sampling }} |
+                                        Rp{{ biaya_sampling | default_if_none:0 | intcomma:'.00' }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Aksi Verifikator</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <input type="hidden" name="action" value="update_status">
+                        <button class="btn btn-primary w-100" type="submit">Simpan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

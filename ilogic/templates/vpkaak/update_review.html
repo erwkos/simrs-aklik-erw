@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+{% block content %}
+    <style>
+        .table td, .table th {
+            word-wrap: break-word;
+            white-space: normal;
+            max-width: 200px;
+        }
+
+        .OLevelResult {
+            display: none;
+        }
+
+        .OLevelResult.active {
+            display: block;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card table-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5>Detail - Sampling Data Klaim CBG</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 m-l-30 mt-4">
+                            <table class="table">
+                                <tbody>
+                                <tr>
+                                    <td><b>NO SEP :</b></td>
+                                    <td>{{ data_klaim.Nosjp }}</td>
+                                    <td><b>Nmjnspulang :</b></td>
+                                    <td>{{ data_klaim.Nmjnspulang }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Tgldtgsjp :</b></td>
+                                    <td>{{ data_klaim.Tgldtgsjp|date:'d/m/Y' }}</td>
+                                    <td><b>Kddokter :</b></td>
+                                    <td>{{ data_klaim.kddokter }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Tglplgsjp :</b></td>
+                                    <td>{{ data_klaim.Tglplgsjp|date:'d/m/Y' }}</td>
+                                    <td><b>Nmdokter :</b></td>
+                                    <td>{{ data_klaim.nmdokter }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Nokapst :</b></td>
+                                    <td>{{ data_klaim.Nokapst }}</td>
+                                    <td><b>Umur :</b></td>
+                                    <td>{{ data_klaim.Umur }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Tglpelayanan :</b></td>
+                                    <td>{{ data_klaim.Tglpelayanan }}</td>
+                                    <td><b>Kdsa :</b></td>
+                                    <td>{{ data_klaim.kdsa }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Kdkclayan :</b></td>
+                                    <td>{{ data_klaim.Kdkclayan }}</td>
+                                    <td><b>Deskripsisd :</b></td>
+                                    <td>{{ data_klaim.deskripsisd }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Nmkclayan :</b></td>
+                                    <td>{{ data_klaim.Nmkclayan }}</td>
+                                    <td><b>Kdsi :</b></td>
+                                    <td>{{ data_klaim.kdsi }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Kddati2Layan :</b></td>
+                                    <td>{{ data_klaim.Kddati2Layan }}</td>
+                                    <td><b>Deskripsisi :</b></td>
+                                    <td>{{ data_klaim.deskripsisi }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Nmdati2Layan :</b></td>
+                                    <td>{{ data_klaim.Nmdati2Layan }}</td>
+                                    <td><b>Kdsp :</b></td>
+                                    <td>{{ data_klaim.kdsp }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Kdppklayan :</b></td>
+                                    <td>{{ data_klaim.Kdppklayan }}</td>
+                                    <td><b>Deskripsisp :</b></td>
+                                    <td>{{ data_klaim.deskripsisp }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Nmppklayan :</b></td>
+                                    <td>{{ data_klaim.Nmppklayan }}</td>
+                                    <td><b>Kdsr :</b></td>
+                                    <td>{{ data_klaim.kdsr }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Nmtkp :</b></td>
+                                    <td>{{ data_klaim.Nmtkp }}</td>
+                                    <td><b>Deskripsisr :</b></td>
+                                    <td>{{ data_klaim.deskripsisr }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Kdinacbgs :</b></td>
+                                    <td>{{ data_klaim.Kdinacbgs }}</td>
+                                    <td><b>Tarifgroup :</b></td>
+                                    <td>{{ data_klaim.Tarifgroup|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Nminacbgs :</b></td>
+                                    <td>{{ data_klaim.Nminacbgs }}</td>
+                                    <td><b>Tarifsa :</b></td>
+                                    <td>{{ data_klaim.tarifsa|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Kddiagprimer :</b></td>
+                                    <td>{{ data_klaim.Kddiagprimer }}</td>
+                                    <td><b>Tarifsd :</b></td>
+                                    <td>{{ data_klaim.tarifsd|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Nmdiagprimer :</b></td>
+                                    <td>{{ data_klaim.Nmdiagprimer }}</td>
+                                    <td><b>Tarifsi :</b></td>
+                                    <td>{{ data_klaim.tarifsi|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Diagsekunder :</b></td>
+                                    <td>{{ data_klaim.Diagsekunder }}</td>
+                                    <td><b>Tarifsp :</b></td>
+                                    <td>{{ data_klaim.tarifsp|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Procedure :</b></td>
+                                    <td>{{ data_klaim.Procedure }}</td>
+                                    <td><b>Tarifsr :</b></td>
+                                    <td>{{ data_klaim.tarifsr|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Klsrawat :</b></td>
+                                    <td>{{ data_klaim.Klsrawat }}</td>
+                                    <td><b>Biayaverifikasi :</b></td>
+                                    <td>{{ data_klaim.Biayaverifikasi|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Status Data Klaim : </b></td>
+                                    <td>
+                                        {% if data_klaim.status == 'Belum Review' %}
+                                            <button type="button"
+                                                    class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+                                        {% elif data_klaim.status == 'Sesuai' %}
+                                            <button type="button"
+                                                    class="btn btn-success btn-sm">{{ data_klaim.status }}</button>
+                                        {% elif data_klaim.status == 'Tidak Sesuai' %}
+                                            <button type="button"
+                                                    class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="card table-card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5>Aksi Verifikator</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6 m-l-30 mt-4">
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    {{ data_klaim_form|crispy }}
+                                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                                    <button class="btn btn-primary w-100" type="submit">Simpan</button>
+                                </form>
+                                </di>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function changeOptions(selectEl) {
+            let subForms = document.getElementsByClassName('OLevelResult')
+            if (selectEl === 'Sesuai') {
+                document.getElementById("div_id_keterangan_review").classList.add("active");
+                document.getElementById("id_keterangan_review").setAttribute("required", "");
+
+                document.getElementById("div_id_Kdinacbgs_koreksi").classList.remove("active");
+                document.getElementById("div_id_biaya_koreksi").classList.remove("active");
+                document.getElementById("id_Kdinacbgs_koreksi").removeAttribute("required");
+                document.getElementById("id_biaya_koreksi").removeAttribute("required");
+            } else if (selectEl === 'Tidak Sesuai') {
+                document.getElementById("div_id_keterangan_review").classList.add("active");
+                document.getElementById("div_id_Kdinacbgs_koreksi").classList.add("active");
+                document.getElementById("div_id_biaya_koreksi").classList.add("active");
+                document.getElementById("id_keterangan_review").setAttribute("required", "");
+                document.getElementById("id_Kdinacbgs_koreksi").setAttribute("required", "");
+                document.getElementById("id_biaya_koreksi").setAttribute("required", "");
+            } else {
+                document.getElementById("div_id_keterangan_review").classList.remove("active");
+                document.getElementById("div_id_Kdinacbgs_koreksi").classList.remove("active");
+                document.getElementById("div_id_biaya_koreksi").classList.remove("active");
+                document.getElementById("id_keterangan_review").removeAttribute("required", "");
+                document.getElementById("id_Kdinacbgs_koreksi").removeAttribute("required");
+                document.getElementById("id_biaya_koreksi").removeAttribute("required");
+            }
+        }
+
+        document.getElementById("id_status").setAttribute("onchange", "changeOptions(this.value)");
+        document.getElementById("div_id_keterangan_review").classList.add("OLevelResult.active");
+        document.getElementById("id_keterangan_review").setAttribute("required", "");
+        document.getElementById("div_id_Kdinacbgs_koreksi").classList.add("OLevelResult");
+        document.getElementById("div_id_biaya_koreksi").classList.add("OLevelResult");
+    </script>
+
+{% endblock %}

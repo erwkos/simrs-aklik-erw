@@ -1,757 +1,823 @@
 {% autoescape on %}
-<!DOCTYPE html>
-<html lang="en">
-<!-- [Head] start -->
+    <!DOCTYPE html>
+    <html lang="en">
+    <!-- [Head] start -->
 
-<head>
-    <title>iLogic BPJS Kesehatan</title>
-    <!-- [Meta] -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="BPJS Kesehatan VIBI">
-    <meta name="keywords" content="bpjs, kesehatan, vibi">
-    <meta name="author" content="iLogic">
+    <head>
+        <title>iLogic BPJS Kesehatan</title>
+        <!-- [Meta] -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="BPJS Kesehatan VIBI">
+        <meta name="keywords" content="bpjs, kesehatan, vibi">
+        <meta name="author" content="iLogic">
+        <!-- [Favicon] icon -->
+        <link rel="icon" href="/static/favicon.png" type="image/x-icon">
+        <!-- [Font] Family -->
+        <link rel="stylesheet" href="/static/assets/fonts/inter/inter.css" id="main-font-link"/>
 
-    <!-- [Favicon] icon -->
-    <link rel="icon" href="/static/favicon.png" type="image/x-icon">
-    <!-- [Font] Family -->
-    <link rel="stylesheet" href="/static/assets/fonts/inter/inter.css" id="main-font-link"/>
+        <!-- [Tabler Icons] https://tablericons.com -->
+        <link rel="stylesheet" href="/static/assets/fonts/tabler-icons.min.css"/>
+        <!-- [Feather Icons] https://feathericons.com -->
+        <link rel="stylesheet" href="/static/assets/fonts/feather.css"/>
+        <!-- [Font Awesome Icons] https://fontawesome.com/icons -->
+        <link rel="stylesheet" href="/static/assets/fonts/fontawesome.css"/>
+        <!-- [Material Icons] https://fonts.google.com/icons -->
+        <link rel="stylesheet" href="/static/assets/fonts/material.css"/>
+        <!-- [Template CSS Files] -->
+        <link rel="stylesheet" href="/static/assets/css/style.css" id="main-style-link"/>
+        <link rel="stylesheet" href="/static/assets/css/style-preset.css"/>
 
-    <!-- [Tabler Icons] https://tablericons.com -->
-    <link rel="stylesheet" href="/static/assets/fonts/tabler-icons.min.css"/>
-    <!-- [Feather Icons] https://feathericons.com -->
-    <link rel="stylesheet" href="/static/assets/fonts/feather.css"/>
-    <!-- [Font Awesome Icons] https://fontawesome.com/icons -->
-    <link rel="stylesheet" href="/static/assets/fonts/fontawesome.css"/>
-    <!-- [Material Icons] https://fonts.google.com/icons -->
-    <link rel="stylesheet" href="/static/assets/fonts/material.css"/>
-    <!-- [Template CSS Files] -->
-    <link rel="stylesheet" href="/static/assets/css/style.css" id="main-style-link"/>
-    <link rel="stylesheet" href="/static/assets/css/style-preset.css"/>
+        <!-- gridJS start  -->
+        <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet"/>
 
-    <!-- gridJS start  -->
-    <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+        {% block scriptheader %}
 
-    {% block scriptheader %}
+        {% endblock scriptheader %}
+        <!-- gridJS end  -->
+    </head>
+    <!-- [Head] end -->
+    <!-- [Body] Start -->
 
-    {% endblock scriptheader %}
-    <!-- gridJS end  -->
-</head>
-<!-- [Head] end -->
-<!-- [Body] Start -->
+    <body>
 
-<body>
-
-<!-- [ Pre-loader ] start -->
-<div class="loader-bg">
-    <div class="loader-track">
-        <div class="loader-fill"></div>
-    </div>
-</div>
-<!-- [ Pre-loader ] End -->
-<!-- [ Sidebar Menu ] start -->
-<nav class="pc-sidebar pc-sidebar-hide">
-    <div class="navbar-wrapper">
-        <div class="m-header">
-            <a href="#" class="b-brand text-primary">
-                <!-- ========   Change your logo from here   ============ -->
-                <img src="/static/logobpjs.png" style="width: 100px;">
-                <span class="badge bg-light-success rounded-pill ms-2">iLogic v1.0</span>
-            </a>
+    <!-- [ Pre-loader ] start -->
+    <div class="loader-bg">
+        <div class="loader-track">
+            <div class="loader-fill"></div>
         </div>
-        <div class="navbar-content">
-            <div class="card pc-user-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <img src="/static/assets/images/user/avatar-1.jpg" alt="user-image"
-                                 class="user-avtar wid-45 rounded-circle"/>
-                        </div>
-                        <div class="flex-grow-1 ms-3 me-2">
+    </div>
+    <!-- [ Pre-loader ] End -->
+    <!-- [ Sidebar Menu ] start -->
+    <nav class="pc-sidebar pc-sidebar-hide">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="#" class="b-brand text-primary">
+                    <!-- ========   Change your logo from here   ============ -->
+                    <img src="/static/logobpjs.png" style="width: 100px;">
+                    <span class="badge bg-light-success rounded-pill ms-2">iLogic v1.0</span>
+                </a>
+            </div>
+            <div class="navbar-content">
+                <div class="card pc-user-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <img src="/static/assets/images/user/avatar-1.jpg" alt="user-image"
+                                     class="user-avtar wid-45 rounded-circle"/>
+                            </div>
+                            <div class="flex-grow-1 ms-3 me-2">
 
-                            <h6 class="mb-0">{{ request.user.first_name }}</h6>
+                                <h6 class="mb-0">{{ request.user.first_name }}</h6>
 
-                            {% if request.user.is_superuser %}
-                            <small>Administrator</small>
-                            {% endif %}
+                                {% if request.user.is_superuser %}
+                                    <small>Administrator</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'supervisor' %}
-                            <small>Supervisor</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'supervisor' %}
+                                    <small>Supervisor</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'adminWEB' %}
-                            <small>Administrator</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'adminWEB' %}
+                                    <small>Administrator</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'adminAK' %}
-                            <small>Staf AK</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'adminAK' %}
+                                    <small>Staf AK</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'verifikator' %}
-                            <small>Verifikator</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'verifikator' %}
+                                    <small>Verifikator</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'faskes' %}
-                            <small>Faskes</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'faskes' %}
+                                    <small>Faskes</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'verifikator' or user.groups.all.0.name == 'adminAK' or user.groups.all.0.name == 'adminWEB' or user.groups.all.0.name == 'verifikator' %}
-                            <small>{{ request.user.kantorcabang_set.all.0 }}</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'verifikator' or user.groups.all.0.name == 'adminAK' or user.groups.all.0.name == 'adminWEB' or user.groups.all.0.name == 'verifikator' %}
+                                    <small>{{ request.user.kantorcabang_set.all.0 }}</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'faskes' %}
-                            <small>{{ request.user.faskes_set.all.0 }}</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'faskes' %}
+                                    <small>{{ request.user.faskes_set.all.0 }}</small>
+                                {% endif %}
 
-                            {% if user.groups.all.0.name == 'entrilogik' %}
-                            <small>{{ request.user.entrilogik_set.all.0 }}</small>
-                            {% endif %}
+                                {% if user.groups.all.0.name == 'entrilogik' %}
+                                    <small>{{ request.user.entrilogik_set.all.0 }}</small>
+                                {% endif %}
 
-                        </div>
-                        <a class="btn btn-icon btn-link-secondary avtar-s" data-bs-toggle="collapse"
-                           href="#pc_sidebar_userlink">
-                            <svg class="pc-icon">
-                                <use xlink:href="#custom-sort-outline"></use>
-                            </svg>
-                        </a>
-                    </div>
-                    <div class="collapse pc-user-links" id="pc_sidebar_userlink">
-                        <div class="pt-3">
-                            <a href="/user/ubahpassword">
-                                <i class="ti ti-user"></i>
-                                <span>Ubah Password</span>
+                            </div>
+                            <a class="btn btn-icon btn-link-secondary avtar-s" data-bs-toggle="collapse"
+                               href="#pc_sidebar_userlink">
+                                <svg class="pc-icon">
+                                    <use xlink:href="#custom-sort-outline"></use>
+                                </svg>
                             </a>
-                            <a href="/user/logout">
-                                <i class="ti ti-power"></i>
-                                <span>Logout</span>
-                            </a>
+                        </div>
+                        <div class="collapse pc-user-links" id="pc_sidebar_userlink">
+                            <div class="pt-3">
+                                <a href="/user/ubahpassword">
+                                    <i class="ti ti-user"></i>
+                                    <span>Ubah Password</span>
+                                </a>
+                                <a href="/user/logout">
+                                    <i class="ti ti-power"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <ul class="pc-navbar">
-                <li class="pc-item pc-hasmenu">
-                    <a href="/" class="pc-link">
+                <ul class="pc-navbar">
+                    <li class="pc-item pc-hasmenu">
+                        <a href="/" class="pc-link">
             <span class="pc-micon">
               <svg class="pc-icon">
                 <use xlink:href="#custom-status-up"></use>
               </svg>
             </span>
-                        <span class="pc-mtext">Dashboard</span>
-                    </a>
-                </li>
-
-                {% for x in request.user.groups.all %}
-
-                {% if x.name == 'faskes' %}
-                    <li class="pc-item pc-hasmenu pc-trigger">
-                        <a href="#" class="pc-link">
-                            <span class="pc-micon">
-                              <svg class="pc-icon">
-                                <use xlink:href="#custom-notification-status"></use>
-                              </svg>
-                            </span>
-                            <span class="pc-mtext">Rumah Sakit</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span></a>
-                        <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'faskes:register' %}">Input Register Klaim</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'faskes:daftar-register' %}">
-                                <span class="pc-badge bg-danger">{{ request.count_registerclaim }}</span>
-                                Daftar Register</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'faskes:daftar_data_klaim_pending_dispute_cbg' %}">
-                                    <span class="pc-badge bg-danger">{{ request.count_data_klaim }}</span>
-                                    Data Klaim Pending/Dispute CBG</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'faskes:daftar_data_klaim_pending_dispute_obat' %}">
-                                    <span class="pc-badge bg-danger">{{ request.count_data_klaim_obat }}</span>
-                                    Data Klaim Pending/Dispute Obat</a>
-                            </li>
-                        </ul>
+                            <span class="pc-mtext">Dashboard</span>
+                        </a>
                     </li>
-                {% endif %}
 
-                {% if x.name == 'adminAK' %}
-                    <!-- Register Klaim -->
-                    <li class="pc-item pc-hasmenu pc-trigger">
-                        <a href="#" class="pc-link">
+                    {% for x in request.user.groups.all %}
+
+                        {% if x.name == 'faskes' %}
+                            <li class="pc-item pc-hasmenu pc-trigger">
+                                <a href="#" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-notification-status"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Register Klaim</span>
-                            <span class="pc-arrow">
+                                    <span class="pc-mtext">Rumah Sakit</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span></a>
+                                <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'faskes:register' %}">Input Register Klaim</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'faskes:daftar-register' %}">
+                                            <span class="pc-badge bg-danger">{{ request.count_registerclaim }}</span>
+                                            Daftar Register</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'faskes:daftar_data_klaim_pending_dispute_cbg' %}">
+                                            <span class="pc-badge bg-danger">{{ request.count_data_klaim }}</span>
+                                            Data Klaim Pending/Dispute CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'faskes:daftar_data_klaim_pending_dispute_obat' %}">
+                                            <span class="pc-badge bg-danger">{{ request.count_data_klaim_obat }}</span>
+                                            Data Klaim Pending/Dispute Obat</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% endif %}
+
+                        {% if x.name == 'adminAK' %}
+                            <!-- Register Klaim -->
+                            <li class="pc-item pc-hasmenu pc-trigger">
+                                <a href="#" class="pc-link">
+                            <span class="pc-micon">
+                              <svg class="pc-icon">
+                                <use xlink:href="#custom-notification-status"></use>
+                              </svg>
+                            </span>
+                                    <span class="pc-mtext">Register Klaim</span>
+                                    <span class="pc-arrow">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                      stroke-linejoin="round" class="feather feather-chevron-right">
                                     <polyline points="9 18 15 12 9 6"></polyline>
                                 </svg>
                             </span>
-                        </a>
-                        <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'staff:daftar-register' %}">
-                                    <span class="pc-badge bg-danger">{{ request.count_registerclaim }}</span>
-                                    Daftar Register Klaim
                                 </a>
+                                <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'staff:daftar-register' %}">
+                                            <span class="pc-badge bg-danger">{{ request.count_registerclaim }}</span>
+                                            Daftar Register Klaim
+                                        </a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'staff:daftar_proses_boa' %}">
+                                            <span class="pc-badge bg-danger">{{ request.count_registerklaim_belum_boa }}</span>
+                                            Proses BOA Register Klaim
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'staff:daftar_proses_boa' %}">
-                                    <span class="pc-badge bg-danger">{{ request.count_registerklaim_belum_boa }}</span>
-                                    Proses BOA Register Klaim
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
 
-                    <!-- Pengaturan -->
-                    <li class="pc-item pc-hasmenu pc-trigger">
-                        <a href="#" class="pc-link">
+                            <!-- Pengaturan -->
+                            <li class="pc-item pc-hasmenu pc-trigger">
+                                <a href="#" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-setting-2"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Pengaturan</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span></a>
-                        <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'staff:list_user_verifikator' %}">Pengaturan Verifikator</a>
+                                    <span class="pc-mtext">Pengaturan</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span></a>
+                                <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'staff:list_user_verifikator' %}">Pengaturan
+                                            Verifikator</a>
+                                    </li>
+                                </ul>
                             </li>
-                        </ul>
-                    </li>
 
-                    <!-- Monitoring Data Klaim -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#" class="pc-link">
+                            <!-- Monitoring Data Klaim -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-fatrows"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Monitoring Data Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span></a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_CBG_stafak' %}">
-                                    Monitoring Data Klaim CBG</a>
+                                    <span class="pc-mtext">Monitoring Data Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span></a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_CBG_stafak' %}">
+                                            Monitoring Data Klaim CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_obat_stafak' %}">
+                                            Monitoring Data Klaim Obat</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG_stafak' %}">
+                                            Monitoring Data Klaim Pending/Dispute CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_obat_stafak' %}">
+                                            Monitoring Data Klaim Obat Pending/Dispute Obat</a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_obat_stafak' %}">
-                                    Monitoring Data Klaim Obat</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG_stafak' %}">
-                                    Monitoring Data Klaim Pending/Dispute CBG</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_obat_stafak' %}">
-                                    Monitoring Data Klaim Obat Pending/Dispute Obat</a>
-                            </li>
-                        </ul>
-                    </li>
 
-                    <!-- Download Data Klaim -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#" class="pc-link">
+                            <!-- Download Data Klaim -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-document-filter"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Download Data Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span></a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'staff:ambil_nosep_cbg' %}">Ambil No SEP CBG</a>
+                                    <span class="pc-mtext">Download Data Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span></a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'staff:ambil_nosep_cbg' %}">Ambil No SEP CBG</a>
+                                    </li>
+                                </ul>
                             </li>
-                        </ul>
-                    </li>
-                {% endif %}
+                        {% endif %}
 
-                {% if x.name == 'adminWEB' %}
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                        {% if x.name == 'adminWEB' %}
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-user-square"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Manajemen User</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'user:kanca_user_list' %}">User Kantor Cabang</a>
+                                    <span class="pc-mtext">Manajemen User</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'user:kanca_user_list' %}">User Kantor
+                                            Cabang</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'user:cbg_user_list' %}">User Faskes</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'user:user_per_verifikator' %}">Pengaturan
+                                            Verifikator</a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'user:cbg_user_list' %}">User Faskes</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'user:user_per_verifikator' %}">Pengaturan Verifikator</a>
-                            </li>
-                        </ul>
-                    </li>
-                {% endif %}
+                        {% endif %}
 
-                {% if x.name == 'verifikator' %}
-                    <!-- Register Klaim -->
-                    <li class="pc-item pc-hasmenu pc-trigger">
-                        <a href="#!" class="pc-link">
+                        {% if x.name == 'verifikator' %}
+                            <!-- Register Klaim -->
+                            <li class="pc-item pc-hasmenu pc-trigger">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-notification-status"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Register Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
-                            <li class="pc-item"><a class="pc-link" href="{% url 'verifikator:daftar-register' %}"><span
-                                    class="pc-badge bg-danger">{{ request.count_registerclaim }}</span>
-                                Daftar Register Klaim</a>
+                                    <span class="pc-mtext">Register Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'verifikator:daftar-register' %}"><span
+                                            class="pc-badge bg-danger">{{ request.count_registerclaim }}</span>
+                                        Daftar Register Klaim</a>
+                                    </li>
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'verifikator:finalisasi-data-klaim' %}"><span
+                                            class="pc-badge bg-danger">{{ request.count_finalisasi }}</span>Finalisasi
+                                        Data
+                                        Klaim </a></li>
+                                </ul>
                             </li>
-                            <li class="pc-item"><a class="pc-link" href="{% url 'verifikator:finalisasi-data-klaim' %}"><span
-                                    class="pc-badge bg-danger">{{ request.count_finalisasi }}</span>Finalisasi Data
-                                Klaim </a></li>
-                        </ul>
-                    </li>
 
-                    <!-- Klaim CBG -->
-                    <li class="pc-item pc-hasmenu pc-trigger">
-                        <a href="#!" class="pc-link">
+                            <!-- Klaim CBG -->
+                            <li class="pc-item pc-hasmenu pc-trigger">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-box-1"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Klaim CBG</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
-                            <li class="pc-item"><a class="pc-link" href="{% url 'verifikator:import-data-klaim' %}">Import
-                                Data CBG</a>
+                                    <span class="pc-mtext">Klaim CBG</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'verifikator:import-data-klaim' %}">Import
+                                        Data CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'verifikator:daftar-data-klaim' %}"><span
+                                                class="pc-badge bg-danger">{{ request.count_dataclaim }}</span>
+                                            Daftar Tugas Data Klaim CBG</a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'verifikator:daftar-data-klaim' %}"><span
-                                    class="pc-badge bg-danger">{{ request.count_dataclaim }}</span>
-                                Daftar Tugas Data Klaim CBG</a>
-                            </li>
-                        </ul>
-                    </li>
 
-                    <!-- Klaim Obat -->
-                    <li class="pc-item pc-hasmenu pc-trigger">
-                        <a href="#!" class="pc-link">
+                            <!-- Klaim Obat -->
+                            <li class="pc-item pc-hasmenu pc-trigger">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-crop"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Klaim Obat</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
-                            <li class="pc-item"><a class="pc-link" href="{% url 'verifikator:import-data-klaim-obat' %}">Import
-                                Data Obat</a>
+                                    <span class="pc-mtext">Klaim Obat</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: block; box-sizing: border-box;">
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'verifikator:import-data-klaim-obat' %}">Import
+                                        Data Obat</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'verifikator:daftar-data-klaim-obat' %}"><span
+                                                class="pc-badge bg-danger">{{ request.count_dataclaim_obat }}</span>
+                                            Daftar Tugas Data Klaim Obat</a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'verifikator:daftar-data-klaim-obat' %}"><span
-                                    class="pc-badge bg-danger">{{ request.count_dataclaim_obat }}</span>
-                                Daftar Tugas Data Klaim Obat</a>
-                            </li>
-                        </ul>
-                    </li>
 
-                    <!-- Monitoring Data Klaim -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                            <!-- Monitoring Data Klaim -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-fatrows"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Monitoring Data Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item"><a class="pc-link"
-                                                   href="{% url 'monitoring:monitoring_data_klaim_CBG' %}">Monitoring
-                                Data Klaim CBG</a></li>
-                            <li class="pc-item"><a class="pc-link"
-                                                   href="{% url 'monitoring:monitoring_data_klaim_obat_verifikator' %}">Monitoring
-                                Data Klaim Obat</a></li>
-                            <li class="pc-item"><a class="pc-link"
-                                                   href="{% url 'monitoring:monitoring_data_klaim_CBG_verifikator' %}">Monitoring
-                                Tugas Verifikator Klaim CBG</a></li>
-{#                            <li class="pc-item"><a class="pc-link"#}
-{#                                                   href="{% url 'monitoring:monitoring_data_klaim_hitung_verifikator' %}">Monitoring#}
-{#                                Hitung Klaim</a></li>#}
-                            <li class="pc-item"><a class="pc-link"
-                                                   href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG' %}">Monitoring
-                                Pending/Dispute CBG</a></li>
-                            <li class="pc-item"><a class="pc-link"
-                                                   href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_obat_verifikator' %}">Monitoring
-                                Pending/Dispute Obat</a></li>
-                        </ul>
-                    </li>
+                                    <span class="pc-mtext">Monitoring Data Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'monitoring:monitoring_data_klaim_CBG' %}">Monitoring
+                                        Data Klaim CBG</a></li>
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'monitoring:monitoring_data_klaim_obat_verifikator' %}">Monitoring
+                                        Data Klaim Obat</a></li>
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'monitoring:monitoring_data_klaim_CBG_verifikator' %}">Monitoring
+                                        Tugas Verifikator Klaim CBG</a></li>
+                                    {#                            <li class="pc-item"><a class="pc-link"#}
+                                    {#                                                   href="{% url 'monitoring:monitoring_data_klaim_hitung_verifikator' %}">Monitoring#}
+                                    {#                                Hitung Klaim</a></li>#}
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG' %}">Monitoring
+                                        Pending/Dispute CBG</a></li>
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_obat_verifikator' %}">Monitoring
+                                        Pending/Dispute Obat</a></li>
+                                </ul>
+                            </li>
 
-                    <!-- Download Data Klaim -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                            <!-- Download Data Klaim -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-document-filter"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Download Data Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item"><a class="pc-link" href="{% url 'verifikator:download_data_cbg' %}">Download
-                                Data CBG</a>
+                                    <span class="pc-mtext">Download Data Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'verifikator:download_data_cbg' %}">Download
+                                        Data CBG</a>
+                                    </li>
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'verifikator:download_data_obat' %}">Download
+                                        Data Obat</a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="pc-item"><a class="pc-link" href="{% url 'verifikator:download_data_obat' %}">Download
-                                Data Obat</a>
-                            </li>
-                        </ul>
-                    </li>
-                {% endif %}
+                        {% endif %}
 
-                {% if x.name == 'supervisor' %}
-                    <!-- Register Klaim -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                        {% if x.name == 'supervisor' %}
+                            <!-- Register Klaim -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-notification-status"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Register Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisor:daftar_register_supervisor' %}">
-                                    Daftar Register Klaim</a>
+                                    <span class="pc-mtext">Register Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'supervisor:daftar_register_supervisor' %}">
+                                            Daftar Register Klaim</a>
+                                    </li>
+                                </ul>
                             </li>
-                        </ul>
-                    </li>
 
-                    <!-- Pengaturan -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                            <!-- Pengaturan -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-setting-2"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Pengaturan</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
+                                    <span class="pc-mtext">Pengaturan</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
 
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisor:daftar_pembagian_ulang_verifikasi_cbg' %}">
-                                    Pembagian Ulang Klaim CBG</a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'supervisor:daftar_pembagian_ulang_verifikasi_cbg' %}">
+                                            Pembagian Ulang Klaim CBG</a>
+                                    </li>
+                                    {#                            <li class="pc-item">#}
+                                    {#                                <a class="pc-link" href="{% url 'supervisor:daftar_pembagian_ulang_verifikasi_obat' %}">#}
+                                    {#                                    Pembagian Ulang Klaim Obat</a>#}
+                                    {#                            </li>#}
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'supervisor:list_user_verifikator' %}">
+                                            Pengaturan Verifikator</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'supervisor:list_pengaturan_sla' %}">
+                                            Pengaturan SLA Verifikasi</a>
+                                    </li>
+                                </ul>
                             </li>
-{#                            <li class="pc-item">#}
-{#                                <a class="pc-link" href="{% url 'supervisor:daftar_pembagian_ulang_verifikasi_obat' %}">#}
-{#                                    Pembagian Ulang Klaim Obat</a>#}
-{#                            </li>#}
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisor:list_user_verifikator' %}">
-                                    Pengaturan Verifikator</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisor:list_pengaturan_sla' %}">
-                                    Pengaturan SLA Verifikasi</a>
-                            </li>
-                        </ul>
-                    </li>
 
-                    <!-- Monitoring Data Klaim -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                            <!-- Monitoring Data Klaim -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-fatrows"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Monitoring Data Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
+                                    <span class="pc-mtext">Monitoring Data Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
 
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_CBG_supervisor' %}">
-                                    Monitoring Data Klaim CBG</a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_CBG_supervisor' %}">
+                                            Monitoring Data Klaim CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_obat_supervisor' %}">
+                                            Monitoring Data Klaim Obat</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG_supervisor' %}">
+                                            Monitoring Data Klaim Pending/Dispute CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_obat_supervisor' %}">
+                                            Monitoring Data Klaim Pending/Dispute Obat</a>
+                                    </li>
+                                    {#                            <li class="pc-item">#}
+                                    {#                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_hitung_supervisor' %}">#}
+                                    {#                                    Monitoring Hitung Klaim</a>#}
+                                    {#                            </li>#}
+                                </ul>
                             </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_obat_supervisor' %}">
-                                    Monitoring Data Klaim Obat</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_CBG_supervisor' %}">
-                                    Monitoring Data Klaim Pending/Dispute CBG</a>
-                            </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_pending_dispute_obat_supervisor' %}">
-                                    Monitoring Data Klaim Pending/Dispute Obat</a>
-                            </li>
-{#                            <li class="pc-item">#}
-{#                                <a class="pc-link" href="{% url 'monitoring:monitoring_data_klaim_hitung_supervisor' %}">#}
-{#                                    Monitoring Hitung Klaim</a>#}
-{#                            </li>#}
-                        </ul>
-                    </li>
 
-                    <!-- Download Data Klaim -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                            <!-- Download Data Klaim -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-document-filter"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Download Data Klaim</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
+                                    <span class="pc-mtext">Download Data Klaim</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
 
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisor:download_data_cbg' %}">
-                                    Download Data CBG</a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'supervisor:download_data_cbg' %}">
+                                            Download Data CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'supervisor:download_data_obat' %}">
+                                            Download Data Obat</a>
+                                    </li>
+                                </ul>
                             </li>
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisor:download_data_obat' %}">
-                                    Download Data Obat</a>
-                            </li>
-                        </ul>
-                    </li>
-                {% endif %}
-                    
-                {% if x.name == 'supervisorkp' %}
-                    <!-- Monitoring Register -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                        {% endif %}
+
+                        {% if x.name == 'supervisorkp' %}
+                            <!-- Monitoring Register -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-fatrows"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Monitoring</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
+                                    <span class="pc-mtext">Monitoring</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
 
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisorkp:monitoring_register_supervisorkp' %}">
-                                    Monitoring Register</a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'supervisorkp:monitoring_register_supervisorkp' %}">
+                                            Monitoring Register</a>
+                                    </li>
+                                </ul>
+
                             </li>
-                        </ul>
 
-                    </li>
-
-                    <!-- Manajemen User -->
-                    <li class="pc-item pc-hasmenu">
-                        <a href="#!" class="pc-link">
+                            <!-- Manajemen User -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
                             <span class="pc-micon">
                               <svg class="pc-icon">
                                 <use xlink:href="#custom-user-square"></use>
                               </svg>
                             </span>
-                            <span class="pc-mtext">Manajemen User</span><span class="pc-arrow"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="feather feather-chevron-right"><polyline
-                                points="9 18 15 12 9 6"></polyline></svg></span>
-                        </a>
-                        <ul class="pc-submenu" style="display: none;">
-                            <li class="pc-item">
-                                <a class="pc-link" href="{% url 'supervisorkp:daftar_user_supervisorkp' %}">Daftar User Nasional</a>
+                                    <span class="pc-mtext">Manajemen User</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'supervisorkp:daftar_user_supervisorkp' %}">Daftar
+                                            User Nasional</a>
+                                    </li>
+                                </ul>
                             </li>
-                        </ul>
-                    </li>
-                {% endif %}
+                        {% endif %}
+                        
+                        <!-- Register Post klaim -->
 
-                {% endfor %}
-            </ul>
+                        <li class="pc-item pc-hasmenu">
+                            <a href="#" class="pc-link">
+                            <span class="pc-micon">
+                              <svg class="pc-icon">
+                                <use xlink:href="#custom-document"></use>
+                              </svg>
+                            </span>
+                                <span class="pc-mtext">Post Klaim</span><span class="pc-arrow"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                    points="9 18 15 12 9 6"></polyline></svg></span></a>
+                            <ul class="pc-submenu" style="display: none;">
+                                <li class="pc-item">
+                                    <a class="pc-link" href="{% url 'vpkaak:register-post-klaim' %}"><span
+                                            class="pc-badge bg-danger">{{ request.count_register_post_klaim }}</span>
+                                        Register Post Klaim</a>
+                                </li>
+                                <li class="pc-item">
+                                    <a class="pc-link" href="{% url 'vpkaak:import-sampling-data-klaim' %}">Import Sampling Data
+                                        Klaim</a>
+                                </li>
+                                <li class="pc-item">
+                                    <a class="pc-link" href="{% url 'vpkaak:review-post-klaim' %}"><span
+                                            class="pc-badge bg-danger">{{ request.count_sampling_data_klaim_cbg }}</span>
+                                        Review</a>
+                                </li>
+                                <li class="pc-item">
+                                    <a class="pc-link" href="{% url 'vpkaak:finalisasi-register-post-klaim' %}">Finalisasi</a>
+                                </li>
+                                <li class="pc-item">
+                                    <a class="pc-link" href="{% url 'vpkaak:kertas-kerja-koreksi' %}">Kertas Kerja
+                                        Koreksi</a>
+                                </li>
+{#                                <li class="pc-item">#}
+{#                                    <a class="pc-link" href="/vpkaak/input-nomor-ba">Input Nomor BA</a>#}
+{#                                </li>#}
+                            </ul>
+                        </li>
+
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
-<!-- [ Sidebar Menu ] end -->
-<!-- [ Header Topbar ] start -->
-<header class="pc-header">
-    <div class="header-wrapper"> <!-- [Mobile Media Block] start -->
-        <div class="me-auto pc-mob-drp">
-            <ul class="list-unstyled">
-                <!-- ======= Menu collapse Icon ===== -->
-                <li class="pc-h-item pc-sidebar-collapse">
-                    <a href="#" class="pc-head-link ms-0" id="sidebar-hide">
-                        <i class="ti ti-menu-2"></i>
-                    </a>
-                </li>
-                <li class="pc-h-item pc-sidebar-popup">
-                    <a href="#" class="pc-head-link ms-0" id="mobile-collapse">
-                        <i class="ti ti-menu-2"></i>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <!-- [Mobile Media Block end] -->
-        <div class="ms-auto">
-            <ul class="list-unstyled">
-                <li class="dropdown pc-h-item">
-                    <a
-                            class="pc-head-link dropdown-toggle arrow-none me-0"
-                            data-bs-toggle="dropdown"
-                            href="#"
-                            role="button"
-                            aria-haspopup="false"
-                            aria-expanded="false"
-                    >
-                        <svg class="pc-icon">
-                            <use xlink:href="#custom-sun-1"></use>
-                        </svg>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end pc-h-dropdown">
-                        <a href="#!" class="dropdown-item" onclick="layout_change('dark')">
-                            <svg class="pc-icon">
-                                <use xlink:href="#custom-moon"></use>
-                            </svg>
-                            <span>Dark</span>
+    </nav>
+    <!-- [ Sidebar Menu ] end -->
+    <!-- [ Header Topbar ] start -->
+    <header class="pc-header">
+        <div class="header-wrapper"> <!-- [Mobile Media Block] start -->
+            <div class="me-auto pc-mob-drp">
+                <ul class="list-unstyled">
+                    <!-- ======= Menu collapse Icon ===== -->
+                    <li class="pc-h-item pc-sidebar-collapse">
+                        <a href="#" class="pc-head-link ms-0" id="sidebar-hide">
+                            <i class="ti ti-menu-2"></i>
                         </a>
-                        <a href="#!" class="dropdown-item" onclick="layout_change('light')">
+                    </li>
+                    <li class="pc-h-item pc-sidebar-popup">
+                        <a href="#" class="pc-head-link ms-0" id="mobile-collapse">
+                            <i class="ti ti-menu-2"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <!-- [Mobile Media Block end] -->
+            <div class="ms-auto">
+                <ul class="list-unstyled">
+                    <li class="dropdown pc-h-item">
+                        <a
+                                class="pc-head-link dropdown-toggle arrow-none me-0"
+                                data-bs-toggle="dropdown"
+                                href="#"
+                                role="button"
+                                aria-haspopup="false"
+                                aria-expanded="false"
+                        >
                             <svg class="pc-icon">
                                 <use xlink:href="#custom-sun-1"></use>
                             </svg>
-                            <span>Light</span>
                         </a>
-                        <a href="#!" class="dropdown-item" onclick="layout_change_default()">
-                            <svg class="pc-icon">
-                                <use xlink:href="#custom-setting-2"></use>
-                            </svg>
-                            <span>Default</span>
-                        </a>
-                    </div>
-                </li>
-            </ul>
+                        <div class="dropdown-menu dropdown-menu-end pc-h-dropdown">
+                            <a href="#!" class="dropdown-item" onclick="layout_change('dark')">
+                                <svg class="pc-icon">
+                                    <use xlink:href="#custom-moon"></use>
+                                </svg>
+                                <span>Dark</span>
+                            </a>
+                            <a href="#!" class="dropdown-item" onclick="layout_change('light')">
+                                <svg class="pc-icon">
+                                    <use xlink:href="#custom-sun-1"></use>
+                                </svg>
+                                <span>Light</span>
+                            </a>
+                            <a href="#!" class="dropdown-item" onclick="layout_change_default()">
+                                <svg class="pc-icon">
+                                    <use xlink:href="#custom-setting-2"></use>
+                                </svg>
+                                <span>Default</span>
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-</header>
+    </header>
 
 
-<!-- [ Main Content ] start -->
-<div class="pc-container">
-    <div class="pc-content">
-        {% block content %}
-        {% endblock content %}
+    <!-- [ Main Content ] start -->
+    <div class="pc-container">
+        <div class="pc-content">
+            {% block content %}
+            {% endblock content %}
+        </div>
+        <!-- [ Main Content ] end -->
     </div>
     <!-- [ Main Content ] end -->
-</div>
-<!-- [ Main Content ] end -->
 
-<!--Footer yaa-->
-<footer class="pc-footer">
-      <div class="footer-wrapper container-fluid">
-        <div class="row">
-          <div class="col my-1">
-            <p class="m-0">iLogic v1.0</p>
-          </div>
-          <div class="col-auto my-1">
-            <ul class="list-inline footer-link mb-0">
-              <li class="list-inline-item">2023</li>
-            </ul>
-          </div>
+    <!--Footer yaa-->
+    <footer class="pc-footer">
+        <div class="footer-wrapper container-fluid">
+            <div class="row">
+                <div class="col my-1">
+                    <p class="m-0">iLogic v1.0</p>
+                </div>
+                <div class="col-auto my-1">
+                    <ul class="list-inline footer-link mb-0">
+                        <li class="list-inline-item">2023</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-      </div>
     </footer>
-<!--FOoter yaa-->
-<!-- Required Js -->
-<script src="/static/assets/js/plugins/popper.min.js"></script>
-<script src="/static/assets/js/plugins/simplebar.min.js"></script>
-<script src="/static/assets/js/plugins/bootstrap.min.js"></script>
-<script src="/static/assets/js/fonts/custom-font.js"></script>
-<script src="/static/assets/js/config.js"></script>
-<script src="/static/assets/js/pcoded1.js"></script>
-<script src="/static/assets/js/plugins/feather.min.js"></script>
-<script src="/static/assets/js/plugins/popper.min.js"></script>
+    <!--FOoter yaa-->
+    <!-- Required Js -->
+    <script src="/static/assets/js/plugins/popper.min.js"></script>
+    <script src="/static/assets/js/plugins/simplebar.min.js"></script>
+    <script src="/static/assets/js/plugins/bootstrap.min.js"></script>
+    <script src="/static/assets/js/fonts/custom-font.js"></script>
+    <script src="/static/assets/js/config.js"></script>
+    <script src="/static/assets/js/pcoded1.js"></script>
+    <script src="/static/assets/js/plugins/feather.min.js"></script>
+    <script src="/static/assets/js/plugins/popper.min.js"></script>
 
-<!-- [Page Specific JS] start -->
-<script src="/static/assets/js/plugins/simple-datatables.js"></script>
-<script>
-    {#const dataTable = new simpleDatatables.DataTable('#pc-dt-simple', {#}
-    {#    sortable: false,#}
-    {#    perPage: 5#}
-    {#});#}
-    {#// new SimpleBar(document.querySelector('.sale-scroll'));#}
-    {#// new SimpleBar(document.querySelector('.feed-scroll'));#}
-    {#new SimpleBar(document.querySelector('.revenue-scroll'));#}
-    {#new SimpleBar(document.querySelector('.income-scroll'));#}
-    {#new SimpleBar(document.querySelector('.customer-scroll'));#}
-</script>
-<script>
-const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-</script>
-<!-- [Page Specific JS] end -->
-</body>
-<!-- [Body] end -->
-</html>
+    <!-- [Page Specific JS] start -->
+    <script src="/static/assets/js/plugins/simple-datatables.js"></script>
+    <script>
+        {#const dataTable = new simpleDatatables.DataTable('#pc-dt-simple', {#}
+        {#    sortable: false,#}
+        {#    perPage: 5#}
+        {#})
+            ;
+        #}
+        {#// new SimpleBar(document.querySelector('.sale-scroll'));#}
+        {#// new SimpleBar(document.querySelector('.feed-scroll'));#}
+        {#new SimpleBar(document.querySelector('.revenue-scroll'));#}
+        {#new SimpleBar(document.querySelector('.income-scroll'));#}
+        {#new SimpleBar(document.querySelector('.customer-scroll'));#}
+    </script>
+    <script>
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    </script>
+    <!-- [Page Specific JS] end -->
+    </body>
+    <!-- [Body] end -->
+    </html>
 
 
 {% endautoescape %}

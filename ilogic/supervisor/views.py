@@ -140,6 +140,8 @@ def update_pembagian_ulang_verifikasi_cbg(request, pk):
     queryset_awal = RegisterKlaim.objects.filter(nomor_register_klaim__startswith=kantor_cabang.kode_cabang)
     register = queryset_awal.get(id=pk)
     verifikator_awal = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
+    verifikator_bagi_ulang_per_verifikator = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES).values(
+        'verifikator__id', 'verifikator__first_name', 'verifikator__last_name').distinct()
 
     # count
     data_klaim = DataKlaimCBG.objects.filter(register_klaim=register)
@@ -258,6 +260,7 @@ def update_pembagian_ulang_verifikasi_cbg(request, pk):
     context = {
         'register': register,
         'verifikator': verifikator_awal,
+        'verifikator_bagi': verifikator_bagi_ulang_per_verifikator,
         'jumlah_proses': jumlah_proses,
         'jumlah_layak': jumlah_layak,
         'jumlah_pending': jumlah_pending,

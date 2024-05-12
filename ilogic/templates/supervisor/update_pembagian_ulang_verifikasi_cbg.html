@@ -114,9 +114,10 @@
                                         <div class="form-check mb-2">
                                             <input class="form-check-input" type="checkbox" id="ver" name="{{ ver }}"
                                                    value="{{ ver.id }}" checked="">
-                                            <label class="form-check-label" for="ver"> {{ ver.first_name }} </label>
+                                            <label class="form-check-label" for="ver"> {{ ver.first_name }} {{ ver.last_name }} </label>
                                         </div>
                                     {% endfor %}
+                                <input type="button" value="Check All" onclick="checkAll()">
                                 </div>
                             </div>
                             <input type="hidden" name="action" value="bagi_ulang">
@@ -137,8 +138,8 @@
                                     <div class="mb-3">
                                         <select class="select form-select" name="verifikator_terpilih">
                                             <option selected>Pilih Nama Verifikator</option>
-                                            {% for ver in verifikator %}
-                                                <option value="{{ ver.id }}">{{ ver.first_name }}</option>
+                                            {% for ver in verifikator_bagi %}
+                                                <option value="{{ ver.verifikator__id }}">{{ ver.verifikator__first_name }} {{ ver.verifikator__last_name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -150,9 +151,10 @@
                                         <div class="form-check mb-2">
                                             <input class="form-check-input" type="checkbox" id="ver" name="{{ ver }}"
                                                    value="{{ ver.id }}" checked="">
-                                            <label class="form-check-label" for="ver"> {{ ver.first_name }} </label>
+                                            <label class="form-check-label" for="ver"> {{ ver.first_name }} {{ ver.last_name }} </label>
                                         </div>
                                     {% endfor %}
+                                    <input type="button" value="Check All" onclick="checkAll()">
                                 </div>
                             </div>
                             <input type="hidden" name="action" value="bagi_ulang_per_verifikator">
@@ -191,6 +193,17 @@
         let div_bagi_ulang = document.getElementById("bagi_ulang");
         div_bagi_ulang.classList.add("hidden")
     }
+
+    var isChecked = false;
+
+    function checkAll() {
+        var checkboxes = document.querySelectorAll('input[type=checkbox]');
+        checkboxes.forEach(function (checkbox) {
+            checkbox.checked = !isChecked;
+        });
+        isChecked = !isChecked;
+    }
+
 </script>
 
 

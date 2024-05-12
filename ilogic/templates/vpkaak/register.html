@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load my_tags %}
+
+{% block content %}
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="container-fluid">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="card">
+            <button class="btn btn-light-primary text-start" onclick="hideTheAddDiv()">
+                <i class="fas fa-plus-circle"></i> Register Post Klaim Baru
+            </button>
+            <div class="d-flex flex-wrap gap-2">
+
+            </div>
+
+            <div class="card-body" id="hideTheAdd" style="display: none;">
+                <div class="container-fluid">
+                    <br>
+                    <form id="registerForm" class="row row-cols-md-auto g-3 align-items-center" method="POST">
+                        {% csrf_token %}
+                        {{ form | crispy }}
+                        <input type="hidden" name="add_register_post_klaim" value="added">
+                        <button class="btn btn-primary" type="submit">Buat Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>
+                    Daftar Register Post Klaim
+                    <span class="badge bg-danger">{{ request.count_register_post_klaim }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="container-fluid">
+                    <br>
+                    <div class="card-body">
+                        <form class="row row-cols-md-auto g-3 align-items-center">
+                            {{ myFilter.form | crispy }}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col">No</th>
+                            <th scope="col">Noregister</th>
+                            <th scope="col">Tgl Register</th>
+                            <th scope="col">Jenis Audit</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Periode Awal</th>
+                            <th scope="col">Periode Akhir</th>
+                            <th scope="col">Bulan Beban</th>
+                            <th scope="col">Nomor Berita Acara</th>
+                            <th scope="col">User Reg</th>
+                            
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for register in register_list %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ register.nomor_register }}</td>
+                                <td>{{ register.created_at|date:"d/m/Y" }}</td>
+                                <td>{{ register.get_jenis_audit_display }}</td>
+                                {% if register.get_status_display == 'Register' %}
+                                    <td>
+                                        <buttton
+                                                class="btn btn-light btn-sm">{{ register.get_status_display }}</buttton>
+                                    </td>
+                                {% elif register.get_status_display == 'Proses Review' %}
+                                    <td>
+                                        <buttton
+                                                class="btn btn-danger btn-sm">{{ register.get_status_display }}</buttton>
+                                    </td>
+                                {% elif register.get_status_display == 'Selesai' %}
+                                    <td>
+                                        <buttton
+                                                class="btn btn-success btn-sm ">{{ register.get_status_display }}</buttton>
+                                    </td>
+                                {% endif %}
+                                <td>{{ register.periode_awal|date:"d/m/Y"|default:"-" }}</td>
+                                <td>{{ register.periode_akhir|date:"d/m/Y"|default:"-" }}</td>
+                                <td>{{ register.bulan_beban|date:"M-y"|default:"-" }}</td>
+                                <td>{{ register.nomor_BA_VPK_AAK|default_if_none:"" }}</td>
+                                <td>{{ register.user }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center">Tidak ada data</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if register_list.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if register_list.previous_page_number != 1 %}
+                <a href="?{% param_replace page=register_list.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ register_list.number }} of {{ register_list.paginator.num_pages }}
+
+        {% if register_list.has_next %}
+            {% if register_list.next_page_number != paginator.num_pages %}
+                <a href="?{% param_replace page=register_list.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=register_list.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>Register Klaim {{ register_list.start_index }} - {{ register_list.end_index }} </p>
+    </span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleDiv();
+        });
+
+        function hideTheAddDiv() {
+            let hide_the_add = document.getElementById("hideTheAdd");
+            if (hide_the_add.style.display === "none") {
+                hide_the_add.style.display = "block";
+            } else {
+                hide_the_add.style.display = "none";
+            }
+
+        }
+
+        function toggleDiv() {
+            let jenis_audit = document.getElementById("id_jenis_audit").value;
+            let div_id_inisiasi = document.getElementById("div_id_inisiasi");
+            let div_id_periode_awal = document.getElementById("div_id_periode_awal");
+            let div_id_periode_akhir = document.getElementById("div_id_periode_akhir");
+            let div_id_surat_tugas = document.getElementById("div_id_surat_tugas");
+
+            let div_id_bulan_beban = document.getElementById("div_id_bulan_beban");
+            {#let div_id_nomor_BA_VPK_AAK = document.getElementById("div_id_nomor_BA_VPK_AAK");#}
+            let div_id_staff_upk = document.getElementById("div_id_staff_upk");
+            let div_id_verifikator = document.getElementById("div_id_verifikator");
+            let div_id_faskes = document.getElementById("div_id_faskes");
+            let div_id_kelas = document.getElementById("div_id_kelas");
+
+
+            if (jenis_audit === "AAK-FKRTL") {
+                div_id_inisiasi.style.display = "block";
+                div_id_periode_awal.style.display = "block";
+                div_id_periode_akhir.style.display = "block";
+                div_id_surat_tugas.style.display = "block";
+                div_id_faskes.style.display = "block";
+
+                div_id_bulan_beban.style.display = "none";
+                {#div_id_nomor_BA_VPK_AAK.style.display = "none";#}
+                div_id_staff_upk.style.display = "none";
+                div_id_verifikator.style.display = "none";
+                div_id_kelas.style.display = "none";
+                id_bulan_beban_day.style.display = "none";
+
+                id_bulan_beban.value = "";
+                id_nomor_BA_VPK_AAK.value = "";
+                id_staff_upk.value = "";
+                id_verifikator.value = "";
+                id_faskes.value = "";
+                id_kelas.value = "";
+            } else if (jenis_audit === "VPK-FKRTL") {
+                div_id_inisiasi.style.display = "none";
+                div_id_periode_awal.style.display = "none";
+                div_id_periode_akhir.style.display = "none";
+                div_id_surat_tugas.style.display = "none";
+
+                div_id_bulan_beban.style.display = "block";
+                {#div_id_nomor_BA_VPK_AAK.style.display = "block";#}
+                div_id_staff_upk.style.display = "block";
+                div_id_verifikator.style.display = "block";
+                div_id_faskes.style.display = "block";
+                div_id_kelas.style.display = "block";
+                id_bulan_beban_day.style.display = "none";
+
+                id_inisiasi.value = "";
+                id_periode_awal.value = "";
+                id_periode_akhir.value = "";
+                id_surat_tugas.value = "";
+            } else {
+                div_id_inisiasi.style.display = "none";
+                div_id_periode_awal.style.display = "none";
+                div_id_periode_akhir.style.display = "none";
+                div_id_surat_tugas.style.display = "none";
+
+                div_id_bulan_beban.style.display = "none";
+                {#div_id_nomor_BA_VPK_AAK.style.display = "none";#}
+                div_id_staff_upk.style.display = "none";
+                div_id_verifikator.style.display = "none";
+                div_id_faskes.style.display = "none";
+                div_id_kelas.style.display = "none";
+                id_bulan_beban_day.style.display = "none";
+
+                id_inisiasi.value = "";
+                id_periode_awal.value = "";
+                id_periode_akhir.value = "";
+                id_surat_tugas.value = "";
+                id_bulan_beban.value = "";
+                {#id_nomor_BA_VPK_AAK.value = "";#}
+                id_staff_upk.value = "";
+                id_verifikator.value = "";
+                id_faskes.value = "";
+                id_kelas.value = "";
+            }
+        }
+
+    </script>
+
+    <script>
+        document.getElementById("id_bulan_beban_day").style.display = "none";
+    </script>
+
+
+
+
+{% endblock %}

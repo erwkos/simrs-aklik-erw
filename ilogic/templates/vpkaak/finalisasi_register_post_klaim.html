@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load my_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>
+                    Daftar Finalisasi Register Post Klaim (VPK-AAK)
+                    <span class="badge bg-danger">{{ request.count_finalisasi }}</span>
+                </h5>
+            </div>
+
+            <div class="container">
+                <br>
+                <div class="card-body">
+                    <form class="row row-cols-md-auto g-3 align-items-center">
+                        {{ myFilter.form | crispy }}
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-borderless mb-0">
+                            <thead>
+                            <tr>
+                                <th scope="col">Final</th>
+                                <th scope="col">No Register</th>
+                                <th scope="col">Tgl Register</th>
+                                <th scope="col">Jenis Audit</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Periode</th>
+                                <th scope="col">Bulan Beban</th>
+                                {#                                <th scope="col">Biaya Register</th>#}
+                                {#                                <th scope="col">Biaya Koreksi</th>#}
+                                {#                                <th scope="col">Efisiensi</th>#}
+
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for register in register_list %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'vpkaak:update-finalisasi-register-post-klaim' register.id %}">
+                                            <button class="btn btn-success btn-sm">Final</button>
+                                        </a>
+                                    </td>
+                                    <td>{{ register.nomor_register }}</td>
+                                    <td>{{ register.created_at|date:"d/m/Y" }}</td>
+                                    <td>{{ register.get_jenis_audit_display }}</td>
+                                    {% if register.get_status_display == 'Register' %}
+                                        <td>
+                                            <buttton
+                                                    class="btn btn-light btn-sm">{{ register.get_status_display }}</buttton>
+                                        </td>
+                                    {% elif register.get_status_display == 'Proses Review' %}
+                                        <td>
+                                            <buttton
+                                                    class="btn btn-danger btn-sm">{{ register.get_status_display }}</buttton>
+                                        </td>
+                                    {% elif register.get_status_display == 'Selesai' %}
+                                        <td>
+                                            <buttton
+                                                    class="btn btn-success btn-sm ">{{ register.get_status_display }}</buttton>
+                                        </td>
+                                    {% endif %}
+                                    <td>{{ register.periode_awal|date:"d/m/Y"|default:"-" }}
+                                        sd {{ register.periode_akhir|date:"d/m/Y"|default:"-" }}</td>
+                                    <td>{{ register.bulan_beban|date:"M-y"|default:"-" }}</td>
+                                    {#                                    <td></td>#}
+                                    {#                                    <td></td>#}
+                                    {#                                    <td></td>#}
+
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center">Tidak ada data</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if register_list.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if register_list.previous_page_number != 1 %}
+                <a href="?{% param_replace page=register_list.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ register_list.number }} of {{ register_list.paginator.num_pages }}
+
+        {% if register_list.has_next %}
+            {% if register_list.next_page_number != paginator.num_pages %}
+                <a href="?{% param_replace page=register_list.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=register_list.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>Register Klaim {{ register_list.start_index }} - {{ register_list.end_index }} </p>
+    </span>
+        </div>
+    </div>
+{% endblock %}

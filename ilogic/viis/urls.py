@@ -40,7 +40,7 @@ urlpatterns = [
     path('captcha/', include('captcha.urls')),
     path('monitoring/', include(('monitoring.urls', 'monitoring'), namespace='monitoring')),
     path('supervisor/', include(('supervisor.urls', 'supervisor'), namespace='supervisor')),
-    path('dokumentasi/', include(('dokumentasi.urls', 'dokumentasi'), namespace='dokumentasi')),
+    # path('dokumentasi/', include(('dokumentasi.urls', 'dokumentasi'), namespace='dokumentasi')),
     path('supervisorkp/', include(('supervisorkp.urls', 'supervisorkp'), namespace='supervisorkp')),
     path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
     path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
