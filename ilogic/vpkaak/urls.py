@@ -16,4 +16,9 @@ urlpatterns = [
     path('update/finalisasi/register/post-klaim/<int:pk>', views.update_finalisasi_register_post_klaim, name='update-finalisasi-register-post-klaim'),
     path('kertas-kerja-verifikasi', views.kertas_kerja_koreksi, name='kertas-kerja-koreksi'),
     path('input-nomor-ba/<int:pk>', views.input_nomor_ba, name='input-nomor-ba'),
+
+    # supervisorkp
+    path('register/supervisorkp', views.register_post_klaim_supervisorkp, name='register_post_klaim_supervisorkp'),
+
+
 ] + router.urls

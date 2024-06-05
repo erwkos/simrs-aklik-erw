@@ -31,6 +31,8 @@ class RegisterPostKlaim(models.Model):
     # faskes = models.ForeignKey(Faskes, on_delete=models.CASCADE, null=True, blank=True, related_name="faskes")
     # kelas = models.CharField(max_length=10, choices=KelasFaskesChoices.choices, blank=True, null=True)
 
+    is_kp = models.BooleanField(default=False)
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="user_register")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

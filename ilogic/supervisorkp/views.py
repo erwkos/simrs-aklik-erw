@@ -65,6 +65,15 @@ def update_user_supervisorkp(request, pk):
     if request.method == 'POST':
         form = EditUserSupervisorkpForm(data=request.POST, instance=instance)
         if form.is_valid():
+
+            kantor_cabang = form.cleaned_data['kantor_cabang']
+            # Remove the user from all KantorCabang instances they are associated with
+            for kc in KantorCabang.objects.filter(user=instance):
+                kc.user.remove(instance)
+            # If a KantorCabang was selected, add the user to it
+            if kantor_cabang:
+                kantor_cabang.user.add(instance)
+
             form.save()
             messages.success(request, 'Data user berhasil diubah')
             return redirect('supervisorkp:daftar_user_supervisorkp')
@@ -211,5 +220,6 @@ def daftar_data_klaim_cbg(request):
     }
 
     return render(request, 'supervisorkp/daftar_data_klaim_cbg.html', context)
+
 
 

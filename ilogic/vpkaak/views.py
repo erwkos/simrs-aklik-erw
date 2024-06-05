@@ -68,8 +68,9 @@ def register_post_klaim(request):
 
             # deteksi VPK dengan buban ganda
             if jenis_audit == JenisAuditChoices.VPK:
-                cek_vpk = RegisterPostKlaim.objects.filter(user__kantorcabang=request.user.kantorcabang_set.all().first(),
-                                                           bulan_beban=form.cleaned_data['bulan_beban'])
+                cek_vpk = RegisterPostKlaim.objects.filter(
+                    user__kantorcabang=request.user.kantorcabang_set.all().first(),
+                    bulan_beban=form.cleaned_data['bulan_beban'])
                 if cek_vpk:
                     messages.warning(request,
                                      f'VPK dengan Bulan beban '
@@ -433,7 +434,8 @@ def review(request):
             # Assign the data for each cell of the row
             for col_num, cell_value in enumerate(row):
                 if isinstance(cell_value, datetime.date):
-                    worksheet.write_datetime(row_num, col_num, cell_value, workbook.add_format({'num_format':'yyyy-mm-dd'}))
+                    worksheet.write_datetime(row_num, col_num, cell_value,
+                                             workbook.add_format({'num_format': 'yyyy-mm-dd'}))
                 else:
                     worksheet.write(row_num, col_num, cell_value)
                 # cell = worksheet.cell(row=row_num, column=col_num)
@@ -500,6 +502,9 @@ def finalisasi_register_post_klaim(request):
     return render(request, 'vpkaak/finalisasi_register_post_klaim.html', context)
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def update_finalisasi_register_post_klaim(request, pk):
     queryset = RegisterPostKlaim.objects.filter(user__kantorcabang=request.user.kantorcabang_set.all().first())
     instance = queryset.get(pk=pk)
@@ -562,6 +567,9 @@ def update_finalisasi_register_post_klaim(request, pk):
     return render(request, 'vpkaak/update_finalisasi_register_post_klaim.html', context)
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def kertas_kerja_koreksi(request):
     queryset = RegisterPostKlaim.objects.filter(
         user__kantorcabang=request.user.kantorcabang_set.all().first(),
@@ -583,6 +591,9 @@ def kertas_kerja_koreksi(request):
     return render(request, 'vpkaak/kertas_kerja_koreksi.html', context)
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def input_nomor_ba(request, pk):
     queryset = RegisterPostKlaim.objects.filter(user__kantorcabang=request.user.kantorcabang_set.all().first())
     instance = queryset.get(pk=pk)
@@ -600,3 +611,93 @@ def input_nomor_ba(request, pk):
         'form': form,
     }
     return render(request, 'vpkaak/input_nomor_ba.html', context)
+
+
+#################
+# supervisorkp ##
+#################
+@login_required
+@check_device
+@permissions(role=['supervisorkp'])
+def register_post_klaim_supervisorkp(request):
+    queryset = RegisterPostKlaim.objects.filter(is_kp=True).order_by('-created_at')
+
+    # filter
+    myFilter = RegisterPostKlaimFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    # pagination
+    paginator = Paginator(queryset, 25)
+    page_number = request.GET.get('page')
+    queryset = paginator.get_page(page_number)
+
+    if request.POST.get('add_register_post_klaim'):
+        form = RegisterPostKlaimForm(data=request.POST)
+        if form.is_valid():
+            jenis_audit = form.cleaned_data['jenis_audit']
+
+            # validasi field
+            if jenis_audit == 'AAK-FKRTL':
+                required_fields = ['inisiasi', 'periode_awal', 'periode_akhir', 'surat_tugas']
+            elif jenis_audit == 'VPK-FKRTL':
+                required_fields = ['bulan_beban']
+            else:
+                messages.error(request, 'Jenis audit tidak valid')
+                return redirect(request.headers.get('Referer'))
+
+            for field_name in required_fields:
+                if not form.cleaned_data.get(field_name):
+                    messages.error(request, f'Field {field_name} harus diisi')
+                    return redirect(request.headers.get('Referer'))
+
+            # deteksi VPK dengan buban ganda
+            if jenis_audit == JenisAuditChoices.VPK:
+                cek_vpk = RegisterPostKlaim.objects.filter(
+                    user__kantorcabang=request.user.kantorcabang_set.all().first(),
+                    bulan_beban=form.cleaned_data['bulan_beban'])
+                if cek_vpk:
+                    messages.warning(request,
+                                     f'VPK dengan Bulan beban '
+                                     f'{calendar.month_name[cek_vpk[0].bulan_beban.month]}-{cek_vpk[0].bulan_beban.year} '
+                                     f'sudah ada')
+                    return redirect(request.headers.get('Referer'))
+
+            # Jika validasi berhasil, bentuk nomor register klaim, simpan data dan atur status menjadi Register
+            if jenis_audit == 'AAK-FKRTL':
+                jenis_audit_prefix = 'AAK-FKRTL'
+            elif jenis_audit == 'VPK-FKRTL':
+                jenis_audit_prefix = 'VPK-FKRTL'
+            else:
+                jenis_audit_prefix = 'OTHER'
+            bulan_tahun = timezone.now().strftime("%m%y")
+            tahun = timezone.now().strftime("%y")
+            max_nomor_urut = RegisterPostKlaim.objects.filter(
+                nomor_register__contains=f"{jenis_audit_prefix}/{request.user.kantorcabang_set.all().first().kode_cabang}",
+                nomor_register__endswith=tahun).aggregate(Max('nomor_register'))
+            if max_nomor_urut['nomor_register__max']:
+                nomor_urut = int(max_nomor_urut['nomor_register__max'].split('/')[0])
+                nomor_urut += 1
+            else:
+                nomor_urut = 1
+
+            register_post_klaim = form.save(commit=False)
+            register_post_klaim.is_kp = True
+            register_post_klaim.status = 'Register'
+            register_post_klaim.user = request.user
+            register_post_klaim.nomor_register = f"{nomor_urut:03d}/{jenis_audit_prefix}/{request.user.kantorcabang_set.all().first().kode_cabang}/{bulan_tahun}"
+            register_post_klaim.save()
+
+            messages.success(request, 'Register berhasil dibuat')
+            return redirect(request.headers.get('Referer'))
+    else:
+        form = RegisterPostKlaimForm()
+
+    context = {
+        'form': form,
+        'register_list': queryset,
+        'myFilter': myFilter,
+    }
+    return render(request, 'vpkaak/register_supervisorkp.html', context)
+
+
+

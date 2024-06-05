@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import (
     JenisKlaim,
     RegisterKlaim,
-    DataKlaimCBG, SLA, KeteranganPendingDispute, DataKlaimObat
+    DataKlaimCBG, SLA, KeteranganPendingDispute, DataKlaimObat, JawabanPendingDispute
 )
 
 from operator import or_
@@ -56,4 +56,9 @@ class SLAAdmin(ImportExportModelAdmin):
 
 @admin.register(KeteranganPendingDispute)
 class KeteranganPendingDisputeAdmin(ImportExportModelAdmin):
-    search_fields = ('verifikator',)
+    search_fields = ('ket_pending_dispute',)
+
+
+@admin.register(JawabanPendingDispute)
+class JawabanPendingDisputeAdmin(ImportExportModelAdmin):
+    search_fields = ('ket_jawaban_pending',)

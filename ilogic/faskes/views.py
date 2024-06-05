@@ -152,6 +152,10 @@ def detail_register(request, pk):
 
             form.save()
             instance.status = StatusRegisterChoices.PENGAJUAN
+
+            # ketika diajukan maka reset tgl dengan tanggal saat ini
+            instance.tgl_aju = datetime.datetime.now()
+
             instance.save()
             messages.success(request, 'Status Klaim berhasil diajukan kembali. Terima Kasih.')
             return redirect(request.headers.get('Referer'))
