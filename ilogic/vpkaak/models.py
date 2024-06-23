@@ -3,6 +3,7 @@ from django.db.models import Max
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.core.validators import MinLengthValidator
 
 from faskes.models import Faskes
 from vpkaak.choices import JenisAuditChoices, KelasFaskesChoices, StatusChoices, InisiasiChoices, StatusReviewChoices
@@ -32,13 +33,14 @@ class RegisterPostKlaim(models.Model):
     # kelas = models.CharField(max_length=10, choices=KelasFaskesChoices.choices, blank=True, null=True)
 
     is_kp = models.BooleanField(default=False)
-
+    is_from_kp = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="user_register")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.nomor_register
+
 
 # @receiver(pre_save, sender=RegisterPostKlaim)
 # def generate_nama_register(sender, instance, **kwargs):
@@ -73,7 +75,7 @@ class SamplingDataKlaimCBG(models.Model):
     Nosjp = models.CharField(max_length=255)
     Tglpelayanan = models.DateField()
     Kdkrlayan = models.CharField(max_length=255)
-    Kdkclayan = models.CharField(max_length=255)
+    Kdkclayan = models.CharField(max_length=255, validators=[MinLengthValidator(4)])
     Nmkclayan = models.CharField(max_length=255)
     Kddati2Layan = models.CharField(max_length=255)
     Nmdati2Layan = models.CharField(max_length=255)
@@ -88,9 +90,10 @@ class SamplingDataKlaimCBG(models.Model):
     Procedure = models.CharField(max_length=5000, blank=True, null=True)
     Klsrawat = models.CharField(max_length=255)
     Nmjnspulang = models.CharField(max_length=255)
-    kddokter = models.CharField(max_length=255)
-    nmdokter = models.CharField(max_length=255)
+    kddokter = models.CharField(max_length=255, blank=True, null=True)
+    nmdokter = models.CharField(max_length=255, blank=True, null=True)
     Umur = models.IntegerField()
+    Jkpst = models.CharField(max_length=10, blank=True, null=True)
     kdsa = models.CharField(max_length=255)
     kdsd = models.CharField(max_length=255)
     deskripsisd = models.CharField(max_length=255)
@@ -109,8 +112,28 @@ class SamplingDataKlaimCBG(models.Model):
     Biayaverifikasi = models.IntegerField()
     redflag = models.CharField(max_length=500, blank=True, null=True)
 
+    # databayi
+    is_bayi = models.BooleanField(default=False)
+    beratbayi = models.IntegerField(default=0)
+    tanggallahirbayi = models.DateField(blank=True, null=True)
+
+    # datars
+    Kodersmenkes = models.CharField(max_length=10, blank=True, null=True)
+    Kelasrsmenkes = models.CharField(max_length=10, blank=True, null=True)
+
     # hasil koreksi
+    is_koreksi = models.BooleanField(default=False)
+    Kddiagprimer_koreksi = models.CharField(max_length=5000, blank=True, null=True)
+    Nmdiagprimer_koreksi = models.CharField(max_length=5000, blank=True, null=True)
+    Diagsekunder_koreksi = models.CharField(max_length=5000, blank=True, null=True)
+    Procedure_koreksi = models.CharField(max_length=5000, blank=True, null=True)
+    kdsa_koreksi = models.CharField(max_length=255, blank=True, null=True)
+    kdsd_koreksi = models.CharField(max_length=255, blank=True, null=True)
+    kdsi_koreksi = models.CharField(max_length=255, blank=True, null=True)
+    kdsp_koreksi = models.CharField(max_length=255, blank=True, null=True)
+    kdsr_koreksi = models.CharField(max_length=255, blank=True, null=True)
     Kdinacbgs_koreksi = models.CharField(max_length=255, blank=True, null=True)
+    Nminacbgs_koreksi = models.CharField(max_length=255, blank=True, null=True)
     Klsrawat_koreksi = models.CharField(max_length=255, blank=True, null=True)
     biaya_koreksi = models.IntegerField(blank=True, null=True)
 
@@ -120,6 +143,7 @@ class SamplingDataKlaimCBG(models.Model):
     keterangan_review = models.CharField(max_length=1000, blank=True, null=True)
 
     # identity
+    is_from_kp = models.BooleanField(default=False)
     is_final = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

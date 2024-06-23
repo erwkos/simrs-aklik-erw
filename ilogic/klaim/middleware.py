@@ -140,6 +140,14 @@ class DaftarClaimCount:
 
                     request.count_sampling_data_klaim_cbg = obj_sampling_data_klaim_cbg.count()
 
+                    # sampling data postklaim verifikator
+                    obj_sampling_data_klaim_cbg_kp = obj_sampling_data_klaim_cbg.filter(
+                        status=StatusReviewChoices.Belum, is_from_kp=True
+                    )
+
+                    request.count_sampling_data_klaim_cbg_kp = obj_sampling_data_klaim_cbg_kp.count()
+
+
                 if request.user.check_permissions(group_list=['adminAK']):
                     pengajuan = obj
                     obj_terima = pengajuan.filter(Q(status=StatusRegisterChoices.TERIMA) & Q(verifikator__isnull=True))

@@ -1,8 +1,195 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load humanize %}
+{% load split %}
+{% block scriptheader %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-{% block content %}
+    <script>
+        $(document).ready(function () {
+            let diagnosisCounter = 2;
+            let procedureCounter = 2;
+
+            function queryDiagnosis(query, url, dropdownId) {
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    data: {'query': query},
+                    success: function (response) {
+                        const dropdown = $('#' + dropdownId);
+                        dropdown.empty();
+                        response.forEach(function (item) {
+                            let [description, code] = item;
+                            dropdown.append(`<div class="dropdown-item" data-value="${code} - ${description}">${code} - ${description}</div>`);
+                        });
+                        dropdown.show();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(error);
+                    }
+                });
+            }
+
+            $('#addAdditionalName').click(function () {
+                const newFieldId = 'diagnosis_sekunder' + diagnosisCounter;
+                const newDropdownId = newFieldId + '_dropdown';
+                $('#additionalNames').append(
+                    `<div class="form-group row">
+          <label for="${newFieldId}" class="col-4 col-form-label"><!--Tambahan--!></label>
+          <div class="col-7">
+            <input type="text" class="form-control" name="${newFieldId}" placeholder="Diagnosis Sekunder" enabled>
+            <div class="dropdown-menu" id="${newDropdownId}"></div>
+          </div>
+          <div class="col-1 mt-2">
+            <button type="button" class="btn btn-danger btn-sm remove-name"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`
+                );
+                diagnosisCounter++;
+            });
+
+            $('#addAdditionalPro').click(function () {
+                const newFieldId = 'procedure' + procedureCounter;
+                const newDropdownId = newFieldId + '_dropdown';
+                $('#additionalPro').append(
+                    `<div class="form-group row">
+          <label for="${newFieldId}" class="col-4 col-form-label"><!--Tambahan--!></label>
+          <div class="col-7">
+            <input type="text" class="form-control" name="${newFieldId}" placeholder="Prosedur " enabled>
+            <div class="dropdown-menu" id="${newDropdownId}"></div>
+          </div>
+          <div class="col-1 mt-2">
+            <button type="button" class="btn btn-danger btn-sm remove-pro"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>`
+                );
+                procedureCounter++;
+            });
+
+            // Function to toggle lock icon
+            $('.toggle-lock').click(function () {
+                const targetInput = $(this).closest('.form-group').find('input[name="' + $(this).data('target') + '"]');
+                targetInput.prop('disabled', !targetInput.prop('disabled'));
+                const icon = $(this).find('i');
+                if (targetInput.prop('disabled')) {
+                    icon.removeClass('fa-minus').addClass('fa-plus'); // Jika terkunci, ganti ikon menjadi +
+                } else {
+                    icon.removeClass('fa-plus').addClass('fa-minus'); // Jika terbuka, ganti ikon menjadi -
+                }
+            });
+
+            // Event delegation to handle dynamically added remove buttons for names
+            $(document).on('click', '.remove-name', function () {
+                $(this).closest('.form-group').remove();
+            });
+
+            // Event delegation to handle dynamically added remove buttons for pro
+            $(document).on('click', '.remove-pro', function () {
+                $(this).closest('.form-group').remove();
+            });
+
+            $('#diagnosis_utama').on('input', function () {
+                const query = $(this).val();
+                if (query.length > 0) {
+                    queryDiagnosis(query, "/vpkaak/query_icd10/", "diagnosis_utama_dropdown");
+                } else {
+                    $('#diagnosis_utama_dropdown').hide();
+                }
+            });
+
+            $(document).on('input', '[name^="diagnosis_sekunder"]', function () {
+                const query = $(this).val();
+                const dropdownId = $(this).next('.dropdown-menu').attr('id');
+                if (query.length > 0) {
+                    queryDiagnosis(query, "/vpkaak/query_icd10/", dropdownId);
+                } else {
+                    $('#' + dropdownId).hide();
+                }
+            });
+
+            $(document).on('input', '[name^="procedure"]', function () {
+                const query = $(this).val();
+                const dropdownId = $(this).next('.dropdown-menu').attr('id');
+                if (query.length > 0) {
+                    queryDiagnosis(query, "/vpkaak/query_icd9/", dropdownId);
+                } else {
+                    $('#' + dropdownId).hide();
+                }
+            });
+
+            $(document).on('click', '.dropdown-item', function () {
+                const value = $(this).data('value');
+                $(this).closest('.form-group').find('input').val(value);
+                $(this).closest('.dropdown-menu').hide();
+            });
+
+            $('#cek_grouping').click(function (e) {
+            e.preventDefault();
+            const formData = $('#myForm').serialize();
+            const $button = $(this);
+            const originalText = $button.text();
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Memproses Grouping');
+
+            $.ajax({
+                url: "/vpkaak/cek_grouping/",
+                type: "POST",
+                data: formData,
+                success: function (response) {
+                    if (response.error) {
+                        alert(response.error);
+                    } else {
+                        $('input[name="inacbg"]').val(response.group_code + ' - ' + response.nama_list);
+                        $('input[name="tarif"]').val(response.data_list);
+
+                        $('select[name="special_prosedure"]').find('option').remove();
+                        $('select[name="special_prosthesis"]').find('option').remove();
+                        $('select[name="special_investigation"]').find('option').remove();
+                        $('select[name="special_drug"]').find('option').remove();
+
+                        response.data_list_match_topup_sp_pattern.forEach(function (item) {
+                            $('select[name="special_prosedure"]').append(item);
+                        });
+
+                        response.data_list_match_topup_sr_pattern.forEach(function (item) {
+                            $('select[name="special_prosthesis"]').append(item);
+                        });
+
+                        response.data_list_match_topup_si_pattern.forEach(function (item) {
+                            $('select[name="special_investigation"]').append(item);
+                        });
+
+                        response.data_list_match_topup_sd_pattern.forEach(function (item) {
+                            $('select[name="special_drug"]').append(item);
+                        });
+                    }
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Cek Grouping");
+                },
+                error: function (xhr, status, error) {
+                    console.error(error);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Terjadi Kesalahan, Coba Lagi.");
+                }
+            });
+        });
+
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            $('#is_bayi').change(function () {
+                if ($(this).is(':checked')) {
+                    $('#bayi-details').show();
+                } else {
+                    $('#bayi-details').hide();
+                }
+            });
+        });
+    </script>
+    <style>
+        select:invalid {
+            color: gray;
+        }
+    </style>
     <style>
         .table td, .table th {
             word-wrap: break-word;
@@ -17,212 +204,1058 @@
         .OLevelResult.active {
             display: block;
         }
-    </style>
 
+        .dropdown-menu {
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            z-index: 1000;
+            width: 100%;
+        }
+
+        .dropdown-item {
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+    <style>
+        .modal-dialog {
+            width: 95%;
+            height: 95%;
+            max-width: 95%;
+        }
+
+        .modal-content {
+            height: 95%;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+        }
+    </style>
+    <script>
+        function toggleKeteranganReview() {
+            var status = document.getElementById('id_status').value;
+            var keteranganReviewDiv = document.getElementById('div_id_keterangan_review');
+            var koreksiDiv = document.getElementById('koreksi');
+            var buttonStatus = document.getElementById('button_status');
+            if (status === 'Tidak Sesuai') {
+                keteranganReviewDiv.style.display = 'none';
+                koreksiDiv.style.display = 'block';
+                buttonStatus.style.display = 'none';
+            } else {
+                keteranganReviewDiv.style.display = 'block';
+                koreksiDiv.style.display = 'none';
+                buttonStatus.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var statusSelect = document.getElementById('id_status');
+            statusSelect.addEventListener('change', toggleKeteranganReview);
+            toggleKeteranganReview(); // Initialize visibility on page load
+        });
+    </script>
+    <style>
+        .loading-dots::after {
+            content: " .";
+            animation: dots 1s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% {
+                content: " .";
+            }
+            40% {
+                content: " ..";
+            }
+            60% {
+                content: " ...";
+            }
+            80%, 100% {
+                content: " ..";
+            }
+        }
+    </style>
+{% endblock %}
+
+
+{% block content %}
+    <div class="container-fluid">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
     <div class="row">
         <div class="col-lg-12">
             <div class="card table-card">
                 <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5>Detail - Sampling Data Klaim CBG</h5>
+                    <h5>Aksi Verifikator - Data Klaim
+                        <button type="button" class="btn-primary btn" data-bs-toggle="modal"
+                                data-bs-target="#sepModal">{{ data_klaim.Nosjp }}</button>
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-12 m-l-30 mt-4">
-                            <table class="table">
-                                <tbody>
-                                <tr>
-                                    <td><b>NO SEP :</b></td>
-                                    <td>{{ data_klaim.Nosjp }}</td>
-                                    <td><b>Nmjnspulang :</b></td>
-                                    <td>{{ data_klaim.Nmjnspulang }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Tgldtgsjp :</b></td>
-                                    <td>{{ data_klaim.Tgldtgsjp|date:'d/m/Y' }}</td>
-                                    <td><b>Kddokter :</b></td>
-                                    <td>{{ data_klaim.kddokter }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Tglplgsjp :</b></td>
-                                    <td>{{ data_klaim.Tglplgsjp|date:'d/m/Y' }}</td>
-                                    <td><b>Nmdokter :</b></td>
-                                    <td>{{ data_klaim.nmdokter }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Nokapst :</b></td>
-                                    <td>{{ data_klaim.Nokapst }}</td>
-                                    <td><b>Umur :</b></td>
-                                    <td>{{ data_klaim.Umur }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Tglpelayanan :</b></td>
-                                    <td>{{ data_klaim.Tglpelayanan }}</td>
-                                    <td><b>Kdsa :</b></td>
-                                    <td>{{ data_klaim.kdsa }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Kdkclayan :</b></td>
-                                    <td>{{ data_klaim.Kdkclayan }}</td>
-                                    <td><b>Deskripsisd :</b></td>
-                                    <td>{{ data_klaim.deskripsisd }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Nmkclayan :</b></td>
-                                    <td>{{ data_klaim.Nmkclayan }}</td>
-                                    <td><b>Kdsi :</b></td>
-                                    <td>{{ data_klaim.kdsi }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Kddati2Layan :</b></td>
-                                    <td>{{ data_klaim.Kddati2Layan }}</td>
-                                    <td><b>Deskripsisi :</b></td>
-                                    <td>{{ data_klaim.deskripsisi }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Nmdati2Layan :</b></td>
-                                    <td>{{ data_klaim.Nmdati2Layan }}</td>
-                                    <td><b>Kdsp :</b></td>
-                                    <td>{{ data_klaim.kdsp }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Kdppklayan :</b></td>
-                                    <td>{{ data_klaim.Kdppklayan }}</td>
-                                    <td><b>Deskripsisp :</b></td>
-                                    <td>{{ data_klaim.deskripsisp }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Nmppklayan :</b></td>
-                                    <td>{{ data_klaim.Nmppklayan }}</td>
-                                    <td><b>Kdsr :</b></td>
-                                    <td>{{ data_klaim.kdsr }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Nmtkp :</b></td>
-                                    <td>{{ data_klaim.Nmtkp }}</td>
-                                    <td><b>Deskripsisr :</b></td>
-                                    <td>{{ data_klaim.deskripsisr }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Kdinacbgs :</b></td>
-                                    <td>{{ data_klaim.Kdinacbgs }}</td>
-                                    <td><b>Tarifgroup :</b></td>
-                                    <td>{{ data_klaim.Tarifgroup|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Nminacbgs :</b></td>
-                                    <td>{{ data_klaim.Nminacbgs }}</td>
-                                    <td><b>Tarifsa :</b></td>
-                                    <td>{{ data_klaim.tarifsa|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Kddiagprimer :</b></td>
-                                    <td>{{ data_klaim.Kddiagprimer }}</td>
-                                    <td><b>Tarifsd :</b></td>
-                                    <td>{{ data_klaim.tarifsd|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Nmdiagprimer :</b></td>
-                                    <td>{{ data_klaim.Nmdiagprimer }}</td>
-                                    <td><b>Tarifsi :</b></td>
-                                    <td>{{ data_klaim.tarifsi|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Diagsekunder :</b></td>
-                                    <td>{{ data_klaim.Diagsekunder }}</td>
-                                    <td><b>Tarifsp :</b></td>
-                                    <td>{{ data_klaim.tarifsp|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Procedure :</b></td>
-                                    <td>{{ data_klaim.Procedure }}</td>
-                                    <td><b>Tarifsr :</b></td>
-                                    <td>{{ data_klaim.tarifsr|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Klsrawat :</b></td>
-                                    <td>{{ data_klaim.Klsrawat }}</td>
-                                    <td><b>Biayaverifikasi :</b></td>
-                                    <td>{{ data_klaim.Biayaverifikasi|intcomma }}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Status Data Klaim : </b></td>
-                                    <td>
-                                        {% if data_klaim.status == 'Belum Review' %}
-                                            <button type="button"
-                                                    class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
-                                        {% elif data_klaim.status == 'Sesuai' %}
-                                            <button type="button"
-                                                    class="btn btn-success btn-sm">{{ data_klaim.status }}</button>
-                                        {% elif data_klaim.status == 'Tidak Sesuai' %}
-                                            <button type="button"
-                                                    class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-6">
-                <div class="card table-card">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <h5>Aksi Verifikator</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-6 m-l-30 mt-4">
+                        <div class="col-12 mt-3 mx-3">
+                            <div class="row">
                                 <form method="POST">
-                                    {% csrf_token %}
-                                    {{ data_klaim_form|crispy }}
-                                    <input type="hidden" name="next" value="{{ request.GET.next }}">
-                                    <button class="btn btn-primary w-100" type="submit">Simpan</button>
+                                    <div class="col-6">
+                                        <div class="container">
+                                            {% csrf_token %}
+                                            {{ data_klaim_form|crispy }}
+                                        </div>
+                                        <div class="container">
+                                            <button type="submit" class="btn btn-primary" id="button_status">Simpan</button>
+                                        </div>
+                                    </div>
                                 </form>
-                                </di>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="card" id="koreksi">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <h2>Belum Dikoreksi</h2>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Diagnosis Utama</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" name="diagnosis_utama"
+                                           placeholder="Diagnosis Utama"
+                                           value="{{ data_klaim.Kddiagprimer }} - {{ data_klaim.Nmdiagprimer }}"
+                                           disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Diagnosis Sekunder</b></label>
+                                {% if data_klaim.Diagsekunder %}
+                                    {% with diagnoses_list=data_klaim.Diagsekunder|split:";" %}
+                                        {% for diagnosis in diagnoses_list %}
+                                            {% if forloop.first %}
+                                                <div class="col-8">
+                                                    <input type="text" class="form-control"
+                                                           placeholder="Diagnosis Sekunder"
+                                                           value="{{ diagnosis }}" disabled>
+                                                </div>
+                                            {% else %}
+                                                <div class="col-4 mt-3"></div>
+                                                <div class="col-8 mt-3">
+                                                    <input type="text" class="form-control"
+                                                           placeholder="Diagnosis Sekunder"
+                                                           value="{{ diagnosis }}" disabled>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                {% else %}
+                                    <div class="col-8">
+                                        <input type="text" class="form-control" placeholder="Diagnosis Sekunder"
+                                               value="{{ data_klaim.Diagsekunder }}" disabled>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Prosedur</b></label>
+                                {% if data_klaim.Procedure %}
+                                    {% with procedure_list=data_klaim.Procedure|split:";" %}
+                                        {% for procedure in procedure_list %}
+                                            {% if forloop.first %}
+                                                <div class="col-8">
+                                                    <input type="text" class="form-control"
+                                                           placeholder="Procedure"
+                                                           value="{{ procedure }}" disabled>
+                                                </div>
+                                            {% else %}
+                                                <div class="col-4 mt-3"></div>
+                                                <div class="col-8 mt-3">
+                                                    <input type="text" class="form-control"
+                                                           placeholder="Procedure"
+                                                           value="{{ procedure }}" disabled>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                {% else %}
+                                    <div class="col-8">
+                                        <input type="text" class="form-control" placeholder="Procedure"
+                                               value="{{ data_klaim.Procedure }}" disabled>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Sub Acute</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" value="{{ data_klaim.kdsa }}"
+                                           placeholder="Masukkan Sub Acute" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Special Prosedure</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control"
+                                           value="{{ data_klaim.kdsp }} - {{ data_klaim.deskripsisp }}"
+                                           placeholder="Masukkan Special Prosedure" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Special Prosthesis</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control"
+                                           value="{{ data_klaim.kdsr }} - {{ data_klaim.deskripsisr }}"
+                                           placeholder="Masukkan Special Prosthesis" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Special Investigation</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control"
+                                           value="{{ data_klaim.kdsi }} - {{ data_klaim.deskripsisi }}"
+                                           placeholder="Masukkan Special Investigation" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Special Drug</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control"
+                                           value="{{ data_klaim.kdsd }} - {{ data_klaim.deskripsisd }}"
+                                           placeholder="Masukkan Special Drug" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Kelas Rawat</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" placeholder="Kelas Rawat BPJS"
+                                           value="{{ data_klaim.Klsrawat }}" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-secondary" style="width: 100%;"
+                                            disabled>------------------
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>INACBG</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control"
+                                           value="{{ data_klaim.Kdinacbgs }} - {{ data_klaim.Nminacbgs }}"
+                                           placeholder="Kode INACBG"
+                                           disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Biaya Verifikasi</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control"
+                                           value="{{ data_klaim.Biayaverifikasi|intcomma }}"
+                                           placeholder="Tarif" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if data_klaim.is_koreksi is False %}
+                            <div class="col-5 container">
+                                <h2>Setelah Dikoreksi (Unreviewed)</h2>
+                                <form id="myForm" method="POST">
+                                    {% csrf_token %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Diagnosis Utama</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" id="diagnosis_utama"
+                                                   autocomplete="off"
+                                                   name="diagnosis_utama" placeholder="Diagnosis Utama"
+                                                   value="{{ data_klaim.Kddiagprimer }} - {{ data_klaim.Nmdiagprimer }}">
+                                            <div class="dropdown-menu" id="diagnosis_utama_dropdown"></div>
+                                        </div>
+                                    </div>
+                                    {% if data_klaim.Diagsekunder %}
+                                        {% with diagnoses_list=data_klaim.Diagsekunder|split:";" %}
+                                            {% for diagnosis in diagnoses_list %}
+                                                {% if forloop.first %}
+                                                    <div class="form-group row">
+                                                        <label class="col-4 col-form-label"><b>Diagnosis
+                                                            Sekunder</b></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   id="diagnosis_sekunder"
+                                                                   autocomplete="off" name="diagnosis_sekunder1"
+                                                                   placeholder="Diagnosis Sekunder"
+                                                                   value="{{ diagnosis }}">
+                                                            <div class="dropdown-menu"
+                                                                 id="diagnosis_sekunder_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button" class="btn btn-dark btn-sm"
+                                                                    id="addAdditionalName"><i
+                                                                    class="fas fa-plus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="form-group row">
+                                                        <label for="diagnosis_sekunder10{{ forloop.counter }}"
+                                                               class="col-4 col-form-label">
+                                                            <!--Tambahan--!></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   id="diagnosis_sekunder10{{ forloop.counter }}"
+                                                                   name="diagnosis_sekunder10{{ forloop.counter }}"
+                                                                   placeholder="Diagnosis Sekunder"
+                                                                   value="{{ diagnosis }}" enabled>
+                                                            <div class="dropdown-menu"
+                                                                 id="diagnosis_sekunder10{{ forloop.counter }}_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button"
+                                                                    class="btn btn-danger btn-sm remove-name"><i
+                                                                    class="fas fa-trash"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endwith %}
+                                        <div id="additionalNames"></div>
+                                        <div id="addButtonContainer"></div>
+                                    {% else %}
+                                        <div class="form-group row">
+                                            <label class="col-4 col-form-label"><b>Diagnosis
+                                                Sekunder</b></label>
+                                            <div class="col-7">
+                                                <input type="text" class="form-control" id="diagnosis_sekunder"
+                                                       autocomplete="off"
+                                                       name="diagnosis_sekunder1"
+                                                       placeholder="Diagnosis Sekunder">
+                                                <div class="dropdown-menu"
+                                                     id="diagnosis_sekunder_dropdown"></div>
+                                            </div>
+                                            <div class="col-1 mt-2">
+                                                <button type="button" class="btn btn-dark btn-sm"
+                                                        id="addAdditionalName"><i
+                                                        class="fas fa-plus"></i></button>
+                                            </div>
+                                        </div>
+                                        <div id="additionalNames"></div>
+                                        <div id="addButtonContainer"></div>
+                                    {% endif %}
+
+                                    {% if data_klaim.Procedure %}
+                                        {% with procedure_list=data_klaim.Procedure|split:";" %}
+                                            {% for procedure in procedure_list %}
+                                                {% if forloop.first %}
+                                                    <div class="form-group row">
+                                                        <label class="col-4 col-form-label"><b>Prosedur</b></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   name="procedure1" autocomplete="off"
+                                                                   placeholder="Prosedur"
+                                                                   value="{{ procedure }}">
+                                                            <div class="dropdown-menu"
+                                                                 id="procedure_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button" class="btn btn-dark btn-sm"
+                                                                    id="addAdditionalPro"><i
+                                                                    class="fas fa-plus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="form-group row">
+                                                        <label for="procedure10{{ forloop.counter }}"
+                                                               class="col-4 col-form-label">
+                                                            <!--Tambahan--!></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   id="procedure10{{ forloop.counter }}"
+                                                                   name="procedure10{{ forloop.counter }}"
+                                                                   placeholder="Prosedur"
+                                                                   value="{{ procedure }}" enabled>
+                                                            <div class="dropdown-menu"
+                                                                 id="procedure10{{ forloop.counter }}_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button"
+                                                                    class="btn btn-danger btn-sm remove-pro"><i
+                                                                    class="fas fa-trash"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endwith %}
+                                        <div id="additionalPro"></div>
+                                        <div id="addProButtonContainer"></div>
+                                    {% else %}
+                                        <div class="form-group row">
+                                            <label class="col-4 col-form-label"><b>Prosedur</b></label>
+                                            <div class="col-7">
+                                                <input type="text" class="form-control" name="procedure1"
+                                                       autocomplete="off"
+                                                       placeholder="Prosedur" value="">
+                                                <div class="dropdown-menu" id="procedure_dropdown"></div>
+                                            </div>
+                                            <div class="col-1 mt-2">
+                                                <button type="button" class="btn btn-dark btn-sm"
+                                                        id="addAdditionalPro"><i
+                                                        class="fas fa-plus"></i></button>
+                                            </div>
+                                        </div>
+                                        <div id="additionalPro"></div>
+                                        <div id="addProButtonContainer"></div>
+                                    {% endif %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Sub Acute</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="sub_acute"
+                                                   placeholder="Masukkan Sub Acute"
+                                                   value="None" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Prosedure</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_prosedure">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Prosthesis</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_prosthesis">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Investigation</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_investigation">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Drug</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_drug">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Apakah Pasien Bayi?</b></label>
+                                        <div class="col-8">
+                                            {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
+                                                <input id="is_bayi" name="is_bayi" type="checkbox"
+                                                       class="form-check-input mt-2"
+                                                       style="width: 30px; height: 30px;" checked>
+                                            {% else %}
+                                                <input id="is_bayi" name="is_bayi" type="checkbox"
+                                                       class="form-check-input mt-2"
+                                                       style="width: 30px; height: 30px;">
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
+                                        <div id="bayi-details">
+                                    {% else %}
+                                        <div id="bayi-details" style="display: none;">
+                                    {% endif %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Birth Weight</b></label>
+                                        <div class="col-8">
+                                            <input id="beratbayi" name="beratbayi" type="number"
+                                                   class="form-control"
+                                                   value="{{ data_klaim.beratbayi }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tanggal Lahir Bayi</b><br>
+                                            <right>{{ data_klaim.tanggallahirbayi }}</right>
+                                        </label>
+                                        <div class="col-8">
+                                            <input id="tanggallahirbayi" class="form-control"
+                                                   name="tanggallahirbayi" type="date">
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Gender</b></label>
+                                        <div class="col-8">
+                                            <select name="gender" class="form-select">
+                                                {% if data_klaim.Jkpst == "f" %}
+                                                    <option value="f">Perempuan</option>
+                                                    <option value="m">Laki-laki</option>
+                                                {% else %}
+                                                    <option value="m">Laki-laki</option>
+                                                    <option value="f">Perempuan</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Kelas Rawat</b></label>
+                                        <div class="col-8">
+                                            <select name="kelas_rawat" class="form-select">
+                                                {% if data_klaim.Klsrawat == "Kelas I" %}
+                                                    <option value="Kelas I" selected>Kelas I</option>
+                                                    <option value="Kelas II">Kelas II</option>
+                                                    <option value="Kelas III">Kelas III</option>
+                                                {% elif data_klaim.Klsrawat == "Kelas II" %}
+                                                    <option value="Kelas I">Kelas I</option>
+                                                    <option value="Kelas II" selected>Kelas II</option>
+                                                    <option value="Kelas III">Kelas III</option>
+                                                {% else %}
+                                                    <option value="Kelas I">Kelas I</option>
+                                                    <option value="Kelas II">Kelas II</option>
+                                                    <option value="Kelas III" selected>Kelas III</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-12">
+                                            <input type="hidden" name="no_sep" value="{{ data_klaim.Nosjp }}">
+                                            <input type="hidden" name="no_peserta"
+                                                   value="{{ data_klaim.Nokapst }}">
+                                            <input type="hidden" name="tipe_rawat"
+                                                   value="{{ data_klaim.Nmtkp }}">
+                                            <input type="hidden" name="umur" value="{{ data_klaim.Umur }}">
+                                            <input type="hidden" name="Tgldtgsjp"
+                                                   value="{{ data_klaim.Tgldtgsjp|date:'Y-m-d' }}">
+                                            <input type="hidden" name="Tglplgsjp"
+                                                   value="{{ data_klaim.Tglplgsjp|date:'Y-m-d' }}">
+                                            <input type="hidden" name="cek_grouping" value="cek_grouping">
+                                            <button type="button" id="cek_grouping" class="btn btn-success"
+                                                    style="width: 100%;">Cek
+                                                Grouping
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% csrf_token %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Kode RS Menkes</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="Kodersmenkes"
+                                                   placeholder="Kode RS Menkes"
+                                                   value="{{ data_klaim.Kodersmenkes }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>INACBG</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="inacbg"
+                                                   placeholder="Kode INACBG"
+                                                   value="{{ data_klaim.Kdinacbgs_koreksi }} - {{ data_klaim.Nminacbgs_koreksi }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tarif</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="tarif"
+                                                   placeholder="Tarif"
+                                                   value="{{ data_klaim.biaya_koreksi|intcomma }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Keterangan Review</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="keterangan_review"
+                                                   placeholder="Masukkan Keterangan Review">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                                Simpan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                        {% elif data_klaim.is_koreksi is True %}
+                            <div class="col-5 container">
+                                <h2>Setelah Dikoreksi (Reviewed)</h2>
+                                <form id="myForm" method="POST">
+                                    {% csrf_token %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Diagnosis Utama</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" id="diagnosis_utama"
+                                                   autocomplete="off"
+                                                   name="diagnosis_utama" placeholder="Diagnosis Utama"
+                                                   value="{{ data_klaim.Kddiagprimer_koreksi }} - {{ data_klaim.Nmdiagprimer_koreksi }}">
+                                            <div class="dropdown-menu" id="diagnosis_utama_dropdown"></div>
+                                        </div>
+                                    </div>
+                                    {% if data_klaim.Diagsekunder_koreksi %}
+                                        {% with diagnoses_list=data_klaim.Diagsekunder_koreksi|split:";" %}
+                                            {% for diagnosis in diagnoses_list %}
+                                                {% if forloop.first %}
+                                                    <div class="form-group row">
+                                                        <label class="col-4 col-form-label"><b>Diagnosis
+                                                            Sekunder</b></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   id="diagnosis_sekunder"
+                                                                   autocomplete="off" name="diagnosis_sekunder1"
+                                                                   placeholder="Diagnosis Sekunder"
+                                                                   value="{{ diagnosis }}">
+                                                            <div class="dropdown-menu"
+                                                                 id="diagnosis_sekunder_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button" class="btn btn-dark btn-sm"
+                                                                    id="addAdditionalName"><i
+                                                                    class="fas fa-plus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="form-group row">
+                                                        <label for="diagnosis_sekunder10{{ forloop.counter }}"
+                                                               class="col-4 col-form-label">
+                                                            <!--Tambahan--!></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   id="diagnosis_sekunder10{{ forloop.counter }}"
+                                                                   name="diagnosis_sekunder10{{ forloop.counter }}"
+                                                                   placeholder="Diagnosis Sekunder"
+                                                                   value="{{ diagnosis }}" enabled>
+                                                            <div class="dropdown-menu"
+                                                                 id="diagnosis_sekunder10{{ forloop.counter }}_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button"
+                                                                    class="btn btn-danger btn-sm remove-name"><i
+                                                                    class="fas fa-trash"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endwith %}
+                                        <div id="additionalNames"></div>
+                                        <div id="addButtonContainer"></div>
+                                    {% else %}
+                                        <div class="form-group row">
+                                            <label class="col-4 col-form-label"><b>Diagnosis
+                                                Sekunder</b></label>
+                                            <div class="col-7">
+                                                <input type="text" class="form-control" id="diagnosis_sekunder"
+                                                       autocomplete="off"
+                                                       name="diagnosis_sekunder1"
+                                                       placeholder="Diagnosis Sekunder">
+                                                <div class="dropdown-menu"
+                                                     id="diagnosis_sekunder_dropdown"></div>
+                                            </div>
+                                            <div class="col-1 mt-2">
+                                                <button type="button" class="btn btn-dark btn-sm"
+                                                        id="addAdditionalName"><i
+                                                        class="fas fa-plus"></i></button>
+                                            </div>
+                                        </div>
+                                        <div id="additionalNames"></div>
+                                        <div id="addButtonContainer"></div>
+                                    {% endif %}
+
+                                    {% if data_klaim.Procedure %}
+                                        {% with procedure_list=data_klaim.Procedure_koreksi|split:";" %}
+                                            {% for procedure in procedure_list %}
+                                                {% if forloop.first %}
+                                                    <div class="form-group row">
+                                                        <label class="col-4 col-form-label"><b>Prosedur</b></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   name="procedure1" autocomplete="off"
+                                                                   placeholder="Prosedur"
+                                                                   value="{{ procedure }}">
+                                                            <div class="dropdown-menu"
+                                                                 id="procedure_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button" class="btn btn-dark btn-sm"
+                                                                    id="addAdditionalPro"><i
+                                                                    class="fas fa-plus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="form-group row">
+                                                        <label for="procedure10{{ forloop.counter }}"
+                                                               class="col-4 col-form-label">
+                                                            <!--Tambahan--!></label>
+                                                        <div class="col-7">
+                                                            <input type="text" class="form-control"
+                                                                   id="procedure10{{ forloop.counter }}"
+                                                                   name="procedure10{{ forloop.counter }}"
+                                                                   placeholder="Prosedur"
+                                                                   value="{{ procedure }}" enabled>
+                                                            <div class="dropdown-menu"
+                                                                 id="procedure10{{ forloop.counter }}_dropdown"></div>
+                                                        </div>
+                                                        <div class="col-1 mt-2">
+                                                            <button type="button"
+                                                                    class="btn btn-danger btn-sm remove-pro"><i
+                                                                    class="fas fa-trash"></i></button>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endwith %}
+                                        <div id="additionalPro"></div>
+                                        <div id="addProButtonContainer"></div>
+                                    {% else %}
+                                        <div class="form-group row">
+                                            <label class="col-4 col-form-label"><b>Prosedur</b></label>
+                                            <div class="col-7">
+                                                <input type="text" class="form-control" name="procedure1"
+                                                       autocomplete="off"
+                                                       placeholder="Prosedur" value="">
+                                                <div class="dropdown-menu" id="procedure_dropdown"></div>
+                                            </div>
+                                            <div class="col-1 mt-2">
+                                                <button type="button" class="btn btn-dark btn-sm"
+                                                        id="addAdditionalPro"><i
+                                                        class="fas fa-plus"></i></button>
+                                            </div>
+                                        </div>
+                                        <div id="additionalPro"></div>
+                                        <div id="addProButtonContainer"></div>
+                                    {% endif %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Sub Acute</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="sub_acute"
+                                                   placeholder="Masukkan Sub Acute"
+                                                   value="None" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Prosedure</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_prosedure">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Prosthesis</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_prosthesis">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Investigation</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_investigation">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Special Drug</b></label>
+                                        <div class="col-8">
+                                            <select class="form-control" name="special_drug">
+                                                <option value="None">None</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Apakah Pasien Bayi?</b></label>
+                                        <div class="col-8">
+                                            {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
+                                                <input id="is_bayi" name="is_bayi" type="checkbox"
+                                                       class="form-check-input mt-2"
+                                                       style="width: 30px; height: 30px;" checked>
+                                            {% else %}
+                                                <input id="is_bayi" name="is_bayi" type="checkbox"
+                                                       class="form-check-input mt-2"
+                                                       style="width: 30px; height: 30px;">
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
+                                        <div id="bayi-details">
+                                    {% else %}
+                                        <div id="bayi-details" style="display: none;">
+                                    {% endif %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Birth Weight</b></label>
+                                        <div class="col-8">
+                                            <input id="beratbayi" name="beratbayi" type="number"
+                                                   class="form-control"
+                                                   value="{{ data_klaim.beratbayi }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tanggal Lahir Bayi</b><br>
+                                            <right>{{ data_klaim.tanggallahirbayi }}</right>
+                                        </label>
+                                        <div class="col-8">
+                                            <input id="tanggallahirbayi" class="form-control"
+                                                   name="tanggallahirbayi" type="date">
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Gender</b></label>
+                                        <div class="col-8">
+                                            <select name="gender" class="form-select">
+                                                {% if data_klaim.Jkpst == "f" %}
+                                                    <option value="f">Perempuan</option>
+                                                    <option value="m">Laki-laki</option>
+                                                {% else %}
+                                                    <option value="m">Laki-laki</option>
+                                                    <option value="f">Perempuan</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Kelas Rawat</b></label>
+                                        <div class="col-8">
+                                            <select name="kelas_rawat" class="form-select">
+                                                {% if data_klaim.Klsrawat_koreksi == "Kelas I" %}
+                                                    <option value="Kelas I" selected>Kelas I</option>
+                                                    <option value="Kelas II">Kelas II</option>
+                                                    <option value="Kelas III">Kelas III</option>
+                                                {% elif data_klaim.Klsrawat_koreksi == "Kelas II" %}
+                                                    <option value="Kelas I">Kelas I</option>
+                                                    <option value="Kelas II" selected>Kelas II</option>
+                                                    <option value="Kelas III">Kelas III</option>
+                                                {% else %}
+                                                    <option value="Kelas I">Kelas I</option>
+                                                    <option value="Kelas II">Kelas II</option>
+                                                    <option value="Kelas III" selected>Kelas III</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-12">
+                                            <input type="hidden" name="no_sep" value="{{ data_klaim.Nosjp }}">
+                                            <input type="hidden" name="no_peserta"
+                                                   value="{{ data_klaim.Nokapst }}">
+                                            <input type="hidden" name="tipe_rawat"
+                                                   value="{{ data_klaim.Nmtkp }}">
+                                            <input type="hidden" name="umur" value="{{ data_klaim.Umur }}">
+                                            <input type="hidden" name="Tgldtgsjp"
+                                                   value="{{ data_klaim.Tgldtgsjp|date:'Y-m-d' }}">
+                                            <input type="hidden" name="Tglplgsjp"
+                                                   value="{{ data_klaim.Tglplgsjp|date:'Y-m-d' }}">
+                                            <input type="hidden" name="cek_grouping" value="cek_grouping">
+                                            <button type="button" id="cek_grouping" class="btn btn-success"
+                                                    style="width: 100%;">Cek
+                                                Grouping
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% csrf_token %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Kode RS Menkes</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="Kodersmenkes"
+                                                   placeholder="Kode RS Menkes"
+                                                   value="{{ data_klaim.Kodersmenkes }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>INACBG</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="inacbg"
+                                                   placeholder="Kode INACBG"
+                                                   value="{{ data_klaim.Kdinacbgs_koreksi }} - {{ data_klaim.Nminacbgs_koreksi }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tarif</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="tarif"
+                                                   placeholder="Tarif"
+                                                   value="{{ data_klaim.biaya_koreksi|intcomma }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Keterangan Review</b></label>
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" name="keterangan_review"
+                                                   placeholder="Masukkan Keterangan Review"
+                                                   value="{{ data_klaim.keterangan_review }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                                Simpan
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-        function changeOptions(selectEl) {
-            let subForms = document.getElementsByClassName('OLevelResult')
-            if (selectEl === 'Sesuai') {
-                document.getElementById("div_id_keterangan_review").classList.add("active");
-                document.getElementById("id_keterangan_review").setAttribute("required", "");
-
-                document.getElementById("div_id_Kdinacbgs_koreksi").classList.remove("active");
-                document.getElementById("div_id_biaya_koreksi").classList.remove("active");
-                document.getElementById("id_Kdinacbgs_koreksi").removeAttribute("required");
-                document.getElementById("id_biaya_koreksi").removeAttribute("required");
-            } else if (selectEl === 'Tidak Sesuai') {
-                document.getElementById("div_id_keterangan_review").classList.add("active");
-                document.getElementById("div_id_Kdinacbgs_koreksi").classList.add("active");
-                document.getElementById("div_id_biaya_koreksi").classList.add("active");
-                document.getElementById("id_keterangan_review").setAttribute("required", "");
-                document.getElementById("id_Kdinacbgs_koreksi").setAttribute("required", "");
-                document.getElementById("id_biaya_koreksi").setAttribute("required", "");
-            } else {
-                document.getElementById("div_id_keterangan_review").classList.remove("active");
-                document.getElementById("div_id_Kdinacbgs_koreksi").classList.remove("active");
-                document.getElementById("div_id_biaya_koreksi").classList.remove("active");
-                document.getElementById("id_keterangan_review").removeAttribute("required", "");
-                document.getElementById("id_Kdinacbgs_koreksi").removeAttribute("required");
-                document.getElementById("id_biaya_koreksi").removeAttribute("required");
-            }
-        }
-
-        document.getElementById("id_status").setAttribute("onchange", "changeOptions(this.value)");
-        document.getElementById("div_id_keterangan_review").classList.add("OLevelResult.active");
-        document.getElementById("id_keterangan_review").setAttribute("required", "");
-        document.getElementById("div_id_Kdinacbgs_koreksi").classList.add("OLevelResult");
-        document.getElementById("div_id_biaya_koreksi").classList.add("OLevelResult");
-    </script>
-
+    <div class="modal fade" id="sepModal" tabindex="-1" aria-labelledby="sepModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sepModalLabel">Detail - Sampling Data Klaim CBG</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered">
+                        <tbody>
+                        <tr>
+                            <td><b>NO SEP :</b></td>
+                            <td>{{ data_klaim.Nosjp }}</td>
+                            <td><b>Nmjnspulang :</b></td>
+                            <td>{{ data_klaim.Nmjnspulang }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tgldtgsjp :</b></td>
+                            <td>{{ data_klaim.Tgldtgsjp|date:'d/m/Y' }}</td>
+                            <td><b>Kddokter :</b></td>
+                            <td>{{ data_klaim.kddokter }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tglplgsjp :</b></td>
+                            <td>{{ data_klaim.Tglplgsjp|date:'d/m/Y' }}</td>
+                            <td><b>Nmdokter :</b></td>
+                            <td>{{ data_klaim.nmdokter }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nokapst :</b></td>
+                            <td>{{ data_klaim.Nokapst }}</td>
+                            <td><b>Umur :</b></td>
+                            <td>{{ data_klaim.Umur }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tglpelayanan :</b></td>
+                            <td>{{ data_klaim.Tglpelayanan }}</td>
+                            <td><b>Kdsa :</b></td>
+                            <td>{{ data_klaim.kdsa }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kdkclayan :</b></td>
+                            <td>{{ data_klaim.Kdkclayan }}</td>
+                            <td><b>Deskripsisd :</b></td>
+                            <td>{{ data_klaim.deskripsisd }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmkclayan :</b></td>
+                            <td>{{ data_klaim.Nmkclayan }}</td>
+                            <td><b>Kdsi :</b></td>
+                            <td>{{ data_klaim.kdsi }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kddati2Layan :</b></td>
+                            <td>{{ data_klaim.Kddati2Layan }}</td>
+                            <td><b>Deskripsisi :</b></td>
+                            <td>{{ data_klaim.deskripsisi }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmdati2Layan :</b></td>
+                            <td>{{ data_klaim.Nmdati2Layan }}</td>
+                            <td><b>Kdsp :</b></td>
+                            <td>{{ data_klaim.kdsp }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kdppklayan :</b></td>
+                            <td>{{ data_klaim.Kdppklayan }}</td>
+                            <td><b>Deskripsisp :</b></td>
+                            <td>{{ data_klaim.deskripsisp }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmppklayan :</b></td>
+                            <td>{{ data_klaim.Nmppklayan }}</td>
+                            <td><b>Kdsr :</b></td>
+                            <td>{{ data_klaim.kdsr }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmtkp :</b></td>
+                            <td>{{ data_klaim.Nmtkp }}</td>
+                            <td><b>Deskripsisr :</b></td>
+                            <td>{{ data_klaim.deskripsisr }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kdinacbgs :</b></td>
+                            <td>{{ data_klaim.Kdinacbgs }}</td>
+                            <td><b>Tarifgroup :</b></td>
+                            <td>{{ data_klaim.Tarifgroup|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nminacbgs :</b></td>
+                            <td>{{ data_klaim.Nminacbgs }}</td>
+                            <td><b>Tarifsa :</b></td>
+                            <td>{{ data_klaim.tarifsa|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kddiagprimer :</b></td>
+                            <td>{{ data_klaim.Kddiagprimer }}</td>
+                            <td><b>Tarifsd :</b></td>
+                            <td>{{ data_klaim.tarifsd|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmdiagprimer :</b></td>
+                            <td>{{ data_klaim.Nmdiagprimer }}</td>
+                            <td><b>Tarifsi :</b></td>
+                            <td>{{ data_klaim.tarifsi|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Diagsekunder :</b></td>
+                            <td>{{ data_klaim.Diagsekunder }}</td>
+                            <td><b>Tarifsp :</b></td>
+                            <td>{{ data_klaim.tarifsp|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Procedure :</b></td>
+                            <td style="word-wrap: break-word">{{ data_klaim.Procedure }}</td>
+                            <td><b>Tarifsr :</b></td>
+                            <td>{{ data_klaim.tarifsr|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Klsrawat :</b></td>
+                            <td>{{ data_klaim.Klsrawat }}</td>
+                            <td><b>Biayaverifikasi :</b></td>
+                            <td>{{ data_klaim.Biayaverifikasi|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Status Data Klaim : </b></td>
+                            <td>
+                                {% if data_klaim.status == 'Belum Review' %}
+                                    <button type="button"
+                                            class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+                                {% elif data_klaim.status == 'Sesuai' %}
+                                    <button type="button"
+                                            class="btn btn-success btn-sm">{{ data_klaim.status }}</button>
+                                {% elif data_klaim.status == 'Tidak Sesuai' %}
+                                    <button type="button"
+                                            class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

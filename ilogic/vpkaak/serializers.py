@@ -25,6 +25,7 @@ class SamplingDataKlaimCBGSerializer(serializers.ModelSerializer):
     def get_faskes(self, obj):
         return obj.faskes.nama
 
+
 #
 # class VerifikatorSerializer(serializers.ModelSerializer):
 #     fullname = serializers.SerializerMethodField()
@@ -36,3 +37,8 @@ class SamplingDataKlaimCBGSerializer(serializers.ModelSerializer):
 #     def get_fullname(self, obj):
 #         return obj.get_full_name()
 #
+
+class RegisterPostKlaimSupervisorKPSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegisterPostKlaim
+        fields = '__all__'

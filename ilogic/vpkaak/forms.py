@@ -71,6 +71,51 @@ class RegisterPostKlaimForm(forms.ModelForm):
         }
 
 
+class RegisterPostKlaimSupervisorKPForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['jenis_audit'].widget.attrs['onchange'] = 'toggleDiv()'
+
+    bulan_beban = forms.DateField(widget=SelectDateWidget(attrs={'type': 'month'}))
+
+    def clean_bulan_beban(self):
+        bulan_beban = self.cleaned_data.get('bulan_beban')
+        if bulan_beban:
+            # Periksa apakah hanya bulan dan tahun yang diisi (tanpa tanggal)
+            if bulan_beban.day is None:
+                # Atur tanggal menjadi tanggal 1
+                bulan_beban = bulan_beban.replace(day=1)
+        return bulan_beban
+
+    def clean(self):
+        cleaned_data = super().clean()
+        jenis_audit = cleaned_data.get('jenis_audit')
+        if jenis_audit == 'AAK-FKRTL':
+            if 'bulan_beban' in cleaned_data:
+                del cleaned_data['bulan_beban']
+        return cleaned_data
+
+    class Meta:
+        model = RegisterPostKlaim
+        fields = [
+            'jenis_audit',
+            'inisiasi',
+            'periode_awal',
+            'periode_akhir',
+            'surat_tugas',
+            'bulan_beban',
+            # 'nomor_BA_VPK_AAK',
+            # 'staff_upk',
+            # 'verifikator',
+            # 'faskes',
+            # 'kelas',
+        ]
+        widgets = {
+            'periode_awal': DateInput(attrs={'type': 'date'}),
+            'periode_akhir': DateInput(attrs={'type': 'date'}),
+        }
+
+
 class ImportSamplingDataKlaimForm(forms.Form):
     register = forms.CharField(widget=forms.TextInput(attrs={'readonly': True}))
     file = forms.FileField(label='Upload File Excel', required=True,
@@ -96,8 +141,6 @@ class SamplingDataKlaimCBGForm(forms.ModelForm):
         model = SamplingDataKlaimCBG
         fields = [
             'status',
-            'Kdinacbgs_koreksi',
-            'biaya_koreksi',
             'keterangan_review',
         ]
 

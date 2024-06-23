@@ -670,6 +670,11 @@
                                            href="{% url 'vpkaak:register_post_klaim_supervisorkp' %}">
                                             Register Post Klaim KP</a>
                                     </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'vpkaak:import_sampling_data_klaim_supervisorkp' %}">
+                                            Import Data Klaim</a>
+                                    </li>
                                 </ul>
                             </li>
                         {% endif %}
@@ -702,6 +707,11 @@
                                     <a class="pc-link" href="{% url 'vpkaak:review-post-klaim' %}"><span
                                             class="pc-badge bg-danger">{{ request.count_sampling_data_klaim_cbg }}</span>
                                         Review</a>
+                                </li>
+                                <li class="pc-item">
+                                    <a class="pc-link" href="{% url 'vpkaak:review_post_klaim_kp' %}"><span
+                                            class="pc-badge bg-danger">{{ request.count_sampling_data_klaim_cbg_kp }}</span>
+                                        Sampling Dari KP</a>
                                 </li>
                                 <li class="pc-item">
                                     <a class="pc-link" href="{% url 'vpkaak:finalisasi-register-post-klaim' %}">Finalisasi</a>
