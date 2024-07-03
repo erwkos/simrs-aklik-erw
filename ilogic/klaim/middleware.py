@@ -63,9 +63,12 @@ class DaftarClaimCount:
 
                 # object post klaim
                 obj_register_post_klaim = RegisterPostKlaim.objects.filter(
-                    user__kantorcabang=request.user.kantorcabang_set.all().first())
+                    user__kantorcabang=request.user.kantorcabang_set.all().first(), is_kp=False, is_final=False)
                 obj_sampling_data_klaim_cbg = SamplingDataKlaimCBG.objects.filter(
                     register__user__kantorcabang=request.user.kantorcabang_set.all().first())
+
+                obj_sampling_data_klaim_cbg_kp = SamplingDataKlaimCBG.objects.filter(
+                    Kdkclayan=request.user.kantorcabang_set.all().first().kode_cabang)
 
                 if request.user.check_permissions(group_list=['verifikator']):
                     # register klaim verifikator
@@ -141,12 +144,11 @@ class DaftarClaimCount:
                     request.count_sampling_data_klaim_cbg = obj_sampling_data_klaim_cbg.count()
 
                     # sampling data postklaim verifikator
-                    obj_sampling_data_klaim_cbg_kp = obj_sampling_data_klaim_cbg.filter(
+                    obj_sampling_data_klaim_cbg_kp = obj_sampling_data_klaim_cbg_kp.filter(
                         status=StatusReviewChoices.Belum, is_from_kp=True
                     )
 
                     request.count_sampling_data_klaim_cbg_kp = obj_sampling_data_klaim_cbg_kp.count()
-
 
                 if request.user.check_permissions(group_list=['adminAK']):
                     pengajuan = obj

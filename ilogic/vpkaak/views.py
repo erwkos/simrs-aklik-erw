@@ -45,7 +45,7 @@ from urllib.parse import urlparse, parse_qs
 @permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def register_post_klaim(request):
     queryset = RegisterPostKlaim.objects.filter(
-        user__kantorcabang=request.user.kantorcabang_set.all().first()).order_by('-created_at')
+        user__kantorcabang=request.user.kantorcabang_set.all().first(), is_kp=False).order_by('-created_at')
 
     # filter
     myFilter = RegisterPostKlaimFilter(request.GET, queryset=queryset)
@@ -79,7 +79,7 @@ def register_post_klaim(request):
             if jenis_audit == JenisAuditChoices.VPK:
                 cek_vpk = RegisterPostKlaim.objects.filter(
                     user__kantorcabang=request.user.kantorcabang_set.all().first(),
-                    bulan_beban=form.cleaned_data['bulan_beban'])
+                    bulan_beban=form.cleaned_data['bulan_beban'], is_kp=False)
                 if cek_vpk:
                     messages.warning(request,
                                      f'VPK dengan Bulan beban '
@@ -146,7 +146,8 @@ def import_sampling_data_klaim(request):
                                 'Kdinacbgs', 'Nminacbgs', 'Kddiagprimer', 'Nmdiagprimer', 'Diagsekunder', 'Procedure',
                                 'Klsrawat', 'Nmjnspulang', 'kddokter', 'nmdokter', 'Umur', 'kdsa', 'kdsd',
                                 'deskripsisd', 'kdsi', 'deskripsisi', 'kdsp', 'deskripsisp', 'kdsr', 'deskripsisr',
-                                'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi']
+                                'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi',
+                                'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag']
             nomor_register = import_form.cleaned_data.get('register')
             register = RegisterPostKlaim.objects.get(nomor_register=nomor_register)
             file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
@@ -181,6 +182,8 @@ def import_sampling_data_klaim(request):
                     return redirect('/vpkaak/import-sampling-data-klaim')
             data_frame = data_frame.replace(np.nan, None)
             data_frame['register'] = register
+            data_frame['Kdkclayan'] = data_frame['Kdkclayan'].astype('str').apply(lambda x: x.zfill(4))
+            # data_frame['Kdkclayan'] = data_frame['Kdkclayan'].zfill(4)
             # data_frame['faskes'] = register.faskes
             # data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
             # data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
@@ -248,7 +251,8 @@ def import_sampling_data_klaim(request):
                             'Kdinacbgs', 'Nminacbgs', 'Kddiagprimer', 'Nmdiagprimer', 'Diagsekunder', 'Procedure',
                             'Klsrawat', 'Nmjnspulang', 'kddokter', 'nmdokter', 'Umur', 'kdsa', 'kdsd',
                             'deskripsisd', 'kdsi', 'deskripsisi', 'kdsp', 'deskripsisp', 'kdsr', 'deskripsisr',
-                            'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi']
+                            'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi',
+                            'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag']
         file_name = request.POST.get('file_name')
         nomor_register = request.POST.get('register')
         get_password = request.POST.get('password')
@@ -283,7 +287,7 @@ def import_sampling_data_klaim(request):
 
         data_frame = data_frame.replace(np.nan, None)
         data_frame['register'] = register
-
+        data_frame['Kdkclayan'] = data_frame['Kdkclayan'].astype('str').apply(lambda x: x.zfill(4))
         # saya nambahin try and except disini mas jadi ga ngasih 500 tapi ngasih messages error kalo ada kesalahan
         try:
             with transaction.atomic():
@@ -308,11 +312,11 @@ def import_sampling_data_klaim(request):
 @check_device
 @permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def review(request):
-    queryset = SamplingDataKlaimCBG.objects.filter(
-        register__user__kantorcabang=request.user.kantorcabang_set.all().first()).order_by('created_at')
+    queryset_sampling_klaim = SamplingDataKlaimCBG.objects.filter(
+        register__user__kantorcabang=request.user.kantorcabang_set.all().first(), is_from_kp=False, is_final=False).order_by('created_at')
 
     # filter
-    myFilter = SamplingDataKlaimCBGFilter(request.GET, queryset=queryset)
+    myFilter = SamplingDataKlaimCBGFilter(request.GET, queryset=queryset_sampling_klaim)
     queryset = myFilter.qs
 
     # pagination
@@ -393,7 +397,7 @@ def review(request):
 
         # Iterate through all
         row_num = 1
-        for queryset in queryset:
+        for queryset in queryset_sampling_klaim:
             row = [
                 queryset.status,
                 queryset.register.nomor_register,
@@ -465,10 +469,11 @@ def review(request):
 @permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def reviewkp(request):
     kantor_cabang = request.user.kantorcabang_set.all().first().kode_cabang
-    queryset = SamplingDataKlaimCBG.objects.filter(Kdkclayan=kantor_cabang).order_by('created_at')
+    # queryset = SamplingDataKlaimCBG.objects.filter(Kdkclayan=kantor_cabang, is_from_kp=True).order_by('created_at')
+    queryset_sampling_klaim = SamplingDataKlaimCBG.objects.filter(Kdkclayan=kantor_cabang, is_from_kp=True, is_final=False).order_by('created_at')
 
     # filter
-    myFilter = SamplingDataKlaimCBGFilter(request.GET, queryset=queryset)
+    myFilter = SamplingDataKlaimCBGFilter(request.GET, queryset=queryset_sampling_klaim)
     queryset = myFilter.qs
 
     # pagination
@@ -549,7 +554,7 @@ def reviewkp(request):
 
         # Iterate through all
         row_num = 1
-        for queryset in queryset:
+        for queryset in queryset_sampling_klaim:
             row = [
                 queryset.status,
                 queryset.register.nomor_register,
@@ -628,7 +633,7 @@ def is_bayi(request):
     else:
         instance.is_bayi = False
     instance.save()
-    print(instance.is_bayi)
+    # print(instance.is_bayi)
     return HttpResponse('is bayi saved')
 
 
@@ -645,8 +650,8 @@ def cek_grouping(request):
         tipe_rawat = 'outpatient'
     elif tipe_rawat == 'RITL':
         tipe_rawat = 'inpatient'
-    else:
-        tipe_rawat = 'outpatient'
+    # else:
+    #     tipe_rawat = 'outpatient'
 
     kelas_rawat = data['kelas_rawat']
     if kelas_rawat == 'Kelas III':
@@ -696,6 +701,16 @@ def cek_grouping(request):
     else:
         is_bayi = False
 
+    # if 'tanggallahirbayi' in data:
+    #     tanggallahirbayi = data['tanggallahirbayi']
+    # else:
+    #     tanggallahirbayi = '1911-11-11'
+    #
+    # if 'beratbayi' in data:
+    #     birth_weight = data['beratbayi']
+    # else:
+    #     birth_weight = 0
+
     tanggallahirbayi = data['tanggallahirbayi']
     Tgldtgsjp = data['Tgldtgsjp']
     Tglplgsjp = data['Tglplgsjp']
@@ -730,7 +745,6 @@ def cek_grouping(request):
     # data_list_match_topup_sr_pattern = []
     # data_list_match_topup_si_pattern = []
     # data_list_match_topup_sd_pattern = []
-
     try:
         (group_code, nama_list, data_list, data_list_match_topup_sp_pattern,
          data_list_match_topup_sr_pattern, data_list_match_topup_si_pattern,
@@ -749,6 +763,7 @@ def cek_grouping(request):
             sd=special_drug,
             is_bayi=is_bayi,
             birth_weight=str(data['beratbayi']),
+            # birth_weight=birth_weight,
             tanggallahirbayi=str(tanggallahirbayi),
             Tgldtgsjp=str(Tgldtgsjp),
             Tglplgsjp=str(Tglplgsjp),
@@ -798,77 +813,232 @@ def cek_grouping(request):
 def update_review(request, pk):
     data = request.POST
     queryset = SamplingDataKlaimCBG.objects.filter(
-        register__user__kantorcabang=request.user.kantorcabang_set.all().first())
+        register__user__kantorcabang=request.user.kantorcabang_set.all().first(), is_from_kp=False, is_final=False)
     instance = queryset.get(pk=pk)
     data_klaim_form = SamplingDataKlaimCBGForm(instance=instance)
     if data:
+        next = request.POST.get('next', '/')
         if data.get('keterangan_review') and data.get('status') == StatusReviewChoices.Sesuai:
             instance.keterangan_review = data['keterangan_review']
             instance.status = StatusReviewChoices.Sesuai
+            instance.verifikator_review = request.user
+            instance.tgl_review = datetime.datetime.today()
             instance.save()
-            messages.success(request, 'Review data klaim berhasil disimpan.')
-            return redirect(request.headers.get('Referer'))
+            messages.success(request, f'NO SEP {instance.Nosjp} berhasil diupdate.')
+            return HttpResponseRedirect(next)
         elif data.get('keterangan_review'):
-            kode_diagprimer_koreksi = data['diagnosis_utama'].split(' - ')[0]
-            nama_diagprimer_koreksi = data['diagnosis_utama'].split(' - ')[1]
+            try:
+                kode_diagprimer_koreksi = data['diagnosis_utama'].split(' - ')[0]
+                nama_diagprimer_koreksi = data['diagnosis_utama'].split(' - ')[1]
 
-            # Mengambil semua diagnosis sekunder dari request.POST
-            data_payload = {key: value for key, value in request.POST.items() if key.startswith('diagnosis_sekunder')}
-            # print(data_payload)
+                # Mengambil semua diagnosis sekunder dari request.POST
+                data_payload = {key: value for key, value in request.POST.items() if key.startswith('diagnosis_sekunder')}
+                # print(data_payload)
 
-            # Mengubah data payload menjadi format yang diinginkan
-            diagnosis_sekunder_list = []
-            for key in sorted(data_payload.keys()):
-                if data_payload[key]:
-                    code, desc = data_payload[key].split(' - ')
-                    diagnosis_sekunder_list.append(f"{code.replace('.', '')} - {desc}")
+                # Mengubah data payload menjadi format yang diinginkan
+                diagnosis_sekunder_list = []
+                for key in sorted(data_payload.keys()):
+                    if data_payload[key]:
+                        code, desc = data_payload[key].split(' - ')
+                        diagnosis_sekunder_list.append(f"{code.replace('.', '')} - {desc}")
 
-            # Menggabungkan hasilnya dengan pemisah ';'
-            diagsekunder_koreksi = ';'.join(diagnosis_sekunder_list)
+                # Menggabungkan hasilnya dengan pemisah ';'
+                diagsekunder_koreksi = ';'.join(diagnosis_sekunder_list)
 
-            # Mengambil semua diagnosis sekunder dari request.POST
-            data_payload_procedure = {key: value for key, value in request.POST.items() if key.startswith('procedure')}
-            # print(data_payload_procedure)
+                # Mengambil semua diagnosis sekunder dari request.POST
+                data_payload_procedure = {key: value for key, value in request.POST.items() if key.startswith('procedure')}
+                # print(data_payload_procedure)
 
-            # Mengubah data payload menjadi format yang diinginkan
-            procedure_list = []
-            for key in sorted(data_payload_procedure.keys()):
-                if data_payload_procedure[key]:
-                    code, desc = data_payload_procedure[key].split(' - ')
-                    procedure_list.append(f"{code.replace('.', '')} - {desc}")
+                # Mengubah data payload menjadi format yang diinginkan
+                procedure_list = []
+                for key in sorted(data_payload_procedure.keys()):
+                    if data_payload_procedure[key]:
+                        code, desc = data_payload_procedure[key].split(' - ')
+                        procedure_list.append(f"{code.replace('.', '')} - {desc}")
 
-            # Menggabungkan hasilnya dengan pemisah ';'
-            procedure_koreksi = ';'.join(procedure_list)
+                # Menggabungkan hasilnya dengan pemisah ';'
+                procedure_koreksi = ';'.join(procedure_list)
 
-            kode_inacbg_koreksi = data['inacbg'].split(' - ')[0]
-            nama_inacbg_koreksi = data['inacbg'].split(' - ')[1]
-            instance.Kddiagprimer_koreksi = kode_diagprimer_koreksi
-            instance.Nmdiagprimer_koreksi = nama_diagprimer_koreksi
-            instance.Diagsekunder_koreksi = diagsekunder_koreksi
-            instance.Procedure_koreksi = procedure_koreksi
-            instance.Kdinacbgs_koreksi = kode_inacbg_koreksi
-            instance.Nminacbgs_koreksi = nama_inacbg_koreksi
-            instance.biaya_koreksi = int(data.get('tarif').replace(",", ""))
-            instance.Klsrawat_koreksi = data.get('kelas_rawat')
-            instance.keterangan_review = data.get('keterangan_review')
-            instance.status = StatusReviewChoices.TidakSesuai
-            instance.is_koreksi = True
+                if data['inacbg'] == '-':
+                    instance.Kdinacbgs_koreksi = None
+                    instance.Nminacbgs_koreksi = None
+                else:
+                    kode_inacbg_koreksi = data['inacbg'].split(' - ')[0]
+                    nama_inacbg_koreksi = data['inacbg'].split(' - ')[1]
+                    instance.Kdinacbgs_koreksi = kode_inacbg_koreksi
+                    instance.Nminacbgs_koreksi = nama_inacbg_koreksi
+                instance.Kddiagprimer_koreksi = kode_diagprimer_koreksi
+                instance.Nmdiagprimer_koreksi = nama_diagprimer_koreksi
+                instance.Diagsekunder_koreksi = diagsekunder_koreksi
+                instance.Procedure_koreksi = procedure_koreksi
+                instance.biaya_koreksi = int(data.get('tarif').replace(",", ""))
+                instance.Klsrawat_koreksi = data.get('kelas_rawat')
+                instance.keterangan_review = data.get('keterangan_review')
+                instance.status = StatusReviewChoices.TidakSesuai
+                instance.is_koreksi = True
+                instance.verifikator_review = request.user
 
-            is_bayi = data.get('is_bayi')
-            if is_bayi == 'on':
-                is_bayi = True
-            else:
-                is_bayi = False
+                if data.get('tipe_rawat') == 'outpatient':
+                    tipe_rawat = "RJTL"
+                elif data.get('tipe_rawat') == 'inpatient':
+                    tipe_rawat = "RITL"
+                else:
+                    tipe_rawat = 'Tidak Diketahui'
+                instance.Nmtkp_koreksi = tipe_rawat
 
-            instance.is_bayi = is_bayi
-            instance.beratbayi = data.get('beratbayi')
-            if data.get('tanggallahirbayi') != '':
-                instance.tanggallahirbayi = data.get('tanggallahirbayi')
-            # instance.tanggallahirbayi = data.get('tanggallahirbayi')
+                is_bayi = data.get('is_bayi')
+                # print(is_bayi)
+                if is_bayi == 'True':
+                    is_bayi = True
+                else:
+                    is_bayi = False
 
+                instance.is_bayi = is_bayi
+                instance.beratbayi = data.get('beratbayi')
+                if data.get('tanggallahirbayi') != '':
+                    instance.tanggallahirbayi = data.get('tanggallahirbayi')
+                # instance.tanggallahirbayi = data.get('tanggallahirbayi')
+                instance.tgl_review = datetime.datetime.today()
+
+                instance.save()
+                messages.success(request, f'NO SEP {instance.Nosjp} berhasil diupdate.')
+                return HttpResponseRedirect(next)
+            except Exception as e:
+                messages.warning(request, f'Terdapat Kesalahan. Lakukan Cek Grouping sebelum simpan. Silahkan Coba Lagi. : {e}')
+                return redirect(request.headers.get('Referer'))
+        else:
+            messages.warning(request, 'Keterangan review harus diisi!')
+    context = {
+        'data_klaim': instance,
+        'data_klaim_form': data_klaim_form,
+    }
+    return render(request, 'vpkaak/update_review.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
+def finalisasi_register_post_klaim(request):
+    queryset = RegisterPostKlaim.objects.filter(
+        user__kantorcabang=request.user.kantorcabang_set.all().first(),
+        status=StatusChoices.Verifikasi)
+
+    # filter
+    myFilter = RegisterPostKlaimFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    # pagination
+    paginator = Paginator(queryset, 25)
+    page_number = request.GET.get('page')
+    queryset = paginator.get_page(page_number)
+
+    context = {
+        'register_list': queryset,
+        'myFilter': myFilter,
+    }
+    return render(request, 'vpkaak/finalisasi_register_post_klaim.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
+def update_review_kp(request, pk):
+    kantor_cabang = request.user.kantorcabang_set.all().first().kode_cabang
+    queryset = SamplingDataKlaimCBG.objects.filter(Kdkclayan=kantor_cabang, is_from_kp=True, is_final=False).order_by('created_at')
+
+    data = request.POST
+    instance = queryset.get(pk=pk)
+    data_klaim_form = SamplingDataKlaimCBGForm(instance=instance)
+    if data:
+        next = request.POST.get('next', '/')
+        if data.get('keterangan_review') and data.get('status') == StatusReviewChoices.Sesuai:
+            instance.keterangan_review = data['keterangan_review']
+            instance.status = StatusReviewChoices.Sesuai
+            instance.verifikator_review = request.user
+            instance.tgl_review = datetime.datetime.today()
             instance.save()
-            messages.success(request, 'Review data klaim berhasil disimpan.')
-            return redirect(request.headers.get('Referer'))
+            messages.success(request, f'NO SEP {instance.Nosjp} berhasil diupdate.')
+            return HttpResponseRedirect(next)
+        elif data.get('keterangan_review'):
+            try:
+                kode_diagprimer_koreksi = data['diagnosis_utama'].split(' - ')[0]
+                nama_diagprimer_koreksi = data['diagnosis_utama'].split(' - ')[1]
+
+                # Mengambil semua diagnosis sekunder dari request.POST
+                data_payload = {key: value for key, value in request.POST.items() if key.startswith('diagnosis_sekunder')}
+                # print(data_payload)
+
+                # Mengubah data payload menjadi format yang diinginkan
+                diagnosis_sekunder_list = []
+                for key in sorted(data_payload.keys()):
+                    if data_payload[key]:
+                        code, desc = data_payload[key].split(' - ')
+                        diagnosis_sekunder_list.append(f"{code.replace('.', '')} - {desc}")
+
+                # Menggabungkan hasilnya dengan pemisah ';'
+                diagsekunder_koreksi = ';'.join(diagnosis_sekunder_list)
+
+                # Mengambil semua diagnosis sekunder dari request.POST
+                data_payload_procedure = {key: value for key, value in request.POST.items() if key.startswith('procedure')}
+                # print(data_payload_procedure)
+
+                # Mengubah data payload menjadi format yang diinginkan
+                procedure_list = []
+                for key in sorted(data_payload_procedure.keys()):
+                    if data_payload_procedure[key]:
+                        code, desc = data_payload_procedure[key].split(' - ')
+                        procedure_list.append(f"{code.replace('.', '')} - {desc}")
+
+                # Menggabungkan hasilnya dengan pemisah ';'
+                procedure_koreksi = ';'.join(procedure_list)
+
+                if data['inacbg'] == '-':
+                    instance.Kdinacbgs_koreksi = None
+                    instance.Nminacbgs_koreksi = None
+                else:
+                    kode_inacbg_koreksi = data['inacbg'].split(' - ')[0]
+                    nama_inacbg_koreksi = data['inacbg'].split(' - ')[1]
+                    instance.Kdinacbgs_koreksi = kode_inacbg_koreksi
+                    instance.Nminacbgs_koreksi = nama_inacbg_koreksi
+                instance.Kddiagprimer_koreksi = kode_diagprimer_koreksi
+                instance.Nmdiagprimer_koreksi = nama_diagprimer_koreksi
+                instance.Diagsekunder_koreksi = diagsekunder_koreksi
+                instance.Procedure_koreksi = procedure_koreksi
+                instance.biaya_koreksi = int(data.get('tarif').replace(",", ""))
+                instance.Klsrawat_koreksi = data.get('kelas_rawat')
+                instance.keterangan_review = data.get('keterangan_review')
+                instance.status = StatusReviewChoices.TidakSesuai
+                instance.is_koreksi = True
+                instance.verifikator_review = request.user
+
+                if data.get('tipe_rawat') == 'outpatient':
+                    tipe_rawat = "RJTL"
+                elif data.get('tipe_rawat') == 'inpatient':
+                    tipe_rawat = "RITL"
+                else:
+                    tipe_rawat = 'Tidak Diketahui'
+                instance.Nmtkp_koreksi = tipe_rawat
+
+                is_bayi = data.get('is_bayi')
+
+                if is_bayi == 'True':
+                    is_bayi = True
+                else:
+                    is_bayi = False
+
+                instance.is_bayi = is_bayi
+                instance.beratbayi = data.get('beratbayi')
+                if data.get('tanggallahirbayi') != '':
+                    instance.tanggallahirbayi = data.get('tanggallahirbayi')
+                # instance.tanggallahirbayi = data.get('tanggallahirbayi')
+                instance.tgl_review = datetime.datetime.today()
+
+                instance.save()
+                messages.success(request, f'NO SEP {instance.Nosjp} berhasil diupdate.')
+                return HttpResponseRedirect(next)
+            except Exception as e:
+                messages.warning(request, f'Terdapat Kesalahan, Lakukan Cek Grouping sebelum simpan. Silahkan Coba Lagi. : {e}')
+                return redirect(request.headers.get('Referer'))
         else:
             messages.warning(request, 'Keterangan review harus diisi!')
     context = {
@@ -1013,6 +1183,24 @@ def input_nomor_ba(request, pk):
     return render(request, 'vpkaak/input_nomor_ba.html', context)
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
+def api_json_data_sampling_vpkaak(request):
+    queryset = SamplingDataKlaimCBG.objects.filter(register__user__kantorcabang=request.user.kantorcabang_set.all().first(), is_from_kp=False, is_final=False).\
+        values('register__nomor_register', 'status', 'Nmkclayan')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
+def monitoring_data_sampling_vpkaak(request):
+    context = {}
+    return render(request, 'vpkaak/monitoring_data_sampling_vpkaak.html', context=context)
+
+
 #################
 # supervisorkp ##
 #################
@@ -1112,7 +1300,8 @@ def import_sampling_data_klaim_supervisorkp(request):
                                 'Kdinacbgs', 'Nminacbgs', 'Kddiagprimer', 'Nmdiagprimer', 'Diagsekunder', 'Procedure',
                                 'Klsrawat', 'Nmjnspulang', 'kddokter', 'nmdokter', 'Umur', 'kdsa', 'kdsd',
                                 'deskripsisd', 'kdsi', 'deskripsisi', 'kdsp', 'deskripsisp', 'kdsr', 'deskripsisr',
-                                'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi']
+                                'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi',
+                                'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag']
             nomor_register = import_form.cleaned_data.get('register')
             register = RegisterPostKlaim.objects.get(nomor_register=nomor_register)
             file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
@@ -1147,6 +1336,8 @@ def import_sampling_data_klaim_supervisorkp(request):
                     return redirect(request.headers.get('Referer'))
             data_frame = data_frame.replace(np.nan, None)
             data_frame['register'] = register
+            data_frame['Kdkclayan'] = data_frame['Kdkclayan'].astype('str').apply(lambda x: x.zfill(4))
+            data_frame['is_from_kp'] = True
             # data_frame['faskes'] = register.faskes
             # data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
             # data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
@@ -1188,6 +1379,7 @@ def import_sampling_data_klaim_supervisorkp(request):
                     #                                                            obj.bupel.year != register.bulan_pelayanan.year])
                     df_valid = pd.DataFrame.from_records(valid_data.values())
                     total_data_valid = len(df_valid)
+                    df_valid = df_valid.head()
                     # df_invalid = pd.DataFrame.from_records(invalid_data.values())
                     # total_data_invalid = len(df_invalid)
                     transaction.set_rollback(True)
@@ -1214,7 +1406,8 @@ def import_sampling_data_klaim_supervisorkp(request):
                             'Kdinacbgs', 'Nminacbgs', 'Kddiagprimer', 'Nmdiagprimer', 'Diagsekunder', 'Procedure',
                             'Klsrawat', 'Nmjnspulang', 'kddokter', 'nmdokter', 'Umur', 'kdsa', 'kdsd',
                             'deskripsisd', 'kdsi', 'deskripsisi', 'kdsp', 'deskripsisp', 'kdsr', 'deskripsisr',
-                            'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi']
+                            'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi',
+                            'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag']
         file_name = request.POST.get('file_name')
         nomor_register = request.POST.get('register')
         get_password = request.POST.get('password')
@@ -1249,6 +1442,8 @@ def import_sampling_data_klaim_supervisorkp(request):
 
         data_frame = data_frame.replace(np.nan, None)
         data_frame['register'] = register
+        data_frame['Kdkclayan'] = data_frame['Kdkclayan'].astype('str').apply(lambda x: x.zfill(4))
+        data_frame['is_from_kp'] = True
 
         # saya nambahin try and except disini mas jadi ga ngasih 500 tapi ngasih messages error kalo ada kesalahan
         try:
@@ -1268,3 +1463,99 @@ def import_sampling_data_klaim_supervisorkp(request):
         # 'verifikator': verifikator,
     }
     return render(request, 'vpkaak/import_data_supervisorkp.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisorkp'])
+def api_json_data_sampling_vpkaak_supervisorkp(request):
+    queryset = SamplingDataKlaimCBG.objects.filter(is_from_kp=True, is_final=False).\
+        values('register__nomor_register', 'status', 'Nmkclayan')
+    data = list(queryset)
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisorkp'])
+def monitoring_data_sampling_vpkaak_supervisorkp(request):
+    context = {}
+    return render(request, 'vpkaak/monitoring_data_sampling_vpkaak_supervisorkp.html', context=context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisorkp'])
+def finalisasi_register_post_klaim_supervisorkp(request):
+    queryset = RegisterPostKlaim.objects.filter(is_kp=True, status=StatusChoices.Verifikasi)
+
+    # filter
+    myFilter = RegisterPostKlaimFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    # pagination
+    paginator = Paginator(queryset, 25)
+    page_number = request.GET.get('page')
+    queryset = paginator.get_page(page_number)
+
+    context = {
+        'register_list': queryset,
+        'myFilter': myFilter,
+    }
+    return render(request, 'vpkaak/finalisasi_register_post_klaim_supervisorkp.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['supervisorkp'])
+def update_finalisasi_register_post_klaim_supervisorkp(request, pk):
+    queryset = RegisterPostKlaim.objects.filter(is_kp=True)
+    instance = queryset.get(pk=pk)
+
+    try:
+        sampling_data_klaim = SamplingDataKlaimCBG.objects.filter(register=instance)
+        jumlah_sesuai = sampling_data_klaim.filter(status=StatusReviewChoices.Sesuai).count()
+        jumlah_tidak_sesuai = sampling_data_klaim.filter(status=StatusReviewChoices.TidakSesuai).count()
+        jumlah_belum_review = sampling_data_klaim.filter(status=StatusReviewChoices.Belum).count()
+        total_sampling = sampling_data_klaim.count()
+
+        biaya_sesuai = sampling_data_klaim.filter(status=StatusReviewChoices.Sesuai).aggregate(Sum('Biayaverifikasi'))[
+            'Biayaverifikasi__sum']
+        biaya_tidak_sesuai = \
+            sampling_data_klaim.filter(status=StatusReviewChoices.TidakSesuai).aggregate(Sum('Biayaverifikasi'))[
+                'Biayaverifikasi__sum']
+        biaya_belum_review = \
+            sampling_data_klaim.filter(status=StatusReviewChoices.Belum).aggregate(Sum('Biayaverifikasi'))[
+                'Biayaverifikasi__sum']
+        biaya_sampling = sampling_data_klaim.aggregate(Sum('Biayaverifikasi'))['Biayaverifikasi__sum']
+    except Exception as e:
+        messages.warning(request, f'Pengecekan Data Sampling Error, {e}')
+        return redirect(request.headers.get('Referer'))
+
+    if request.method == 'POST':
+        form = FinalisasiRegisterPostKlaimForm(request.POST, instance=instance)
+        if form.is_valid():
+            if jumlah_belum_review != 0:
+                messages.warning(request, 'Masih terdapat data sampling klaim yang belum direview')
+                return redirect(request.headers.get('Referer'))
+            obj = form.save()
+            obj.is_final = True
+            obj.save()
+            sampling_data_klaim.update(is_final=True)
+            messages.success(request, 'Finalisasi Register berhasil.')
+    else:
+        form = FinalisasiRegisterPostKlaimForm(instance=instance)
+
+    context = {
+        'form': form,
+        'jumlah_sesuai': jumlah_sesuai,
+        'jumlah_tidak_sesuai': jumlah_tidak_sesuai,
+        'jumlah_belum_review': jumlah_belum_review,
+        'total_sampling': total_sampling,
+        'biaya_sesuai': biaya_sesuai,
+        'biaya_tidak_sesuai': biaya_tidak_sesuai,
+        'biaya_belum_review': biaya_belum_review,
+        'biaya_sampling': biaya_sampling,
+        'instance': instance,
+    }
+    return render(request, 'vpkaak/update_finalisasi_register_post_klaim_supervisorkp.html', context)

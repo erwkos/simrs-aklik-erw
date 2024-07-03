@@ -27,7 +27,7 @@ class RegisterPostKlaimViewSet(GenericViewSet):
     def get_queryset(self):
         if self.action == 'list':
             queryset_kc = self.queryset.filter(
-                user__kantorcabang=self.request.user.kantorcabang_set.all().first())
+                user__kantorcabang=self.request.user.kantorcabang_set.all().first(), is_kp=False)
             return queryset_kc  # filter(Q(file_data_klaim=None) | Q(file_data_klaim=''))
         return super(RegisterPostKlaimViewSet, self).get_queryset()
 

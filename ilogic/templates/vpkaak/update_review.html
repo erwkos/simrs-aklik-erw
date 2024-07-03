@@ -124,60 +124,61 @@
             });
 
             $('#cek_grouping').click(function (e) {
-            e.preventDefault();
-            const formData = $('#myForm').serialize();
-            const $button = $(this);
-            const originalText = $button.text();
+                e.preventDefault();
+                const formData = $('#myForm').serialize();
+                const $button = $(this);
+                const originalText = $button.text();
 
-            $button.prop('disabled', true).addClass('loading-dots').text('Memproses Grouping');
+                $button.prop('disabled', true).addClass('loading-dots').text('Memproses Grouping');
 
-            $.ajax({
-                url: "/vpkaak/cek_grouping/",
-                type: "POST",
-                data: formData,
-                success: function (response) {
-                    if (response.error) {
-                        alert(response.error);
-                    } else {
-                        $('input[name="inacbg"]').val(response.group_code + ' - ' + response.nama_list);
-                        $('input[name="tarif"]').val(response.data_list);
+                $.ajax({
+                    url: "/vpkaak/cek_grouping/",
+                    type: "POST",
+                    data: formData,
+                    success: function (response) {
+                        if (response.error) {
+                            alert(response.error);
+                            $button.prop('disabled', false).removeClass('loading-dots').text("Cek Grouping");
+                        } else if (response.group_code === null) {
+                            $button.prop('disabled', false).removeClass('loading-dots').text("Terjadi Kesalahan, Coba Lagi. Cek Tgl Lahir? Parameter lain?");
+                        } else {
+                            $('input[name="inacbg"]').val(response.group_code + ' - ' + response.nama_list);
+                            $('input[name="tarif"]').val(response.data_list);
 
-                        $('select[name="special_prosedure"]').find('option').remove();
-                        $('select[name="special_prosthesis"]').find('option').remove();
-                        $('select[name="special_investigation"]').find('option').remove();
-                        $('select[name="special_drug"]').find('option').remove();
+                            $('select[name="special_prosedure"]').find('option').remove();
+                            $('select[name="special_prosthesis"]').find('option').remove();
+                            $('select[name="special_investigation"]').find('option').remove();
+                            $('select[name="special_drug"]').find('option').remove();
 
-                        response.data_list_match_topup_sp_pattern.forEach(function (item) {
-                            $('select[name="special_prosedure"]').append(item);
-                        });
+                            response.data_list_match_topup_sp_pattern.forEach(function (item) {
+                                $('select[name="special_prosedure"]').append(item);
+                            });
 
-                        response.data_list_match_topup_sr_pattern.forEach(function (item) {
-                            $('select[name="special_prosthesis"]').append(item);
-                        });
+                            response.data_list_match_topup_sr_pattern.forEach(function (item) {
+                                $('select[name="special_prosthesis"]').append(item);
+                            });
 
-                        response.data_list_match_topup_si_pattern.forEach(function (item) {
-                            $('select[name="special_investigation"]').append(item);
-                        });
+                            response.data_list_match_topup_si_pattern.forEach(function (item) {
+                                $('select[name="special_investigation"]').append(item);
+                            });
 
-                        response.data_list_match_topup_sd_pattern.forEach(function (item) {
-                            $('select[name="special_drug"]').append(item);
-                        });
+                            response.data_list_match_topup_sd_pattern.forEach(function (item) {
+                                $('select[name="special_drug"]').append(item);
+                            });
+                            $button.prop('disabled', false).removeClass('loading-dots').text("Cek Grouping");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(error);
+                        $button.prop('disabled', false).removeClass('loading-dots').text("Terjadi Kesalahan, Coba Lagi.");
                     }
-                    $button.prop('disabled', false).removeClass('loading-dots').text("Cek Grouping");
-                },
-                error: function (xhr, status, error) {
-                    console.error(error);
-                    $button.prop('disabled', false).removeClass('loading-dots').text("Terjadi Kesalahan, Coba Lagi.");
-                }
+                });
             });
-        });
 
         });
-    </script>
-    <script>
         $(document).ready(function () {
             $('#is_bayi').change(function () {
-                if ($(this).is(':checked')) {
+                if ($('#is_bayi').val() === 'True') {
                     $('#bayi-details').show();
                 } else {
                     $('#bayi-details').hide();
@@ -189,8 +190,7 @@
         select:invalid {
             color: gray;
         }
-    </style>
-    <style>
+
         .table td, .table th {
             word-wrap: break-word;
             white-space: normal;
@@ -224,8 +224,7 @@
         .dropdown-item:hover {
             background-color: #f1f1f1;
         }
-    </style>
-    <style>
+
         .modal-dialog {
             width: 95%;
             height: 95%;
@@ -314,11 +313,13 @@
                                 <form method="POST">
                                     <div class="col-6">
                                         <div class="container">
+                                            <input type="hidden" name="next" value="{{ request.GET.next }}">
                                             {% csrf_token %}
                                             {{ data_klaim_form|crispy }}
                                         </div>
                                         <div class="container">
-                                            <button type="submit" class="btn btn-primary" id="button_status">Simpan</button>
+                                            <button type="submit" class="btn btn-primary" id="button_status">Simpan
+                                            </button>
                                         </div>
                                     </div>
                                 </form>
@@ -437,10 +438,35 @@
                                 </div>
                             </div>
                             <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Gender</b></label>
+                                <div class="col-8">
+                                    {% if data_klaim.Jkpst == "Laki-laki" %}
+                                        <input type="text" class="form-control"
+                                               value="Laki-laki"
+                                               disabled>
+                                    {% elif data_klaim.Jkpst == "Perempuan" %}
+                                        <input type="text" class="form-control"
+                                               value="Perempuan"
+                                               disabled>
+                                    {% elif data_klaim.Jkpst is None %}
+                                        <input type="text" class="form-control"
+                                               value="Tidak Ada"
+                                               disabled>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group row">
                                 <label class="col-4 col-form-label"><b>Kelas Rawat</b></label>
                                 <div class="col-8">
                                     <input type="text" class="form-control" placeholder="Kelas Rawat BPJS"
                                            value="{{ data_klaim.Klsrawat }}" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-4 col-form-label"><b>Tipe Rawat</b></label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" placeholder="Tipe Rawat BPJS"
+                                           value="{{ data_klaim.Nmtkp }}" disabled/>
                                 </div>
                             </div>
                             <div class="form-group row">
@@ -473,6 +499,12 @@
                             <div class="col-5 container">
                                 <h2>Setelah Dikoreksi (Unreviewed)</h2>
                                 <form id="myForm" method="POST">
+                                    <input id="beratbayi" name="beratbayi" type="hidden"
+                                           class="form-control"
+                                           value="{{ data_klaim.beratbayi }}">
+                                    <input id="tanggallahirbayi" class="form-control"
+                                           name="tanggallahirbayi" type="hidden">
+                                    <input type="hidden" name="next" value="{{ request.GET.next }}">
                                     {% csrf_token %}
                                     <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>Diagnosis Utama</b></label>
@@ -657,49 +689,15 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label class="col-4 col-form-label"><b>Apakah Pasien Bayi?</b></label>
-                                        <div class="col-8">
-                                            {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
-                                                <input id="is_bayi" name="is_bayi" type="checkbox"
-                                                       class="form-check-input mt-2"
-                                                       style="width: 30px; height: 30px;" checked>
-                                            {% else %}
-                                                <input id="is_bayi" name="is_bayi" type="checkbox"
-                                                       class="form-check-input mt-2"
-                                                       style="width: 30px; height: 30px;">
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
-                                        <div id="bayi-details">
-                                    {% else %}
-                                        <div id="bayi-details" style="display: none;">
-                                    {% endif %}
-                                    <div class="form-group row">
-                                        <label class="col-4 col-form-label"><b>Birth Weight</b></label>
-                                        <div class="col-8">
-                                            <input id="beratbayi" name="beratbayi" type="number"
-                                                   class="form-control"
-                                                   value="{{ data_klaim.beratbayi }}">
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label class="col-4 col-form-label"><b>Tanggal Lahir Bayi</b><br>
-                                            <right>{{ data_klaim.tanggallahirbayi }}</right>
-                                        </label>
-                                        <div class="col-8">
-                                            <input id="tanggallahirbayi" class="form-control"
-                                                   name="tanggallahirbayi" type="date">
-                                        </div>
-                                    </div>
-                                    </div>
-                                    <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>Gender</b></label>
                                         <div class="col-8">
                                             <select name="gender" class="form-select">
-                                                {% if data_klaim.Jkpst == "f" %}
+                                                {% if data_klaim.Jkpst == "Laki-laki" %}
+                                                    <option value="m" selected>Laki-laki</option>
                                                     <option value="f">Perempuan</option>
+                                                {% elif data_klaim.Jkpst == "Perempuan" %}
                                                     <option value="m">Laki-laki</option>
+                                                    <option value="f" selected>Perempuan</option>
                                                 {% else %}
                                                     <option value="m">Laki-laki</option>
                                                     <option value="f">Perempuan</option>
@@ -728,12 +726,69 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tipe Rawat</b></label>
+                                        <div class="col-8">
+                                            <select name="tipe_rawat" class="form-select">
+                                                {% if data_klaim.Nmtkp == "RJTL" %}
+                                                    <option value="outpatient" selected>RJTL</option>
+                                                    <option value="inpatient">RITL</option>
+                                                {% elif data_klaim.Nmtkp == "RITL" %}
+                                                    <option value="outpatient">RJTL</option>
+                                                    <option value="inpatient" selected>RITL</option>
+                                                {% else %}
+                                                    <option value="outpatient">RJTL</option>
+                                                    <option value="inpatient">RITL</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {% if data_klaim.Umur == 0 %}
+                                        <div class="form-group row">
+                                            <label class="col-4 col-form-label"><b>Berapa Usia Bayi?</b></label>
+                                            <div class="col-8">
+                                                <select name="is_bayi" class="form-select" id="is_bayi">
+                                                    {% if data_klaim.is_bayi == False %}
+                                                        <option value="False" selected>Bayi Usia >= 7 Hari</option>
+                                                        <option value="True">Bayi Usia < 7 Hari</option>
+                                                    {% elif data_klaim.is_bayi == True %}
+                                                        <option value="False">Bayi Usia >= 7 Hari</option>
+                                                        <option value="True" selected>Bayi Usia < 7 Hari
+                                                        </option>
+                                                    {% endif %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
+                                            <div id="bayi-details">
+                                        {% else %}
+                                            <div id="bayi-details" style="display: none;">
+                                        {% endif %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Birth Weight</b></label>
+                                        <div class="col-8">
+                                            <input id="beratbayi" name="beratbayi" type="number"
+                                                   class="form-control"
+                                                   value="{{ data_klaim.beratbayi }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tanggal Lahir Bayi</b><br>
+{#                                            <right>{{ data_klaim.tanggallahirbayi }}</right>#}
+                                        </label>
+                                        <div class="col-8">
+                                            <input id="tanggallahirbayi" class="form-control"
+                                                   name="tanggallahirbayi" type="date" value="{{ data_klaim.tanggallahirbayi|date:'Y-m-d' }}">
+                                        </div>
+                                    </div>
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-group row">
                                         <div class="col-12">
                                             <input type="hidden" name="no_sep" value="{{ data_klaim.Nosjp }}">
                                             <input type="hidden" name="no_peserta"
                                                    value="{{ data_klaim.Nokapst }}">
-                                            <input type="hidden" name="tipe_rawat"
-                                                   value="{{ data_klaim.Nmtkp }}">
+                                            {#                                            <input type="hidden" name="tipe_rawat"#}
+                                            {#                                                   value="{{ data_klaim.Nmtkp }}">#}
                                             <input type="hidden" name="umur" value="{{ data_klaim.Umur }}">
                                             <input type="hidden" name="Tgldtgsjp"
                                                    value="{{ data_klaim.Tgldtgsjp|date:'Y-m-d' }}">
@@ -758,9 +813,10 @@
                                     <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>INACBG</b></label>
                                         <div class="col-8">
-                                            <input type="text" class="form-control" name="inacbg"
+                                            <input type="text" class="form-control" name="inacbg" id="inacbg"
                                                    placeholder="Kode INACBG"
-                                                   value="{{ data_klaim.Kdinacbgs_koreksi }} - {{ data_klaim.Nminacbgs_koreksi }}">
+                                                   value="{{ data_klaim.Kdinacbgs_koreksi }} - {{ data_klaim.Nminacbgs_koreksi }}"
+                                                   >
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -774,8 +830,9 @@
                                     <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>Keterangan Review</b></label>
                                         <div class="col-8">
-                                            <input type="text" class="form-control" name="keterangan_review"
-                                                   placeholder="Masukkan Keterangan Review">
+                                            <input type="text" minlength="10" class="form-control"
+                                                   name="keterangan_review"
+                                                   placeholder="Masukkan Keterangan Review" required>
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -792,6 +849,12 @@
                             <div class="col-5 container">
                                 <h2>Setelah Dikoreksi (Reviewed)</h2>
                                 <form id="myForm" method="POST">
+                                    <input id="beratbayi" name="beratbayi" type="hidden"
+                                           class="form-control"
+                                           value="{{ data_klaim.beratbayi }}">
+                                    <input id="tanggallahirbayi" class="form-control"
+                                           name="tanggallahirbayi" type="hidden">
+                                    <input type="hidden" name="next" value="{{ request.GET.next }}">
                                     {% csrf_token %}
                                     <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>Diagnosis Utama</b></label>
@@ -976,49 +1039,15 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label class="col-4 col-form-label"><b>Apakah Pasien Bayi?</b></label>
-                                        <div class="col-8">
-                                            {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
-                                                <input id="is_bayi" name="is_bayi" type="checkbox"
-                                                       class="form-check-input mt-2"
-                                                       style="width: 30px; height: 30px;" checked>
-                                            {% else %}
-                                                <input id="is_bayi" name="is_bayi" type="checkbox"
-                                                       class="form-check-input mt-2"
-                                                       style="width: 30px; height: 30px;">
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
-                                        <div id="bayi-details">
-                                    {% else %}
-                                        <div id="bayi-details" style="display: none;">
-                                    {% endif %}
-                                    <div class="form-group row">
-                                        <label class="col-4 col-form-label"><b>Birth Weight</b></label>
-                                        <div class="col-8">
-                                            <input id="beratbayi" name="beratbayi" type="number"
-                                                   class="form-control"
-                                                   value="{{ data_klaim.beratbayi }}">
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label class="col-4 col-form-label"><b>Tanggal Lahir Bayi</b><br>
-                                            <right>{{ data_klaim.tanggallahirbayi }}</right>
-                                        </label>
-                                        <div class="col-8">
-                                            <input id="tanggallahirbayi" class="form-control"
-                                                   name="tanggallahirbayi" type="date">
-                                        </div>
-                                    </div>
-                                    </div>
-                                    <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>Gender</b></label>
                                         <div class="col-8">
                                             <select name="gender" class="form-select">
-                                                {% if data_klaim.Jkpst == "f" %}
+                                                {% if data_klaim.Jkpst == "Laki-laki" %}
+                                                    <option value="m" selected>Laki-laki</option>
                                                     <option value="f">Perempuan</option>
+                                                {% elif data_klaim.Jkpst == "Perempuan" %}
                                                     <option value="m">Laki-laki</option>
+                                                    <option value="f" selected>Perempuan</option>
                                                 {% else %}
                                                     <option value="m">Laki-laki</option>
                                                     <option value="f">Perempuan</option>
@@ -1047,12 +1076,71 @@
                                         </div>
                                     </div>
                                     <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tipe Rawat</b></label>
+                                        <div class="col-8">
+                                            <select name="tipe_rawat" class="form-select">
+                                                {% if data_klaim.Nmtkp_koreksi == "RJTL" %}
+                                                    <option value="outpatient" selected>RJTL</option>
+                                                    <option value="inpatient">RITL</option>
+                                                {% elif data_klaim.Nmtkp_koreksi == "RITL" %}
+                                                    <option value="outpatient">RJTL</option>
+                                                    <option value="inpatient" selected>RITL</option>
+                                                {% else %}
+                                                    <option value="outpatient">RJTL</option>
+                                                    <option value="inpatient">RITL</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {% if data_klaim.Umur == 0 %}
+                                        <div class="form-group row">
+                                            <label class="col-4 col-form-label"><b>Berapa Usia Bayi?</b></label>
+                                            <div class="col-8">
+                                                <select name="is_bayi" class="form-select" id="is_bayi">
+                                                    {% if data_klaim.is_bayi == False %}
+                                                        <option value="False" selected>Bayi Usia >= 7 Hari</option>
+                                                        <option value="True">Bayi Usia < 7 Hari</option>
+                                                    {% elif data_klaim.is_bayi == True %}
+                                                        <option value="False">Bayi Usia >= 7 Hari</option>
+                                                        <option value="True" selected>Bayi Usia < 7 Hari
+                                                        </option>
+                                                    {% endif %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        {% if data_klaim.is_bayi == True or data_klaim.is_bayi == "True" %}
+                                            <div id="bayi-details">
+                                        {% else %}
+                                            <div id="bayi-details" style="display: none;">
+                                        {% endif %}
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Birth Weight</b></label>
+                                        <div class="col-8">
+                                            <input id="beratbayi" name="beratbayi" type="number"
+                                                   class="form-control"
+                                                   value="{{ data_klaim.beratbayi }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-4 col-form-label"><b>Tanggal Lahir Bayi</b><br>
+{#                                            <right>{{ data_klaim.tanggallahirbayi }}</right>#}
+                                        </label>
+                                        <div class="col-8">
+                                            <input id="tanggallahirbayi" class="form-control"
+                                                   name="tanggallahirbayi" type="date" value="{{ data_klaim.tanggallahirbayi|date:'Y-m-d' }}">
+                                        </div>
+                                    </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="form-group row">
                                         <div class="col-12">
                                             <input type="hidden" name="no_sep" value="{{ data_klaim.Nosjp }}">
                                             <input type="hidden" name="no_peserta"
                                                    value="{{ data_klaim.Nokapst }}">
-                                            <input type="hidden" name="tipe_rawat"
-                                                   value="{{ data_klaim.Nmtkp }}">
+                                            {#                                            <input type="hidden" name="tipe_rawat"#}
+                                            {#                                                   value="{{ data_klaim.Nmtkp }}">#}
                                             <input type="hidden" name="umur" value="{{ data_klaim.Umur }}">
                                             <input type="hidden" name="Tgldtgsjp"
                                                    value="{{ data_klaim.Tgldtgsjp|date:'Y-m-d' }}">
@@ -1077,9 +1165,10 @@
                                     <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>INACBG</b></label>
                                         <div class="col-8">
-                                            <input type="text" class="form-control" name="inacbg"
+                                            <input type="text" class="form-control" name="inacbg" id="inacbg"
                                                    placeholder="Kode INACBG"
-                                                   value="{{ data_klaim.Kdinacbgs_koreksi }} - {{ data_klaim.Nminacbgs_koreksi }}">
+                                                   value="{{ data_klaim.Kdinacbgs_koreksi }} - {{ data_klaim.Nminacbgs_koreksi }}"
+                                                   >
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -1093,9 +1182,10 @@
                                     <div class="form-group row">
                                         <label class="col-4 col-form-label"><b>Keterangan Review</b></label>
                                         <div class="col-8">
-                                            <input type="text" class="form-control" name="keterangan_review"
+                                            <input type="text" minlength="10" class="form-control"
+                                                   name="keterangan_review"
                                                    placeholder="Masukkan Keterangan Review"
-                                                   value="{{ data_klaim.keterangan_review }}">
+                                                   value="{{ data_klaim.keterangan_review }}" required>
                                         </div>
                                     </div>
                                     <div class="form-group row">
@@ -1251,7 +1341,10 @@
                                             class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
                                 {% endif %}
                             </td>
+                        <td><b>Red Flag</b></td>
+                        <td>{{ data_klaim.redflag }}</td>
                         </tr>
+                        
                         </tbody>
                     </table>
                 </div>

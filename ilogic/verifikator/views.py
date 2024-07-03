@@ -1252,6 +1252,7 @@ def import_data_klaim_obat(request):
             except Exception as e:
                 messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')
                 return redirect('/verifikator/import-data-klaim-obat')
+
             with transaction.atomic():
                 DataKlaimObat.objects.bulk_create(obj_list)
                 valid_data = DataKlaimObat.objects.filter(id__in=[obj.id for obj in obj_list

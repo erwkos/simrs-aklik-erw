@@ -16,6 +16,11 @@ STATUS_REGISTER_CHOICES_FINAL = [
     (StatusChoices.Finalisasi, StatusChoices.Finalisasi),
 ]
 
+tahun_hari_ini = datetime.datetime.today().year
+
+YEARS = [x for x in range(tahun_hari_ini - 1, tahun_hari_ini + 1)]
+YEARS.reverse()
+
 
 class DateInputMaxBA(forms.DateInput):
     input_type = 'date'
@@ -31,7 +36,8 @@ class RegisterPostKlaimForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['jenis_audit'].widget.attrs['onchange'] = 'toggleDiv()'
 
-    bulan_beban = forms.DateField(widget=SelectDateWidget(attrs={'type': 'month'}))
+    # bulan_beban = forms.DateField(widget=SelectDateWidget(attrs={'type': 'month'}))
+    bulan_beban = forms.DateField(widget=SelectDateWidget(years=YEARS))
 
     def clean_bulan_beban(self):
         bulan_beban = self.cleaned_data.get('bulan_beban')
@@ -76,7 +82,8 @@ class RegisterPostKlaimSupervisorKPForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['jenis_audit'].widget.attrs['onchange'] = 'toggleDiv()'
 
-    bulan_beban = forms.DateField(widget=SelectDateWidget(attrs={'type': 'month'}))
+    # bulan_beban = forms.DateField(widget=SelectDateWidget(attrs={'type': 'year'}))
+    bulan_beban = forms.DateField(widget=SelectDateWidget(years=YEARS))
 
     def clean_bulan_beban(self):
         bulan_beban = self.cleaned_data.get('bulan_beban')
@@ -129,8 +136,8 @@ class ImportSamplingDataKlaimForm(forms.Form):
         file = self.cleaned_data.get('file')
         if file.name.split('.')[-1] != 'xlsx':
             raise ValidationError('Hanya menerima file dengan ekstensi `.xlsx`')
-        elif file.size >= 1024 * 1024 * 2:
-            raise ValidationError('File harus kurang dari 2MB')
+        # elif file.size >= 1024 * 1024 * 2:
+        #     raise ValidationError('File harus kurang dari 2MB')
         return file
 
 

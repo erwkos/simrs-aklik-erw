@@ -66,17 +66,17 @@
                         <tr style="font-weight: bolder">
                             <td>
                                 {% if queryset.status == 'Belum Review' %}
-                                    <a href="{% url 'vpkaak:update-review' queryset.id %}?next={{ request.get_full_path|urlencode }}">
+                                    <a href="{% url 'vpkaak:update_review_kp' queryset.id %}?next={{ request.get_full_path|urlencode }}">
                                         <button type="button"
                                                 class="btn btn-light btn-sm">{{ queryset.status }}</button>
                                     </a>
                                 {% elif queryset.status == 'Sesuai' %}
-                                    <a href="{% url 'vpkaak:update-review' queryset.id %}?next={{ request.get_full_path|urlencode }}">
+                                    <a href="{% url 'vpkaak:update_review_kp' queryset.id %}?next={{ request.get_full_path|urlencode }}">
                                         <button type="button"
                                                 class="btn btn-success btn-sm">{{ queryset.status }}</button>
                                     </a>
                                 {% elif queryset.status == 'Tidak Sesuai' %}
-                                    <a href="{% url 'vpkaak:update-review' queryset.id %}?next={{ request.get_full_path|urlencode }}">
+                                    <a href="{% url 'vpkaak:update_review_kp' queryset.id %}?next={{ request.get_full_path|urlencode }}">
                                         <button type="button"
                                                 class="btn btn-warning btn-sm">{{ queryset.status }}</button>
                                     </a>

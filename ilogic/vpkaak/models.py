@@ -33,7 +33,7 @@ class RegisterPostKlaim(models.Model):
     # kelas = models.CharField(max_length=10, choices=KelasFaskesChoices.choices, blank=True, null=True)
 
     is_kp = models.BooleanField(default=False)
-    is_from_kp = models.BooleanField(default=False)
+    # is_from_kp = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="user_register")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -96,11 +96,11 @@ class SamplingDataKlaimCBG(models.Model):
     Jkpst = models.CharField(max_length=10, blank=True, null=True)
     kdsa = models.CharField(max_length=255)
     kdsd = models.CharField(max_length=255)
-    deskripsisd = models.CharField(max_length=255)
+    deskripsisd = models.CharField(max_length=255, default='-', blank=True, null=True)
     kdsi = models.CharField(max_length=255)
-    deskripsisi = models.CharField(max_length=255)
+    deskripsisi = models.CharField(max_length=255, default='-', blank=True, null=True)
     kdsp = models.CharField(max_length=255)
-    deskripsisp = models.CharField(max_length=255)
+    deskripsisp = models.CharField(max_length=255, default='-', blank=True, null=True)
     kdsr = models.CharField(max_length=255)
     deskripsisr = models.CharField(max_length=255)
     Tarifgroup = models.IntegerField()
@@ -132,6 +132,7 @@ class SamplingDataKlaimCBG(models.Model):
     kdsi_koreksi = models.CharField(max_length=255, blank=True, null=True)
     kdsp_koreksi = models.CharField(max_length=255, blank=True, null=True)
     kdsr_koreksi = models.CharField(max_length=255, blank=True, null=True)
+    Nmtkp_koreksi = models.CharField(max_length=255, blank=True, null=True)
     Kdinacbgs_koreksi = models.CharField(max_length=255, blank=True, null=True)
     Nminacbgs_koreksi = models.CharField(max_length=255, blank=True, null=True)
     Klsrawat_koreksi = models.CharField(max_length=255, blank=True, null=True)
@@ -140,7 +141,7 @@ class SamplingDataKlaimCBG(models.Model):
     # review
     tgl_review = models.DateTimeField(blank=True, null=True)
     verifikator_review = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
-    keterangan_review = models.CharField(max_length=1000, blank=True, null=True)
+    keterangan_review = models.CharField(max_length=1000, blank=True, null=True, validators=[MinLengthValidator(10)])
 
     # identity
     is_from_kp = models.BooleanField(default=False)
