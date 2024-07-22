@@ -91,7 +91,7 @@
             $('#diagnosis_utama').on('input', function () {
                 const query = $(this).val();
                 if (query.length > 0) {
-                    queryDiagnosis(query, "/vpkaak/query_icd10/", "diagnosis_utama_dropdown");
+                    queryDiagnosis(query, "http://127.0.0.1:8000/query_icd10/", "diagnosis_utama_dropdown");
                 } else {
                     $('#diagnosis_utama_dropdown').hide();
                 }
@@ -101,7 +101,7 @@
                 const query = $(this).val();
                 const dropdownId = $(this).next('.dropdown-menu').attr('id');
                 if (query.length > 0) {
-                    queryDiagnosis(query, "/vpkaak/query_icd10/", dropdownId);
+                    queryDiagnosis(query, "http://127.0.0.1:8000/query_icd10/", dropdownId);
                 } else {
                     $('#' + dropdownId).hide();
                 }
@@ -111,7 +111,7 @@
                 const query = $(this).val();
                 const dropdownId = $(this).next('.dropdown-menu').attr('id');
                 if (query.length > 0) {
-                    queryDiagnosis(query, "/vpkaak/query_icd9/", dropdownId);
+                    queryDiagnosis(query, "http://127.0.0.1:8000/query_icd9/", dropdownId);
                 } else {
                     $('#' + dropdownId).hide();
                 }
@@ -132,7 +132,7 @@
                 $button.prop('disabled', true).addClass('loading-dots').text('Memproses Grouping');
 
                 $.ajax({
-                    url: "/vpkaak/cek_grouping/",
+                    url: "http://127.0.0.1:8000/cek_grouping/",
                     type: "POST",
                     data: formData,
                     success: function (response) {

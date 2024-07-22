@@ -322,7 +322,7 @@ def query_icd10(request):
         session = requests.Session()
 
         cookies = browsercookie.chrome()
-        cookie_value = 'ujklo3ri3n8ut4g01easvngh71'
+        cookie_value = 'u7tqf5m6taufhqh073g6frkbo2'
         for cookie in cookies:
             if cookie.name == "XOCPSID":
                 cookie_value = cookie.value
@@ -363,7 +363,7 @@ def query_icd9(request):
         session = requests.Session()
 
         cookies = browsercookie.chrome()
-        cookie_value = 'ujklo3ri3n8ut4g01easvngh71'
+        cookie_value = 'u7tqf5m6taufhqh073g6frkbo2'
         for cookie in cookies:
             if cookie.name == "XOCPSID":
                 cookie_value = cookie.value
