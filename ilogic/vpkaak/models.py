@@ -111,6 +111,8 @@ class SamplingDataKlaimCBG(models.Model):
     tarifsr = models.IntegerField()
     Biayaverifikasi = models.IntegerField()
     redflag = models.CharField(max_length=500, blank=True, null=True)
+    deskripsi_redflag = models.CharField(max_length=1000, blank=True, null=True)
+    source = models.CharField(max_length=100, blank=True, null=True)
 
     # databayi
     is_bayi = models.BooleanField(default=False)
@@ -118,7 +120,7 @@ class SamplingDataKlaimCBG(models.Model):
     tanggallahirbayi = models.DateField(blank=True, null=True)
 
     # datars
-    Kodersmenkes = models.CharField(max_length=10, blank=True, null=True)
+    Kodersmenkes = models.CharField(max_length=15, blank=True, null=True)
     Kelasrsmenkes = models.CharField(max_length=10, blank=True, null=True)
 
     # hasil koreksi
@@ -151,3 +153,12 @@ class SamplingDataKlaimCBG(models.Model):
 
     def __str__(self):
         return f'{self.Nosjp} - {self.register.nomor_register}'
+
+
+class CookiesICD(models.Model):
+    cookie_value = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.cookie_value

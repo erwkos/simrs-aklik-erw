@@ -620,7 +620,9 @@ def reviewkp(request):
     }
     return render(request, 'vpkaak/reviewkp.html', context)
 
-
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 @csrf_exempt
 def is_bayi(request):
     data = request.POST
@@ -637,6 +639,9 @@ def is_bayi(request):
     return HttpResponse('is bayi saved')
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 @csrf_exempt
 def cek_grouping(request):
     data = request.POST
@@ -1301,7 +1306,7 @@ def import_sampling_data_klaim_supervisorkp(request):
                                 'Klsrawat', 'Nmjnspulang', 'kddokter', 'nmdokter', 'Umur', 'kdsa', 'kdsd',
                                 'deskripsisd', 'kdsi', 'deskripsisi', 'kdsp', 'deskripsisp', 'kdsr', 'deskripsisr',
                                 'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi',
-                                'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag']
+                                'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag', 'deskripsi_redflag', 'source']
             nomor_register = import_form.cleaned_data.get('register')
             register = RegisterPostKlaim.objects.get(nomor_register=nomor_register)
             file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
@@ -1407,7 +1412,7 @@ def import_sampling_data_klaim_supervisorkp(request):
                             'Klsrawat', 'Nmjnspulang', 'kddokter', 'nmdokter', 'Umur', 'kdsa', 'kdsd',
                             'deskripsisd', 'kdsi', 'deskripsisi', 'kdsp', 'deskripsisp', 'kdsr', 'deskripsisr',
                             'Tarifgroup', 'tarifsa', 'tarifsd', 'tarifsi', 'tarifsp', 'tarifsr', 'Biayaverifikasi',
-                            'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag']
+                            'Kodersmenkes', 'Kelasrsmenkes', 'Jkpst', 'redflag', 'deskripsi_redflag', 'source']
         file_name = request.POST.get('file_name')
         nomor_register = request.POST.get('register')
         get_password = request.POST.get('password')

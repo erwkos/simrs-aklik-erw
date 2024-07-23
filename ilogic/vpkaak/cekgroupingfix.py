@@ -10,13 +10,20 @@ import datetime
 import urllib.parse
 import ast
 from urllib.parse import urlparse, parse_qs
+from django.contrib.auth.decorators import login_required
+from user.decorators import check_device, permissions
 
 import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 
+from vpkaak.models import CookiesICD
 
+
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def get_hash(password):
     salt = hashlib.md5(str(random.random()).encode('utf-8')).hexdigest()
     hashed_password = hashlib.md5(
@@ -24,11 +31,13 @@ def get_hash(password):
     return hashed_password, salt
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def grouping(gender=str, umur=str, no_sep=str, no_peserta=str, tipe_rawat=str,
              kelas_rawat=str, diagnosa=str, prosedur=str, sp=str,
              sr=str, si=str, sd=str,
              is_bayi=bool, birth_weight=str, tanggallahirbayi=str, Tgldtgsjp=str, Tglplgsjp=str, rs_tarif=str):
-
     with ((transaction.atomic())):
         session = requests.Session()
 
@@ -316,13 +325,17 @@ def grouping(gender=str, umur=str, no_sep=str, no_peserta=str, tipe_rawat=str,
             return group_code, nama_list, data_list
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def query_icd10(request):
     query = request.GET.get('query', '')
     if query:
         session = requests.Session()
 
         cookies = browsercookie.chrome()
-        cookie_value = 'u7tqf5m6taufhqh073g6frkbo2'
+        query_cookie = CookiesICD.objects.all().first()
+        cookie_value = query_cookie.cookie_value
         for cookie in cookies:
             if cookie.name == "XOCPSID":
                 cookie_value = cookie.value
@@ -357,13 +370,18 @@ def query_icd10(request):
     return JsonResponse([], safe=False)
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def query_icd9(request):
     query = request.GET.get('query', '')
     if query:
         session = requests.Session()
 
         cookies = browsercookie.chrome()
-        cookie_value = 'u7tqf5m6taufhqh073g6frkbo2'
+        query_cookie = CookiesICD.objects.all().first()
+        # print(query_cookie.cookie_value)
+        cookie_value = query_cookie.cookie_value
         for cookie in cookies:
             if cookie.name == "XOCPSID":
                 cookie_value = cookie.value
@@ -398,6 +416,9 @@ def query_icd9(request):
     return JsonResponse([], safe=False)
 
 
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
 def pindahrs(koders):
     with transaction.atomic():
         session = requests.Session()

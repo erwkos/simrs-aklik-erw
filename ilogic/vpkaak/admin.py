@@ -1,7 +1,7 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 
-from vpkaak.models import RegisterPostKlaim, SamplingDataKlaimCBG
+from vpkaak.models import RegisterPostKlaim, SamplingDataKlaimCBG, CookiesICD
 
 
 # Register your models here.
@@ -12,3 +12,4 @@ class RegisterPostKlaimAdmin(ImportExportModelAdmin):
 
 # admin.site.register(RegisterPostKlaim)
 admin.site.register(SamplingDataKlaimCBG)
+admin.site.register(CookiesICD)

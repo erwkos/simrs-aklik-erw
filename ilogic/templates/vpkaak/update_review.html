@@ -2,6 +2,12 @@
 {% load crispy_forms_tags %}
 {% load humanize %}
 {% load split %}
+
+{% block data %}
+    <button type="button" class="btn-primary btn" data-bs-toggle="modal"
+            data-bs-target="#sepModal">{{ data_klaim.Nosjp }}</button>
+{% endblock %}
+
 {% block scriptheader %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -91,7 +97,7 @@
             $('#diagnosis_utama').on('input', function () {
                 const query = $(this).val();
                 if (query.length > 0) {
-                    queryDiagnosis(query, "http://127.0.0.1:8000/query_icd10/", "diagnosis_utama_dropdown");
+                    queryDiagnosis(query, "/vpkaak/query_icd10/", "diagnosis_utama_dropdown");
                 } else {
                     $('#diagnosis_utama_dropdown').hide();
                 }
@@ -101,7 +107,7 @@
                 const query = $(this).val();
                 const dropdownId = $(this).next('.dropdown-menu').attr('id');
                 if (query.length > 0) {
-                    queryDiagnosis(query, "http://127.0.0.1:8000/query_icd10/", dropdownId);
+                    queryDiagnosis(query, "/vpkaak/query_icd10/", dropdownId);
                 } else {
                     $('#' + dropdownId).hide();
                 }
@@ -111,7 +117,7 @@
                 const query = $(this).val();
                 const dropdownId = $(this).next('.dropdown-menu').attr('id');
                 if (query.length > 0) {
-                    queryDiagnosis(query, "http://127.0.0.1:8000/query_icd9/", dropdownId);
+                    queryDiagnosis(query, "/vpkaak/query_icd9/", dropdownId);
                 } else {
                     $('#' + dropdownId).hide();
                 }
@@ -302,8 +308,6 @@
             <div class="card table-card">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h5>Aksi Verifikator - Data Klaim
-                        <button type="button" class="btn-primary btn" data-bs-toggle="modal"
-                                data-bs-target="#sepModal">{{ data_klaim.Nosjp }}</button>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -1328,6 +1332,12 @@
                             <td>{{ data_klaim.Biayaverifikasi|intcomma }}</td>
                         </tr>
                         <tr>
+                            <td><b>Red Flag</b></td>
+                            <td style="word-wrap: break-word">{{ data_klaim.redflag }}</td>
+                            <td><b>Deskripsi Red Flag</b></td>
+                            <td style="word-wrap: break-word">{{ data_klaim.deskripsi_redflag }}</td>
+                        </tr>
+                        <tr>
                             <td><b>Status Data Klaim : </b></td>
                             <td>
                                 {% if data_klaim.status == 'Belum Review' %}
@@ -1341,10 +1351,9 @@
                                             class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
                                 {% endif %}
                             </td>
-                        <td><b>Red Flag</b></td>
-                        <td>{{ data_klaim.redflag }}</td>
+                        <td><b>Source Simpatik: </b></td>
+                        <td>{{ data_klaim.source }}</td>
                         </tr>
-                        
                         </tbody>
                     </table>
                 </div>
