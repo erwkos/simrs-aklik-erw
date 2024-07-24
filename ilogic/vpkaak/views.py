@@ -387,6 +387,8 @@ def review(request):
             'verifikator',
             'tglreview',
             'keterangan',
+            'redflag',
+            'deskripsi_redflag',
         ]
 
         # Assign the titles for each cell of the header
@@ -442,6 +444,8 @@ def review(request):
                 queryset.tarifsp,
                 queryset.tarifsr,
                 queryset.Biayaverifikasi,
+                queryset.redflag,
+                queryset.deskripsi_redflag,
             ]
 
             # Assign the data for each cell of the row
@@ -544,6 +548,8 @@ def reviewkp(request):
             'verifikator',
             'tglreview',
             'keterangan',
+            'redflag',
+            'deskripsi_redflag',
         ]
 
         # Assign the titles for each cell of the header
@@ -599,6 +605,8 @@ def reviewkp(request):
                 queryset.tarifsp,
                 queryset.tarifsr,
                 queryset.Biayaverifikasi,
+                queryset.redflag,
+                queryset.deskripsi_redflag,
             ]
 
             # Assign the data for each cell of the row
