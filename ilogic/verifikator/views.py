@@ -1,4 +1,5 @@
 import io
+import re
 
 import msoffcrypto
 from Crypto.Cipher import AES
@@ -55,6 +56,10 @@ from collections import Counter
 from .utils import pembagian_tugas
 from django.db import IntegrityError
 
+
+def replace_illegal_characters(text):
+    # Mengganti karakter yang tidak diinginkan
+    return re.sub(r'[^A-Za-z0-9\s.,-]', '', text)
 
 @login_required
 @check_device
@@ -471,11 +476,14 @@ def daftar_data_klaim(request):
                 ket_pending_disput_queryset = ''
             else:
                 ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
+                ket_pending_disput_queryset = replace_illegal_characters(ket_pending_disput_queryset)
+
 
             if queryset.ket_jawaban_pending.last() is None:
                 ket_jawaban_pending_queryset = ''
             else:
                 ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+                ket_jawaban_pending_queryset = replace_illegal_characters(ket_jawaban_pending_queryset)
 
             # ket_pending_disput_queryset = ''
             # for x in queryset.ket_pending_dispute.all():
@@ -998,11 +1006,13 @@ def download_data_cbg(request):
                         ket_pending_disput_queryset = ''
                     else:
                         ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
+                        ket_pending_disput_queryset = replace_illegal_characters(ket_pending_disput_queryset)
 
                     if queryset.ket_jawaban_pending.last() is None:
                         ket_jawaban_pending_queryset = ''
                     else:
                         ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+                        ket_jawaban_pending_queryset = replace_illegal_characters(ket_jawaban_pending_queryset)
 
                     # ket_pending_disput_queryset = ''
                     # for x in queryset.ket_pending_dispute.all():
@@ -1089,11 +1099,13 @@ def download_data_cbg(request):
                         ket_pending_disput_queryset = ''
                     else:
                         ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
+                        ket_pending_disput_queryset = replace_illegal_characters(ket_pending_disput_queryset)
 
                     if queryset.ket_jawaban_pending.last() is None:
                         ket_jawaban_pending_queryset = ''
                     else:
                         ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+                        ket_jawaban_pending_queryset = replace_illegal_characters(ket_jawaban_pending_queryset)
 
                     # ket_pending_disput_queryset = ''
                     # for x in queryset.ket_pending_dispute.all():

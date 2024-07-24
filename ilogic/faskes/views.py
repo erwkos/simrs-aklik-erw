@@ -12,6 +12,7 @@ from openpyxl.workbook import Workbook
 from user.decorators import permissions, check_device
 from klaim.filters import RegisterKlaimFaskesFilter, RegisterKlaimKhususFaskesFilter
 from verifikator.filters import DataKlaimCBGFilter, DataKlaimCBGFaskesFilter, DataKlaimObatFaskesFilter
+from verifikator.views import replace_illegal_characters
 from .models import (
     Kepwil,
     KantorCabang,
@@ -228,11 +229,13 @@ def daftar_data_klaim_pending_dispute_cbg(request):
                 ket_pending_disput_queryset = ''
             else:
                 ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
+                ket_pending_disput_queryset = replace_illegal_characters(ket_pending_disput_queryset)
 
             if queryset.ket_jawaban_pending.last() is None:
                 ket_jawaban_pending_queryset = ''
             else:
                 ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+                ket_jawaban_pending_queryset = replace_illegal_characters(ket_jawaban_pending_queryset)
 
             # ket_pending_disput_queryset = ''
             # for x in queryset.ket_pending_dispute.all():
