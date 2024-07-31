@@ -1,6 +1,53 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block scriptheader %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Fungsi untuk melakukan AJAX request
+    function checkStatus() {
+        $.ajax({
+            url: 'http://127.0.0.1:8000/refresh_halaman',
+            type: 'GET', // atau 'POST' tergantung pada server Anda
+            dataType: 'json',
+            success: function(response) {
+                if (response.status_rpa === 200) {
+                    $('#loginVIDI').prop('disabled', true);
+                } else {
+                    $('#loginVIDI').prop('disabled', false);
+                }
+            },
+            error: function() {
+                    $('#loginVIDI').prop('disabled', false);
+            }
+        });
+    }
+
+    // Panggil fungsi saat halaman diakses
+    checkStatus();
+});
+</script>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #e3e3e3;
+            padding: 8px;
+            text-align: left;
+            font-size: 11px;
+        }
+
+    </style>
+
+{% endblock %}
+{% block data %}
+    <button type="button" class="btn-primary btn" id="loginVIDI">Login VIDI</button>
+{% endblock %}
+
 {% block content %}
     <style>
         .OLevelResult {
@@ -10,104 +57,181 @@
         .OLevelResult.active {
             display: block;
         }
+
+        .loading-dots::after {
+            content: " .";
+            animation: dots 1s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% {
+                content: " .";
+            }
+            40% {
+                content: " ..";
+            }
+            60% {
+                content: " ...";
+            }
+            80%, 100% {
+                content: " ..";
+            }
+        }
+
+        /* Ensure the content fits the screen */
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .card {
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            table-layout: auto;
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Add media queries for better responsiveness */
+        @media (max-width: 768px) {
+            .table th, .table td {
+                font-size: 0.8rem;
+            }
+        }
     </style>
-    <div class="col-xl-12 col-md-12 mb-4 mt-4">
-        <div class="card table-card">
-            <div class="card-header d-flex align-items-center justify-content-between">
+    <div class="container mb-2 mt-2">
+        <div class="card">
+            <div class="card-header">
                 <h5>Detail - Data Klaim</h5>
             </div>
-
             <div class="card-body">
                 <div class="row">
-                    <div class="col-6 m-l-30 mt-4">
-                        <table class="table">
-                            <tbody>
-                            <tr>
-                                <td><b>NO SEP :</b></td>
-                                <td>{{ data_klaim.NOSEP }}</td>
-                            </tr>
-                            <tr>
-                                <td><b>NAMA PPKLAYAN</b></td>
-                                <td>{{ data_klaim.faskes.nama }}</td>
-                            </tr>
-                            <tr>
-                                <td><b>BULAN PELAYANAN : </b></td>
-                                <td>{{ data_klaim.bupel | date:'M-y' }}</td>
-                            <tr>
-                                <td><b>KDINACBG : </b></td>
-                                <td>{{ data_klaim.KDINACBG }}</td>
-                            </tr>
-                            <tr>
-                                <td><b>BIAYA : </b></td>
-                                <td>{{ data_klaim.BYPENGAJUAN }}</td>
-                            </tr>
-                            <tr>
-                                <td><b>ALGORITMA : </b></td>
-                                <td>{{ data_klaim.ALGORITMA }}</td>
-                            </tr>
-                            <tr>
-                                <td><b>KETERANGAN PENDING/DISPUTE : </b></td>
-                                <td>
-                                    <table class="table">
-                                        <tr>
-                                            <th>Tanggal</th>
-                                            <th>Verifikator</th>
-                                            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Keterangan Pending/Dispute &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </th>
-                                        </tr>
-                                        {% for data_klaim in data_klaim.ket_pending_dispute.all %}
-                                            <tr>
-                                                <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
-                                                <td>{{ data_klaim.verifikator }} </td>
-                                                <td><textarea class="form-control" rows="3" cols="200"
-                                                              disabled>{{ data_klaim.ket_pending_dispute }}</textarea>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </table>
-                                </td>
-                            <tr>
-                                <td><b>PEMBAHASAN : </b></td>
-                                <td>
-                                    <table class="table">
-                                        <tr>
-                                            <th>Tanggal</th>
-                                            <th>User Faskes</th>
-                                            <th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Jawaban &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </th>
-                                        </tr>
-                                        {% for data_klaim in data_klaim.ket_jawaban_pending.all %}
-                                            <tr>
-                                                <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
-                                                <td>{{ data_klaim.user_faskes }} </td>
-                                                <td><textarea class="form-control" rows="3" cols="200"
-                                                              disabled>{{ data_klaim.ket_jawaban_pending }}</textarea>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </table>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><b>Status Data Klaim : </b></td>
-                                <td>{% include 'base_status_data_klaim.html' %}</td>
-                            </tr>
-                            </tbody>
-                        </table>
-
-                        <form method="POST">
+                    <div class="col-12">
+                        <form id="formSEP">
+                                <table>
+                                    <tbody>
+                                    <tr>
+                                        <td><b>NO SEP :</b></td>
+                                        <td>{{ data_klaim.NOSEP }}
+                                            <button type="submit" class="btn btn-sm btn-secondary" id="cariSEP" style="font-size: 11px;"> Ambil Data Klaim
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr id="dataKlaim">
+                                        {# Data Klaim #}
+                                    </tr>
+                                    <tr>
+                                        <td><b>NAMA PPKLAYAN</b></td>
+                                        <td>{{ data_klaim.faskes.nama }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>BULAN PELAYANAN : </b></td>
+                                        <td>{{ data_klaim.bupel | date:'M-y' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>KDINACBG : </b></td>
+                                        <td>{{ data_klaim.KDINACBG }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>BIAYA : </b></td>
+                                        <td>{{ data_klaim.BYPENGAJUAN }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>ALGORITMA : </b></td>
+                                        <td>{{ data_klaim.ALGORITMA }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Cek Double Klaim (jika ada) : </b></td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-secondary" id="cekDouble" style="font-size: 11px;">History
+                                                Double Klaim
+                                            </button>
+                                            <div id="doubleKlaim">
+                                                {# data doublel klaim #}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>KETERANGAN PENDING/DISPUTE : </b></td>
+                                        <td>
+                                            <table>
+                                                <tr>
+                                                    <th>Tanggal</th>
+                                                    <th>Verifikator</th>
+                                                    <th>Keterangan Pending/Dispute</th>
+                                                </tr>
+                                                {% for data_klaim in data_klaim.ket_pending_dispute.all %}
+                                                    <tr>
+                                                        <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                        <td>{{ data_klaim.verifikator }} </td>
+                                                        <td><textarea class="form-control" rows="3"
+                                                                      disabled>{{ data_klaim.ket_pending_dispute }}</textarea>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>PEMBAHASAN : </b></td>
+                                        <td>
+                                            <table>
+                                                <tr>
+                                                    <th>Tanggal</th>
+                                                    <th>User Faskes</th>
+                                                    <th>Jawaban</th>
+                                                </tr>
+                                                {% for data_klaim in data_klaim.ket_jawaban_pending.all %}
+                                                    <tr>
+                                                        <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                        <td>{{ data_klaim.user_faskes }} </td>
+                                                        <td><textarea class="form-control" rows="3"
+                                                                      disabled>{{ data_klaim.ket_jawaban_pending }}</textarea>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Status Data Klaim : </b></td>
+                                        <td>{% include 'base_status_data_klaim.html' %}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            <input type="hidden" name="kode_ppk" id="id_kode_ppk" value="{{ data_klaim.faskes.kode_ppk }}">
+                            <input type="hidden" name="month_tanggal_pengajuan" id="id_month_tanggal_pengajuan"
+                                   value="{{ data_klaim.register_klaim.tgl_aju|date:'m' }}">
+                            <input type="hidden" name="year_tanggal_pengajuan" id="id_year_tanggal_pengajuan"
+                                   value="{{ data_klaim.register_klaim.tgl_aju|date:'Y' }}">
+                            <input type="hidden" name="no_ba_terima" id="id_no_ba"
+                                   value="{{ data_klaim.register_klaim.no_ba_terima }}">
+                            <input type="hidden" name="no_sep" id="id_no_sep" value="{{ data_klaim.NOSEP }}">
+                        </form>
+                    </div>
+                    <div class="col-6">
+                        <form method="POST" id="verifDataKlaim" class="mt-4">
                             {% csrf_token %}
                             {{ data_klaim_form|crispy }}
                             <div id="pending-form">
                                 {{ data_klaim_pending_form|crispy }}
                             </div>
                             <input type="hidden" name="next" value="{{ request.GET.next }}">
-                            <button class="btn btn-primary w-100" type="submit">Simpan</button>
+                            <button class="btn btn-primary w-100" id="submitVerif">Simpan</button>
+                            <button style="display: none" id="simpanHidden">Simpan Hidden</button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
         function changeOptions(selectEl) {
             let subForms = document.getElementsByClassName('OLevelResult')
@@ -144,11 +268,121 @@
             }
         }
 
+        document.getElementById("id_status").setAttribute("onchange", "changeOptions(this.value)");
+        document.getElementById("div_id_jenis_pending").classList.add("OLevelResult");
+        document.getElementById("div_id_jenis_dispute").classList.add("OLevelResult");
+        document.getElementById("div_id_ket_pending_dispute").classList.add("OLevelResult");
 
-            document.getElementById("id_status").setAttribute("onchange", "changeOptions(this.value)");
-            document.getElementById("div_id_jenis_pending").classList.add("OLevelResult");
-            document.getElementById("div_id_jenis_dispute").classList.add("OLevelResult");
-            document.getElementById("div_id_ket_pending_dispute").classList.add("OLevelResult");
+        $('#loginVIDI').click(function () {
+            const $button = $(this);
+            const originalText = $button.text()
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Silahkan Masukan Username dan password VIDI');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/global_session/',
+                type: 'GET',
+                success: function (response) {
+                    console.log('Berhasil Login');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("Login VIDI");
+                    alert('Login VIDI Berhasil')
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Login VIDI");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+
+        $('#cariSEP').click(function (e) {
+            e.preventDefault()
+
+            const formData = $('#formSEP').serialize()
+            const $button = $(this);
+            const originalText = $button.text()
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Cari Data Klaim');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/ambil_data_klaim/',
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    console.log('Berhasil ambil data');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("Data Klaim Berhasil Diambil");
+                    $('#dataKlaim').html(response.data_klaim);
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Ambil Data Klaim");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+
+        $('#cekDouble').click(function (e) {
+            e.preventDefault()
+
+            const formData = $('#formSEP').serialize()
+            const $button = $(this);
+            const originalText = $button.text()
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Cari History Double Klaim');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/ambil_data_double_klaim/',
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    console.log('Berhasil ambil data double klaim');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("History Double Klaim Berhasil Diambil");
+                    $('#doubleKlaim').html(response.table_html);
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("History Double Klaim");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+
+        $('#submitVerif').click(function (e) {
+            e.preventDefault(); // Prevent the default form submission behavior
+
+            // Show confirmation dialog
+            if (confirm('Apakah Anda yakin ingin menyimpan data?')) {
+                const formData = $('#formSEP').serializeArray();
+                const verifData = $('#verifDataKlaim').serializeArray();
+
+                // Convert serialized arrays to a single object
+                const combineData = {};
+                formData.concat(verifData).forEach(({name, value}) => {
+                    combineData[name] = value;
+                });
+
+                const $button = $(this);
+                const originalText = $button.text();
+
+                $button.prop('disabled', true).addClass('loading-dots').text('Posting data ke VIDI');
+
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/verifikasi_data_klaim/',
+                    type: 'POST',
+                    data: combineData,
+                    success: function (response) {
+                        console.log('Berhasil ambil data');
+                        $button.prop('disabled', true).removeClass('loading-dots').text("Data Klaim Berhasil Diambil");
+                        $('#simpanHidden').click();
+                    },
+                    error: function (xhr) {
+                        console.log('Permintaan gagal dengan kode status: ' + xhr.status);
+                        $button.prop('disabled', false).removeClass('loading-dots').text("Posting data ke VIDI");
+                        alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                    }
+                });
+            } else {
+                // User canceled, do nothing
+                console.log('Submit digagalkan');
+            }
+        });
+        
     </script>
-
 {% endblock %}

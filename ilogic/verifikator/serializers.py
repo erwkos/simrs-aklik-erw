@@ -1,16 +1,29 @@
-
-
 from rest_framework import serializers
 
+from faskes.models import Faskes
 from klaim.models import (
     RegisterKlaim,
-    DataKlaimCBG
+    DataKlaimCBG, JenisKlaim
 )
 from user.models import User
 
 
+class FaskesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Faskes
+        fields = ['nama', 'kode_ppk']
+
+
+class JenisKlaimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JenisKlaim
+        fields = ['nama']
+
+
 class RegisterKlaimSerializer(serializers.ModelSerializer):
-    faskes = serializers.SerializerMethodField()
+    # faskes = serializers.SerializerMethodField()
+    faskes = FaskesSerializer()
+    jenis_klaim = JenisKlaimSerializer()
 
     class Meta:
         model = RegisterKlaim

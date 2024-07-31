@@ -42,7 +42,7 @@ from .forms import (
     StatusRegisterKlaimForm,
     ImportDataKlaimForm,
     DataKlaimVerifikatorForm, FinalisasiVerifikatorForm, HitungDataKlaimForm, KeteranganPendingForm,
-    STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR, UploadDataKlaimForm, PotongKlaimForm
+    STATUS_CHOICES_DATA_KLAIM_VERIFIKATOR, UploadDataKlaimForm, PotongKlaimForm, DataKlaimForm
 )
 from user.decorators import permissions, check_device
 from user.models import User
@@ -193,6 +193,7 @@ def detail_register(request, pk):
 def import_data_klaim(request):
     storage = TemporaryStorage()
     import_form = ImportDataKlaimForm()
+    dataklaim_form = DataKlaimForm()
     verifikator = User.objects.filter(kantorcabang__in=request.user.kantorcabang_set.all(),
                                       groups__name='verifikator',
                                       is_active=True,
@@ -412,6 +413,7 @@ def import_data_klaim(request):
     
     context = {
         'import_form': import_form,
+        'dataklaim_form': dataklaim_form,
         'verifikator': verifikator,
     }
     return render(request, 'verifikator/cbg/import_data_klaim_cbg.html', context)

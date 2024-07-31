@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block data %}
+        <button type="button" class="btn-primary btn" id="loginVIDI">Login VIDI</button>
+
+{% endblock %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <center>
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Import Data Klaim CBG</h5>
+        </div>
+
+<div class="col-12">
+    <div class="card-body">
+        <div class="container-fluid">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+        <div class="card-body">
+            <div class="row mt-4"><center>
+                <div class="col-10">
+
+            <input class="form-control mb-2 mt-2" type="text" name="search" id="input-kodeppk" placeholder="KodePPK / NamaPPK / NO Register">
+            <div id="data-register"></div>
+                    </div></center>
+                    </div>
+        </div>
+
+        <div class="card-body" id="import-data-klaim" style="display: none;">
+            <div class="col-10">
+                <form method="POST" id="formDataKlaim">
+                    {% csrf_token %}
+                    {{ dataklaim_form }}
+                    <button type="submit" class="btn btn-secondary" id="rpaExcel" onclick="submitForm()">RPA Ambil Excel VIDI</button>
+                </form>
+
+            </div>
+            <div class="row mt-4">
+                <center>
+                    <div class="col-10 text-start">
+                        <form method="POST" id="form-import" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{ import_form|crispy }}
+                            <input type="hidden" name="action" value="import">
+                            <div class="mb-3">
+                                <label for="exampleFormControlInput1" class="form-label">Isi Password Excel</label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       placeholder="Hanya diisi jika File Excel memiliki Password">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">IMPORT</button>
+                        </form>
+                    </div>
+                </center>
+            </div>
+        </div>
+        <div class="card-body" id="pembagian-data-klaim" style="display: none">
+            <div class="row mt-4"><center>
+                <div class="col-10 text-start">
+            <form method="POST" id="form-import">
+                {% csrf_token %}
+                <div id="verifikator-pembagian-data-klaim" style="width: 18rem; padding: 20px;"></div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Nomor register</label>
+                    <input type="text" class="form-control" id="register" name="register">
+                </div>
+{#                <input type="hidden" name="action" value="pembagian">#}
+{#                <button type="submit" class="btn btn-primary w-100">Bagikan tugas</button>#}
+            </form>
+                </div></center>
+            </div>
+        </div>
+
+</div>
+    </center>
+</div>
+
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>List Verifikator Active</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">NO</th>
+                            <th scope="col">NAMA VERIFIKATOR</th>
+                            <th scope="col">Status Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for verifikator in verifikator %}
+                        <tr>
+                            <td>{{forloop.counter}}</td>
+                            <td>{{verifikator}}</td>
+                            <td>{{verifikator.is_active}}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script>
+    function formatBulanTahun(tanggal) {
+        const dateObj = new Date(tanggal);
+        const options = {year: 'numeric', month: 'long'};
+        return dateObj.toLocaleDateString('id-ID', options);
+    }
+
+    function formatTanggalAju(tanggal) {
+        const dateObj = new Date(tanggal);
+        const options = {year: 'numeric', month: 'long', day: 'numeric'};
+        return dateObj.toLocaleDateString('id-ID', options);
+    }
+
+    function getMonthNumber(tanggal) {
+        const dateObj = new Date(tanggal);
+        return dateObj.getMonth() + 1;  // getMonth() mengembalikan bulan dari 0-11, jadi tambahkan 1
+    }
+    function getYearNumber(tanggal) {
+        const dateObj = new Date(tanggal);
+        return dateObj.getFullYear();  // getFullYear() mengembalikan tahun
+    }
+
+    function formatBulanTahun(tanggal) {
+        const dateObj = new Date(tanggal);
+        const options = {year: 'numeric', month: 'long'};
+        return dateObj.toLocaleDateString('id-ID', options);
+    }
+
+    function getButtonAction(data) {
+        if (data.is_pengajuan_ulang) {
+            return `<button class="btn btn-warning" onclick="PilihRegister('${data.nomor_register_klaim}')">Bagikan tugas</button>`
+        } else {
+            return `<button class="btn btn-primary" onclick="PilihRegisterImport('${data.nomor_register_klaim}', '${data.tgl_aju}','${data.bulan_pelayanan}', '${data.faskes.kode_ppk}', '${data.no_ba_terima}')">Pilih Import</button>`
+        }
+    }
+
+    function getMonthNumber(tanggal) {
+    const dateObj = new Date(tanggal);
+    return dateObj.getMonth() + 1;  // getMonth() mengembalikan bulan dari 0-11, jadi tambahkan 1
+}
+    var kode_ppk = ''
+    var grid = new gridjs.Grid({
+        columns: ["no_register", "status", "bupel", "nmppk", "kdppk", "jenis_klaim", 'tgl_aju', "action"],
+        pagination: {
+            limit: 5,
+            server: {
+                url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&search=${kode_ppk}`
+            }
+        },
+        server: {
+            url: '/verifikator/api/register-klaim',
+            then: data => data.results.map(data =>
+                [data.nomor_register_klaim, data.status, formatBulanTahun(data.bulan_pelayanan), data.faskes.nama, data.faskes.kode_ppk, data.jenis_klaim.nama, formatTanggalAju(data.tgl_aju),
+                    {#`${data.is_pengajuan_ulang ? "yes" : "no"}`,#}
+                    gridjs.html(getButtonAction(data))
+                ]
+            ),
+            total: data => data.count
+        }
+   })
+   grid.render(document.getElementById("data-register"))
+
+   document.getElementById("input-kodeppk").addEventListener("input", function(e){
+    kode_ppk = e.target.value
+    grid.updateConfig({
+    }).forceRender()
+   })
+
+   function PilihRegisterImport(nomor_register_klaim, bulan_pelayanan, tgl_aju, kode_ppk, no_ba_terima) {
+    document.getElementById("pembagian-data-klaim").style.display = "none"
+    document.getElementById("import-data-klaim").style.display = "block"
+    document.getElementById("id_register").value = nomor_register_klaim
+       
+    // Format bulan dan tahun sebelum menetapkan nilai
+    const formattedBulanTahun = formatBulanTahun(bulan_pelayanan);
+    document.getElementById("id_tanggal_pelayanan").value = formattedBulanTahun;
+    document.getElementById("id_month_tanggal_pengajuan").value = getMonthNumber(tgl_aju)
+    document.getElementById("id_year_tanggal_pengajuan").value = getYearNumber(tgl_aju)
+    document.getElementById("id_kode_ppk").value = kode_ppk;
+    document.getElementById("id_no_ba_terima").value = no_ba_terima;
+
+
+   }
+
+   function PilihRegister(nomor_register_klaim) {
+    document.getElementById("import-data-klaim").style.display = "none"
+    document.getElementById("pembagian-data-klaim").style.display = "block"
+    document.getElementById("register").value = nomor_register_klaim
+    document.getElementById("verifikator-pembagian-data-klaim").innerHTML = ""
+
+    fetch(`/verifikator/verifikator?register=${nomor_register_klaim}`)
+    .then(res => {
+        if (res.ok) {
+            return res.json()
+        }
+    }).then(data => {
+        data.forEach(element => {
+            console.log(0)
+            var verifikator_elem = document.createElement('div')
+            var verifikator_str =`<div class="form-check">` +
+                `<input class="form-check-input" type="checkbox" value="${element.id}" name="verifikator" id="flexCheckDefault">` +
+                `<label class="form-check-label" for="flexCheckDefault">` +
+                    `${element.fullname}` +
+                `</label>` +
+            `</div>`
+            
+            verifikator_elem.innerHTML = verifikator_str
+            
+            document.getElementById("verifikator-pembagian-data-klaim").appendChild(verifikator_elem)
+            console.log(9)
+            
+            
+        });
+    }).catch(err => {
+        
+    })
+   }
+
+document.getElementById('loginVIDI').addEventListener('click', function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'http://127.0.0.1:8000/global_session/', true);
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) { // Cek apakah permintaan telah selesai
+            if (xhr.status === 200) { // Cek apakah respons sukses
+                console.log('Berhasil Login');
+                // Jika respons dari server sukses, arahkan ke URL tersebut
+                {#window.location.href = 'http://127.0.0.1:8000/global_session/';#}
+            } else {
+                console.log('Request failed with status: ' + xhr.status);
+            }
+        }
+    };
+
+    xhr.send();
+});
+
+        {#function submitForm() {#}
+        {#    var url = 'http://127.0.0.1:8000/ambil_data_vedika/';#}
+        {#    var data = {#}
+        {#        kode_ppk: document.getElementById('id_kode_ppk').value,#}
+        {#        month_tanggal_pengajuan: document.getElementById('id_month_tanggal_pengajuan').value,#}
+        {#        year_tanggal_pengajuan: document.getElementById('id_year_tanggal_pengajuan').value,#}
+        {#        no_ba_terima: document.getElementById('id_no_ba_terima').value#}
+        {#    };#}
+        {#    console.log('data', data)#}
+        {##}
+        {#    fetch(url, {#}
+        {#        method: 'POST',#}
+        {#        headers: {#}
+        {#            'Content-Type': 'application/json'#}
+        {#        },#}
+        {#        body: JSON.stringify(data)#}
+        {#    })#}
+        {#    .then(response => response.json())#}
+        {#    .then(result => {#}
+        {#        console.log('Response:', result);#}
+        {##}
+        {#        if (result.file_path) {#}
+        {#            var passwordField = document.createElement('input');#}
+        {#            passwordField.type = 'hidden';#}
+        {#            passwordField.id = 'password';#}
+        {#            passwordField.value = 'BPJS-kesehatan$1234';#}
+        {#            document.body.appendChild(passwordField);#}
+        {#            console.log('Password set:', passwordField.value);#}
+        {#        } else {#}
+        {#            alert('File path not found in response');#}
+        {#        }#}
+        {#    })#}
+        {#    .catch(error => {#}
+        {#        console.error('Error:', error);#}
+        {#        alert('Error fetching the data.');#}
+        {#    });#}
+        {#}#}
+        {##}
+        {#document.getElementById('rpaExcel').addEventListener('click', function(event) {#}
+        {#    event.preventDefault();#}
+        {#    console.log('Button clicked. Sending AJAX request...');#}
+        {#    submitForm();#}
+        {#});#}
+        
+            
+            
+        document.getElementById('rpaExcel').addEventListener('click', function(event) {
+            event.preventDefault();
+
+            console.log('Button clicked. Sending AJAX request...');
+            const formData = $('#formDataKlaim').serialize()
+            
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'http://127.0.0.1:8000/ambil_data_vedika/', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        console.log('AJAX request successful.');
+                        var response = JSON.parse(xhr.responseText);
+                        console.log('Response:', response);
+
+                        if (response.file_path) {
+                            var fileInfo = document.getElementById('file_info');
+                            var filePathDisplay = document.getElementById('file_path');
+                            var fileDownloadLink = document.getElementById('file_download_link');
+
+                            filePathDisplay.textContent = response.file_path;
+                            fileDownloadLink.href = response.file_path;
+                            fileDownloadLink.innerText = 'Download ' + response.file_path.split('/').pop();
+
+                            fileInfo.style.display = 'block';
+
+                            // Set the password field
+                    var passwordField = document.getElementById('password');
+                    if (passwordField) {
+                        passwordField.value = 'BPJS-kesehatan$1234';
+                        console.log('Password set:', passwordField.value);
+                    } else {
+                        console.error('Password field not found.');
+                    }
+                        } else {
+                            alert('File path not found in response');
+                        }
+                    } else {
+                        console.error('AJAX Error: ' + xhr.statusText);
+                        alert('Error fetching the data.');
+                    }
+                }
+            };
+            xhr.send();
+        });
+</script>
+
+
+{% endblock %}

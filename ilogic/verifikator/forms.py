@@ -65,7 +65,12 @@ class StatusRegisterKlaimForm(forms.ModelForm):
 
 
 class ImportDataKlaimForm(forms.Form):
+    # kode_ppk = forms.CharField(widget=forms.TextInput(attrs={'type': 'hidden'}))
     register = forms.CharField(widget=forms.TextInput(attrs={'readonly': True}))
+    # tanggal_pelayanan = forms.DateField(widget=forms.DateInput(attrs={'type': 'hidden'}))
+    # month_tanggal_pengajuan = forms.IntegerField(widget=forms.NumberInput(attrs={'type': 'hidden'}))
+    # year_tanggal_pengajuan = forms.IntegerField(widget=forms.NumberInput(attrs={'type': 'hidden'}))
+    # no_ba_terima = forms.CharField(widget=forms.TextInput(attrs={'type': 'hidden'}))
     file = forms.FileField(label='Upload File Excel', required=True,
                            help_text='Hanya menerima file dengan ekstensi `.xlsx` dan ukuran maksimal 2MB')
 
@@ -81,6 +86,13 @@ class ImportDataKlaimForm(forms.Form):
             raise ValidationError('File harus kurang dari 2MB')
         return file
 
+
+class DataKlaimForm(forms.Form):
+    kode_ppk = forms.CharField(widget=forms.TextInput(attrs={'type': 'hidden'}))
+    # tanggal_pelayanan = forms.DateField(widget=forms.DateInput(attrs={'type': 'hidden'}))
+    month_tanggal_pengajuan = forms.IntegerField(widget=forms.NumberInput(attrs={'type': 'hidden'}))
+    year_tanggal_pengajuan = forms.IntegerField(widget=forms.NumberInput(attrs={'type': 'hidden'}))
+    no_ba_terima = forms.CharField(widget=forms.TextInput(attrs={'type': 'hidden'}))
 
 class ImportUpdateDataKlaimCBGForm(forms.Form):
     register = forms.CharField(required=True, widget=forms.TextInput())

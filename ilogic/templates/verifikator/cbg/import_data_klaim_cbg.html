@@ -1,184 +1,354 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block scriptheader %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Fungsi untuk melakukan AJAX request
+    function checkStatus() {
+        $.ajax({
+            url: 'http://127.0.0.1:8000/refresh_halaman',
+            type: 'GET', // atau 'POST' tergantung pada server Anda
+            dataType: 'json',
+            success: function(response) {
+                if (response.status_rpa === 200) {
+                    $('#loginVIDI').prop('disabled', true);
+                } else {
+                    $('#loginVIDI').prop('disabled', false);
+                }
+            },
+            error: function() {
+                    $('#loginVIDI').prop('disabled', false);
+            }
+        });
+    }
+
+    // Panggil fungsi saat halaman diakses
+    checkStatus();
+});
+</script>
+{% endblock %}
+
+{% block data %}
+    <button type="button" class="btn-primary btn" id="loginVIDI">Login VIDI</button>
+{% endblock %}
+
 {% block content %}
-<div class="col-xl-12 col-md-12 mb-4 mt-4">
-    <center>
-    <div class="card table-card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <h5>Import Data Klaim CBG</h5>
-        </div>
 
-<div class="col-12">
-    <div class="card-body">
-        <div class="container-fluid">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
-                        {{ message }}
-                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <style>
+        .loading-dots::after {
+            content: " .";
+            animation: dots 1s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% {
+                content: " .";
+            }
+            40% {
+                content: " ..";
+            }
+            60% {
+                content: " ...";
+            }
+            80%, 100% {
+                content: " ..";
+            }
+        }
+    </style>
+    
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <center>
+            <div class="card table-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5>Import Data Klaim CBG</h5>
+                </div>
+
+                <div class="col-12">
+                    <div class="card-body">
+                        <div class="container-fluid">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3"
+                                         role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                                aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
                     </div>
-                {% endfor %}
-            {% endif %}
-        </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mt-4">
+                        <center>
+                            <div class="col-10">
+
+                                <input class="form-control mb-2 mt-2" type="text" name="search" id="input-kodeppk"
+                                       placeholder="KodePPK / NamaPPK / NO Register">
+                                <div id="data-register"></div>
+                            </div>
+                        </center>
+                    </div>
+                </div>
+
+                <div class="card-body" id="import-data-klaim" style="display: none;">
+                    <div class="col-10">
+                        <form id="formRPA">
+                            {% csrf_token %}
+                            {{ dataklaim_form }}
+                            <button type="submit" class="btn btn-secondary" id="rpaExcel">RPA Ambil Excel VIDI</button>
+                        </form>
+
+                    </div>
+                    <div class="row mt-4">
+                        <center>
+                            <div class="col-10 text-start">
+                                <form method="POST" id="form-import" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    {{ import_form|crispy }}
+                                    <input type="hidden" name="action" value="import">
+                                    <div class="mb-3">
+                                        <label for="exampleFormControlInput1" class="form-label">Isi Password
+                                            Excel</label>
+                                        <input type="password" class="form-control" id="password" name="password"
+                                               placeholder="Hanya diisi jika File Excel memiliki Password">
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">IMPORT</button>
+                                </form>
+                            </div>
+                        </center>
+                    </div>
+                </div>
+                <div class="card-body" id="pembagian-data-klaim" style="display: none">
+                    <div class="row mt-4">
+                        <center>
+                            <div class="col-10 text-start">
+                                <form method="POST" id="form-import">
+                                    {% csrf_token %}
+                                    <div id="verifikator-pembagian-data-klaim"
+                                         style="width: 18rem; padding: 20px;"></div>
+                                    <div class="mb-3">
+                                        <label for="exampleFormControlInput1" class="form-label">Nomor register</label>
+                                        <input type="text" class="form-control" id="register" name="register">
+                                    </div>
+                                    {#                <input type="hidden" name="action" value="pembagian">#}
+                                    {#                <button type="submit" class="btn btn-primary w-100">Bagikan tugas</button>#}
+                                </form>
+                            </div>
+                        </center>
+                    </div>
+                </div>
+
+            </div>
+        </center>
     </div>
-</div>
-        <div class="card-body">
-            <div class="row mt-4"><center>
-                <div class="col-10">
 
-            <input class="form-control mb-2 mt-2" type="text" name="search" id="input-kodeppk" placeholder="KodePPK / NamaPPK / NO Register">
-            <div id="data-register"></div>
-                    </div></center>
-                    </div>
-        </div>
-        <div class="card-body" id="import-data-klaim" style="display: none;">
-            <div class="row mt-4"><center>
-                <div class="col-10 text-start">
-                    <form method="POST" id="form-import" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{import_form|crispy}}
-                        <input type="hidden" name="action" value="import">
-                <div class="mb-3">
-                    <label for="exampleFormControlInput1" class="form-label">Isi Password Excel</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Hanya diisi jika File Excel memiliki Password">
-                </div>
-
-                        <button type="submit" class="btn btn-primary w-100">IMPORT</button>
-                    </form>
-                </div></center>
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>List Verifikator Active</h5>
             </div>
-        </div>
-        <div class="card-body" id="pembagian-data-klaim" style="display: none">
-            <div class="row mt-4"><center>
-                <div class="col-10 text-start">
-            <form method="POST" id="form-import">
-                {% csrf_token %}
-                <div id="verifikator-pembagian-data-klaim" style="width: 18rem; padding: 20px;"></div>
-                <div class="mb-3">
-                    <label for="exampleFormControlInput1" class="form-label">Nomor register</label>
-                    <input type="text" class="form-control" id="register" name="register">
-                </div>
-                <input type="hidden" name="action" value="pembagian">
-                <button type="submit" class="btn btn-primary w-100">Bagikan tugas</button>
-            </form>
-                </div></center>
-            </div>
-        </div>
-
-</div>
-    </center>
-</div>
-
-<div class="col-xl-12 col-md-12 mb-4 mt-4">
-    <div class="card table-card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <h5>List Verifikator Active</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover table-borderless mb-0">
-                    <thead>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless mb-0">
+                        <thead>
                         <tr>
                             <th scope="col">NO</th>
                             <th scope="col">NAMA VERIFIKATOR</th>
                             <th scope="col">Status Active</th>
                         </tr>
-                    </thead>
-                    <tbody>
-                    {% for verifikator in verifikator %}
-                        <tr>
-                            <td>{{forloop.counter}}</td>
-                            <td>{{verifikator}}</td>
-                            <td>{{verifikator.is_active}}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                        {% for verifikator in verifikator %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ verifikator }}</td>
+                                <td>{{ verifikator.is_active }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
+            </div>
         </div>
     </div>
-</div>
-<script>
-    function getButtonAction(data) {
-        if (data.is_pengajuan_ulang) {
-            return `<button class="btn btn-warning" onclick="PilihRegister('${data.nomor_register_klaim}')">Bagikan tugas</button>`
-        } else {
-            return `<button class="btn btn-primary" onclick="PilihRegisterImport('${data.nomor_register_klaim}')">Pilih Import</button>`
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        function formatBulanTahun(tanggal) {
+            const dateObj = new Date(tanggal);
+            const options = {year: 'numeric', month: 'long'};
+            return dateObj.toLocaleDateString('id-ID', options);
         }
-    }
-    var kode_ppk = ''
-    var grid = new gridjs.Grid({
-        columns: ["nomor_register_klaim", "status", "bulan_pelayanan", "faskes", "jenis_klaim", "action"],
-        pagination: {
-            limit: 5,
-            server: {
-                url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&search=${kode_ppk}`
+
+        function formatTanggalAju(tanggal) {
+            const dateObj = new Date(tanggal);
+            const options = {year: 'numeric', month: 'long', day: 'numeric'};
+            return dateObj.toLocaleDateString('id-ID', options);
+        }
+
+        function getMonthNumber(tanggal) {
+            const dateObj = new Date(tanggal);
+            return dateObj.getMonth() + 1;  // getMonth() mengembalikan bulan dari 0-11, jadi tambahkan 1
+        }
+
+        function getYearNumber(tanggal) {
+            const dateObj = new Date(tanggal);
+            return dateObj.getFullYear();  // getFullYear() mengembalikan tahun
+        }
+
+        function formatBulanTahun(tanggal) {
+            const dateObj = new Date(tanggal);
+            const options = {year: 'numeric', month: 'long'};
+            return dateObj.toLocaleDateString('id-ID', options);
+        }
+
+        function getButtonAction(data) {
+            if (data.is_pengajuan_ulang) {
+                return `<button class="btn btn-warning" onclick="PilihRegister('${data.nomor_register_klaim}')">Bagikan tugas</button>`
+            } else {
+                return `<button class="btn btn-primary" onclick="PilihRegisterImport('${data.nomor_register_klaim}', '${data.tgl_aju}', '${data.faskes.kode_ppk}', '${data.no_ba_terima}')">Pilih Import</button>`
             }
-        },
-        server: {
-            url: '/verifikator/api/register-klaim',
-            then: data => data.results.map(data =>
-                [data.nomor_register_klaim, data.status, data.bulan_pelayanan, data.faskes, data.jenis_klaim,
-                    {#`${data.is_pengajuan_ulang ? "yes" : "no"}`,#}
-                    gridjs.html(getButtonAction(data))
-                ]
-            ),
-            total: data => data.count
         }
-   })
-   grid.render(document.getElementById("data-register"))
 
-   document.getElementById("input-kodeppk").addEventListener("input", function(e){
-    kode_ppk = e.target.value
-    grid.updateConfig({
-    }).forceRender()
-   })
+        var kode_ppk = ''
+        var grid = new gridjs.Grid({
+            columns: ["no_register", "status", "bupel", "nmppk", "kdppk", "jenis_klaim", 'tgl_aju', "action"],
+            pagination: {
+                limit: 5,
+                server: {
+                    url: (prev, page, limit) => `${prev}?limit=${limit}&offset=${page * limit}&search=${kode_ppk}`
+                }
+            },
+            server: {
+                url: '/verifikator/api/register-klaim',
+                then: data => data.results.map(data =>
+                    [data.nomor_register_klaim, data.status, formatBulanTahun(data.bulan_pelayanan), data.faskes.nama, data.faskes.kode_ppk, data.jenis_klaim.nama, formatTanggalAju(data.tgl_aju),
+                        {#`${data.is_pengajuan_ulang ? "yes" : "no"}`,#}
+                        gridjs.html(getButtonAction(data))
+                    ]
+                ),
+                total: data => data.count
+            }
+        })
+        grid.render(document.getElementById("data-register"))
 
-   function PilihRegisterImport(nomor_register_klaim) {
-    document.getElementById("pembagian-data-klaim").style.display = "none"
-    document.getElementById("import-data-klaim").style.display = "block"
-    document.getElementById("id_register").value = nomor_register_klaim
-   }
+        document.getElementById("input-kodeppk").addEventListener("input", function (e) {
+            kode_ppk = e.target.value
+            grid.updateConfig({}).forceRender()
+        })
 
-   function PilihRegister(nomor_register_klaim) {
-    document.getElementById("import-data-klaim").style.display = "none"
-    document.getElementById("pembagian-data-klaim").style.display = "block"
-    document.getElementById("register").value = nomor_register_klaim
-    document.getElementById("verifikator-pembagian-data-klaim").innerHTML = ""
+        function PilihRegisterImport(nomor_register_klaim, tgl_aju, kode_ppk, no_ba_terima) {
+            document.getElementById("pembagian-data-klaim").style.display = "none"
+            document.getElementById("import-data-klaim").style.display = "block"
+            document.getElementById("id_register").value = nomor_register_klaim
 
-    fetch(`/verifikator/verifikator?register=${nomor_register_klaim}`)
-    .then(res => {
-        if (res.ok) {
-            return res.json()
+            // Format bulan dan tahun sebelum menetapkan nilai
+            {#const formattedBulanTahun = formatBulanTahun(bulan_pelayanan);#}
+            {#document.getElementById("id_tanggal_pelayanan").value = formattedBulanTahun;#}
+            document.getElementById("id_month_tanggal_pengajuan").value = getMonthNumber(tgl_aju)
+            document.getElementById("id_year_tanggal_pengajuan").value = getYearNumber(tgl_aju)
+            document.getElementById("id_kode_ppk").value = kode_ppk;
+            document.getElementById("id_no_ba_terima").value = no_ba_terima;
+            {#console.log(tgl_aju)#}
+
         }
-    }).then(data => {
-        data.forEach(element => {
-            console.log(0)
-            var verifikator_elem = document.createElement('div')
-            var verifikator_str =`<div class="form-check">` +
-                `<input class="form-check-input" type="checkbox" value="${element.id}" name="verifikator" id="flexCheckDefault">` +
-                `<label class="form-check-label" for="flexCheckDefault">` +
-                    `${element.fullname}` +
-                `</label>` +
-            `</div>`
-            
-            verifikator_elem.innerHTML = verifikator_str
-            
-            document.getElementById("verifikator-pembagian-data-klaim").appendChild(verifikator_elem)
-            console.log(9)
-            
-            
+
+        function PilihRegister(nomor_register_klaim) {
+            document.getElementById("import-data-klaim").style.display = "none"
+            document.getElementById("pembagian-data-klaim").style.display = "block"
+            document.getElementById("register").value = nomor_register_klaim
+            document.getElementById("verifikator-pembagian-data-klaim").innerHTML = ""
+
+            fetch(`/verifikator/verifikator?register=${nomor_register_klaim}`)
+                .then(res => {
+                    if (res.ok) {
+                        return res.json()
+                    }
+                }).then(data => {
+                data.forEach(element => {
+                    console.log(0)
+                    var verifikator_elem = document.createElement('div')
+                    var verifikator_str = `<div class="form-check">` +
+                        `<input class="form-check-input" type="checkbox" value="${element.id}" name="verifikator" id="flexCheckDefault">` +
+                        `<label class="form-check-label" for="flexCheckDefault">` +
+                        `${element.fullname}` +
+                        `</label>` +
+                        `</div>`
+
+                    verifikator_elem.innerHTML = verifikator_str
+
+                    document.getElementById("verifikator-pembagian-data-klaim").appendChild(verifikator_elem)
+                    console.log(9)
+
+
+                });
+            }).catch(err => {
+
+            })
+        }
+
+        $('#loginVIDI').click(function () {
+            const $button = $(this);
+            const originalText = $button.text()
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Silahkan Masukan Username dan password VIDI');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/global_session/',
+                type: 'GET',
+                success: function (response) {
+                    console.log('Berhasil Login');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("Login VIDI");
+                    alert('Login VIDI Berhasil')
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Login VIDI");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
         });
-    }).catch(err => {
-        
-    })
-   }
 
 
+        $(document).ready(function () {
+            $('#rpaExcel').click(function (e) {
+                e.preventDefault();
 
-</script>
+                const formData = $('#formRPA').serialize();
+                const $button = $(this);
+                const originalText = $button.text()
 
+                $button.prop('disabled', true).addClass('loading-dots').text('Memproses Pengambilan Excel');
 
+                $.ajax({
+                    url: "http://127.0.0.1:8000/ambil_data_vedika/",
+                    type: "POST",
+                    data: formData,
+                    success: function (response) {
+                        console.log('Data berhasil diambil!');
+                        var passwordField = document.getElementById('password');
+                        if (passwordField) {
+                            passwordField.style.display = 'block';
+                            passwordField.value = 'BPJS-kesehatan$1234';
+                            console.log('Password set:', passwordField.value);
+                            console.log('File Path:', response.file_path);
+                        } else {
+                            console.error('Password field not found.');
+                        }
+                        $button.prop('disabled', true).removeClass('loading-dots').text("Excel berhasil diambil, lakukan pemilihan File");
+                    },
+                    error: function (xhr, status, error) {
+                        $button.prop('disabled', false).removeClass('loading-dots').text("RPA Ambil Excel VIDI");
+                        alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' ,Pastikan sudah menggunakan Login VIDI atau Coba Kembali');
+                        console.error('Error:', status, error);
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}
