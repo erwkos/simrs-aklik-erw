@@ -101,6 +101,18 @@
     </div>
 </div>
 <script>
+        function formatBulanTahun(tanggal) {
+            const dateObj = new Date(tanggal);
+            const options = {year: 'numeric', month: 'long'};
+            return dateObj.toLocaleDateString('id-ID', options);
+        }
+
+        function formatTanggalAju(tanggal) {
+            const dateObj = new Date(tanggal);
+            const options = {year: 'numeric', month: 'long', day: 'numeric'};
+            return dateObj.toLocaleDateString('id-ID', options);
+        }
+
     function getButtonAction(data) {
         if (data.is_pengajuan_ulang) {
             return `<button class="btn btn-warning" onclick="PilihRegister('${data.nomor_register_klaim}')">Bagikan tugas</button>`
@@ -110,7 +122,7 @@
     }
     var kode_ppk = ''
     var grid = new gridjs.Grid({
-        columns: ["nomor_register_klaim", "status", "bulan_pelayanan", "faskes", "jenis_klaim", "action"],
+        columns: ["no_register", "status", "bupel", "nmppk", "kdppk", "jenis_klaim", "tgl_aju", "action"],
         pagination: {
             limit: 5,
             server: {
@@ -120,7 +132,7 @@
         server: {
             url: '/verifikator/api/register-klaim-obat',
             then: data => data.results.map(data =>
-                [data.nomor_register_klaim, data.status, data.bulan_pelayanan, data.faskes, data.jenis_klaim,
+                [data.nomor_register_klaim, data.status, formatBulanTahun(data.bulan_pelayanan), data.faskes.nama, data.faskes.kode_ppk, data.jenis_klaim.nama, formatTanggalAju(data.tgl_aju),
                     {#`${data.is_pengajuan_ulang ? "yes" : "no"}`,#}
                     gridjs.html(getButtonAction(data))
                 ]
@@ -168,8 +180,7 @@
 
             document.getElementById("verifikator-pembagian-data-klaim").appendChild(verifikator_elem)
             console.log(9)
-
-
+            
         });
     }).catch(err => {
 
