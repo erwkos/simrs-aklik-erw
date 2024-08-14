@@ -38,7 +38,7 @@ $(document).ready(function() {
             border: 1px solid #e3e3e3;
             padding: 8px;
             text-align: left;
-            font-size: 11px;
+            font-size: 12px;
         }
 
     </style>
@@ -203,16 +203,21 @@ $(document).ready(function() {
                                         <td><b>Status Data Klaim : </b></td>
                                         <td>{% include 'base_status_data_klaim.html' %}</td>
                                     </tr>
+                                    <tr>
+                                        <td><b>Status Data Klaim VIDI: </b></td>
+                                        <td id="status_vidi">Silahkan Klik Button Ambil Data Klaim</td>
+                                    </tr>
                                     </tbody>
                                 </table>
                             <input type="hidden" name="kode_ppk" id="id_kode_ppk" value="{{ data_klaim.faskes.kode_ppk }}">
                             <input type="hidden" name="month_tanggal_pengajuan" id="id_month_tanggal_pengajuan"
-                                   value="{{ data_klaim.register_klaim.tgl_aju|date:'m' }}">
+                                   value="{{ data_klaim.register_klaim.tgl_terima|date:'m' }}">
                             <input type="hidden" name="year_tanggal_pengajuan" id="id_year_tanggal_pengajuan"
-                                   value="{{ data_klaim.register_klaim.tgl_aju|date:'Y' }}">
+                                   value="{{ data_klaim.register_klaim.tgl_terima|date:'Y' }}">
                             <input type="hidden" name="no_ba_terima" id="id_no_ba"
                                    value="{{ data_klaim.register_klaim.no_ba_terima }}">
                             <input type="hidden" name="no_sep" id="id_no_sep" value="{{ data_klaim.NOSEP }}">
+                            <input type="hidden" name="algoritma" id="id_algoritma" value="{{ data_klaim.ALGORITMA }}">
                         </form>
                     </div>
                     <div class="col-6">
@@ -224,6 +229,8 @@ $(document).ready(function() {
                             </div>
                             <input type="hidden" name="next" value="{{ request.GET.next }}">
                             <button class="btn btn-primary w-100" id="submitVerif">Simpan</button>
+                            <hr>
+                            <button class="btn btn-primary w-100" type="submit">Simpan Tanpa RPA</button>
                             <button style="display: none" id="simpanHidden">Simpan Hidden</button>
                         </form>
                     </div>
@@ -310,6 +317,8 @@ $(document).ready(function() {
                     console.log('Berhasil ambil data');
                     $button.prop('disabled', true).removeClass('loading-dots').text("Data Klaim Berhasil Diambil");
                     $('#dataKlaim').html(response.data_klaim);
+                    $('#status_vidi').html(response.button_html);
+                    
                 },
                 error: function (xhr) {
                     console.log('Request failed with status: ' + xhr.status);

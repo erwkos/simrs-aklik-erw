@@ -52,3 +52,8 @@ class NamaJenisKlaimChoices(models.TextChoices):
     CAPD = 'CAPD', _('CAPD')
     AMBULANCE_FKRTL = 'Ambulance-FKRTL', _('Ambulance-FKRTL')
     ALKES = 'Alkes', _('Alkes')
+
+
+class StatusSinkronChoices(models.TextChoices):
+    TIDAK_SINKRON = 'Tidak Sinkron', _('Tidak Sinkron')
+    SINKRON = 'Sinkron', _('Sinkron')
