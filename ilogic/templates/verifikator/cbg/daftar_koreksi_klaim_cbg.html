@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load my_tags %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+    
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Koreksi Klaim CBG</h5>
+        </div>
+
+        <div class="container-fluid">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                        {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <br>
+            <div class="card-body">
+              <form class="row row-cols-md-auto g-3 align-items-center">
+    <!-- The text field -->
+    <div class="col-auto my-1">
+        <input class="form-control" type="text" value="{{ nosep }}" id="myInput">
+    </div>
+                <button type="submit" class="btn btn-success">Submit</button>
+              </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{#{% if data %}#}
+<hr>
+<div class="form-row align-items-center container-fluid">
+    <div class="container-fluid">
+        <h5>{{ data.faskes }} | bupel : {{ data.bupel | date:"M Y" }} </h5>
+    </div>
+    <div class="col-auto my-1">
+        <input class="form-control" type="text" value="{{ nosep }}" id="myInput">
+    </div>
+    <!-- The button used to copy the text -->
+    <div class="col-auto my-1">
+        <button class="btn btn-secondary btn-sm" onclick="myFunction()">Copy text</button>
+    </div>
+            <div class="table-responsive">
+                <table class="table table-xs table-hover table-borderless mb-0" id="data-table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Status</th>
+                        <th scope="col">RS</th>
+                        {#                            <th scope="col">Rufil</th>#}
+                        <th scope="col">No REG</th>
+                        <th scope="col">No SEP</th>
+                        <th scope="col">In</th>
+                        <th scope="col">Out</th>
+                        <th scope="col">Jns Pel</th>
+                        <th scope="col">No Kartu</th>
+                        <th scope="col">Nama</th>
+                        <th scope="col">Poli</th>
+                        <th scope="col">CBG</th>
+                        <th scope="col">Biaya</th>
+                        {#                            <th scope="col">Ket. Pending</th>#}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for data_klaim in data_klaim %}
+                        <tr style="font-weight: bolder">
+                            <td>
+                                {% include 'base_status_data_klaim.html' %}
+                            </td>
+                            <td>{{ data_klaim.faskes.nama }}</td>
+                            <td>{{ data_klaim.register_klaim.nomor_register_klaim }}</td>
+                            <td>{{ data_klaim.NOSEP }}</td>
+                            <td>{{ data_klaim.TGLSEP }}</td>
+                            <td>{{ data_klaim.TGLPULANG }}</td>
+                            <td>{{ data_klaim.JNSPEL }}</td>
+                            <td>{{ data_klaim.NOKARTU }}</td>
+                            <td>{{ data_klaim.NMPESERTA }}</td>
+                            <td>{{ data_klaim.POLI }}</td>
+                            <td>{{ data_klaim.KDINACBG }}</td>
+                            <td style="text-align: right">{{ data_klaim.BYPENGAJUAN | intcomma }}</td>
+                        </tr>
+                    {% empty %}
+                        <td colspan="12" class="text-center">Tidak ada data</td>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+</div>
+{#{% endif %}#}
+{% endblock %}

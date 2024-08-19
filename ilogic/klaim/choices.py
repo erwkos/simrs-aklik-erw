@@ -57,3 +57,15 @@ class NamaJenisKlaimChoices(models.TextChoices):
 class StatusSinkronChoices(models.TextChoices):
     TIDAK_SINKRON = 'Tidak Sinkron', _('Tidak Sinkron')
     SINKRON = 'Sinkron', _('Sinkron')
+
+
+class StatusVidiChoices(models.TextChoices):
+    TIDAK_SINKRON = 'Tidak Sinkron', _('Tidak Sinkron')
+    PEMBAHASAN = 'Pembahasan', _('Pembahasan')
+    TIDAK_LAYAK = 'Tidak Layak', _('Tidak Layak')
+    LAYAK = 'Layak', _('Layak')
+    PENDING = 'Pending', _('Pending')
+    DISPUTE = 'Dispute', _('Dispute')
+    KLAIM = 'Klaim', _('Klaim')
+    BELUM_VER = 'Belum Ver', _('Belum Ver')
+    PROSES = 'Proses', _('Proses')

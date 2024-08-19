@@ -1,0 +1,33 @@
+    {% if data_klaim.status_vidi == 'Proses' %}
+            <a href="#">
+        <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+            </a>
+    {% elif data_klaim.status_vidi == 'Pending' %}
+        <a href="#">
+            <button type="button" class="btn btn-warning btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
+    {% elif data_klaim.status_vidi == 'Tidak Layak' %}
+        <a href="#">
+            <button type="button" class="btn btn-danger btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
+    {% elif data_klaim.status_vidi == 'Layak' %}
+        <a href="#">
+            <button type="button" class="btn btn-success btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
+    {% elif data_klaim.status_vidi == 'Dispute' %}
+        <a href="#">
+            <button type="button" class="btn btn-dark btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
+    {% elif data_klaim.status_vidi == 'Klaim' %}
+        <a href="#">
+            <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
+    {% elif data_klaim.status_vidi == 'Tidak Disinkron' %}
+        <a href="#">
+            <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
+    {% elif data_klaim.status_vidi == 'Belum Disinkron' %}
+        <a href="#">
+            <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
+    {% endif %}

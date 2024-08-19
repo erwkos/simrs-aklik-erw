@@ -1,0 +1,34 @@
+<table class="table table-hover mb-0" id="data-table">
+    <thead>
+        <tr>
+            <th scope="col"><center>ID</center></th>
+            <th scope="col"><center>No SEP</center></th>
+            <th scope="col"><center>Status VIBI</center></th>
+            <th scope="col"><center>Status VIDI</center></th>
+            <th scope="col"><center>Sinkron</center></th>
+            <th scope="col"><center>Waktu sinkron</center></th>
+        </tr>
+    </thead>
+    <tbody id="data-body">
+        {% for data_klaim in data_klaim %}
+            <tr style="font-weight: bolder">
+                <td><center>{{ data_klaim.id }}</center></td>
+                <td><center>{{ data_klaim.NOSEP }}</center></td>
+                <td>
+                    <center>
+                    {% include 'base_status_data_klaim.html' %}
+                    </center>
+                </td>
+                <td>
+                    <center>
+                    {% include 'base_status_data_klaim_vidi.html' %}
+                    </center>
+                </td>
+                <td><center>{{ data_klaim.status_sinkron }}</center></td>
+                <td><center>{{ data_klaim.tgl_sinkron }}</center></td>
+            </tr>
+        {% empty %}
+            <td colspan="12" class="text-center">Tidak ada data</td>
+        {% endfor %}
+    </tbody>
+</table>

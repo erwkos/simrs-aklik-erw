@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from msoffcrypto.exceptions import InvalidKeyError, DecryptionError
 from openpyxl import Workbook
 import pandas as pd
@@ -37,7 +38,8 @@ from klaim.models import (
     DataKlaimCBG, KeteranganPendingDispute, SLA, DataKlaimObat
 )
 from klaim.resources import DataKlaimCBGResource, DataKlaimObatResource
-from .filters import DataKlaimCBGFilter, DownloadDataKlaimCBGFilter, DataKlaimObatFilter, DownloadDataKlaimObatFilter
+from .filters import DataKlaimCBGFilter, DownloadDataKlaimCBGFilter, DataKlaimObatFilter, DownloadDataKlaimObatFilter, \
+    SinkronisasiVIBIVIDIFilter
 from .forms import (
     StatusRegisterKlaimForm,
     ImportDataKlaimForm,
@@ -48,7 +50,8 @@ from user.decorators import permissions, check_device
 from user.models import User
 from klaim.choices import (
     StatusDataKlaimChoices,
-    JenisPelayananChoices, StatusRegisterChoices, NamaJenisKlaimChoices, JenisPendingChoices, JenisDisputeChoices
+    JenisPelayananChoices, StatusRegisterChoices, NamaJenisKlaimChoices, JenisPendingChoices, JenisDisputeChoices,
+    StatusSinkronChoices
 )
 from .models import HitungDataKlaim
 from .storages import TemporaryStorage
@@ -60,6 +63,7 @@ from django.db import IntegrityError
 def replace_illegal_characters(text):
     # Mengganti karakter yang tidak diinginkan
     return re.sub(r'[^A-Za-z0-9\s.,-]', '', text)
+
 
 @login_required
 @check_device
@@ -122,9 +126,11 @@ def detail_register(request, pk):
             if 'tgl_ba_lengkap' in status_form.changed_data:
                 data_klaim = None
                 if instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_REGULER or instance.jenis_klaim.nama == NamaJenisKlaimChoices.CBG_SUSULAN:
-                    data_klaim = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
+                    data_klaim = DataKlaimCBG.objects.filter(
+                        register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
                 elif instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
-                    data_klaim = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
+                    data_klaim = DataKlaimObat.objects.filter(
+                        register_klaim__nomor_register_klaim=instance.nomor_register_klaim)
                 if data_klaim:
                     sla = SLA.objects.filter(jenis_klaim=instance.jenis_klaim,
                                              kantor_cabang=request.user.kantorcabang_set.all().first()).first()
@@ -220,7 +226,7 @@ def import_data_klaim(request):
                     messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
                     return redirect('/verifikator/import-data-klaim')
                 except DecryptionError:
-                    messages.warning(request,  'File Excel seharusnya tidak memiliki password!')
+                    messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
                     return redirect('/verifikator/import-data-klaim')
                 except Exception as e:
                     messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
@@ -229,7 +235,8 @@ def import_data_klaim(request):
                 try:
                     data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
                 except XLRDError:
-                    messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+                    messages.warning(request,
+                                     f'File yang Anda import memiliki password. Silahkan masukkan password file!')
                     return redirect('/verifikator/import-data-klaim')
                 except Exception as e:
                     messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
@@ -260,7 +267,8 @@ def import_data_klaim(request):
                         messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
                         return redirect('/verifikator/import-data-klaim')
                     except Exception as e:
-                        messages.warning(request, f'Kesalahan terjadi pada No SEP : {data_klaim.NOSEP}. Keterangan error : {e}')
+                        messages.warning(request,
+                                         f'Kesalahan terjadi pada No SEP : {data_klaim.NOSEP}. Keterangan error : {e}')
                         return redirect('/verifikator/import-data-klaim')
 
                 # ini data penulisan dipisah mas
@@ -287,7 +295,6 @@ def import_data_klaim(request):
             except Exception as e:
                 messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')
                 return redirect('/verifikator/import-data-klaim')
-
 
             return render(request, 'verifikator/cbg/preview_data_import_cbg.html',
                           {'preview_data_valid': df_valid,
@@ -410,7 +417,7 @@ def import_data_klaim(request):
         except Exception as e:
             messages.error(request, f"Terjadi kesalahan: {e}")
             return redirect('/verifikator/import-data-klaim')
-    
+
     context = {
         'import_form': import_form,
         'dataklaim_form': dataklaim_form,
@@ -479,7 +486,6 @@ def daftar_data_klaim(request):
             else:
                 ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
                 ket_pending_disput_queryset = replace_illegal_characters(ket_pending_disput_queryset)
-
 
             if queryset.ket_jawaban_pending.last() is None:
                 ket_jawaban_pending_queryset = ''
@@ -578,7 +584,6 @@ def daftar_data_klaim(request):
                 messages.warning(request, f'File yang diimport harus memiliki status yang sesuai. '
                                           f'Mohon dapat dicek kembali.')
                 return redirect(request.headers.get('Referer'))
-
 
         # cek jenis pending
         list_jenis_mandatory = [JenisPendingChoices.ADMINISTRASI, JenisPendingChoices.KODING,
@@ -687,6 +692,107 @@ def daftar_data_klaim(request):
     }
 
     return render(request, 'verifikator/cbg/daftar_data_klaim_cbg.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def sinkronisasi_vibi_vidi(request):
+    data = request.POST
+    # data_get = request.GET
+    # register_klaim = ""
+    queryset = None
+    context = {
+        'data_klaim': queryset,
+        # 'register_klaim': register_klaim
+    }
+
+    # if 'register_klaim' in data_get:
+    register_klaim = request.GET.get('nomor_register_klaim')
+    # status = request.GET.get('status')
+    # status_sinkron = request.GET.get('status_sinkron')
+    related_kantor_cabang = request.user.kantorcabang_set.all()
+    queryset = DataKlaimCBG.objects.filter(
+        # verifikator=request.user,
+        verifikator__kantorcabang__in=related_kantor_cabang,
+        register_klaim__nomor_register_klaim=register_klaim,
+        # prosesklaim=False,
+        # status=status,
+        # status_sinkron=status_sinkron,
+    ).order_by('NOSEP', 'TGLSEP')
+    # print(queryset)
+
+    # filter
+    myFilter = SinkronisasiVIBIVIDIFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    context.update({
+        'data_klaim': queryset,
+        'register_klaim': register_klaim,
+        'myFilter': myFilter,
+    })
+
+    if 'no_sep' in data:
+        nosep = data['no_sep']
+        status_vidi = data['status_vidi']
+        try:
+            klaim = DataKlaimCBG.objects.get(NOSEP=nosep)
+            klaim.status_vidi = status_vidi
+            # klaim.status_sinkron = 'Sinkron'
+            if status_vidi == klaim.status:
+                status_sinkron = StatusSinkronChoices.SINKRON
+            elif status_vidi != klaim.status:
+                status_sinkron = StatusSinkronChoices.TIDAK_SINKRON
+            else:
+                status_sinkron = ''
+            klaim.status_sinkron = status_sinkron
+            klaim.tgl_sinkron = datetime.datetime.today()
+            klaim.save()
+            context.update({
+                'klaim': klaim,
+            })
+            response_data = {
+                'no_sep': nosep,
+                'status_vidi': status_vidi,
+                'message': 'Berhasil Update',
+            }
+            return JsonResponse(response_data)
+        except DataKlaimCBG.DoesNotExist:
+            response_data = {
+                'no_sep': nosep,
+                'message': 'Data tidak ditemukan',
+            }
+            return JsonResponse(response_data, status=404)
+
+    return render(request, 'verifikator/cbg/sinkronisasi_vibi_vidi.html', context)
+
+
+@csrf_exempt
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def sinkronisasi_vibi_vidi_download(request):
+    data = request.POST
+    if data.get('no_sep'):
+        nosep = data.get('no_sep')
+        status_vidi = data.get('status_vidi')
+        status_sinkron = data.get('status_sinkron')
+        queryset = DataKlaimCBG.objects.get(NOSEP=nosep)
+        queryset.status_vidi = status_vidi
+        # queryset.status_sinkron = 'Sinkron'
+        queryset.save()
+        response_data = {
+            'no_sep': nosep,
+            'status_vidi': status_vidi,
+            'status_sinkron': status_sinkron,
+            'message': 'Berhasil Update',
+        }
+        return JsonResponse(response_data)
+    queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NOSEP', 'TGLSEP')
+    context = {
+        'data_klaim': queryset,
+    }
+    return render(request, 'verifikator/cbg/sinkronisasi_vibi_vidi_download.html', context)
 
 
 # @login_required
@@ -835,7 +941,8 @@ def update_finalisasi_data_klaim(request, pk):
                 'BYPENGAJUAN__sum']
             biaya_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).aggregate(Sum('BYPENGAJUAN'))[
                 'BYPENGAJUAN__sum']
-            biaya_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('BYPENGAJUAN'))[
+            biaya_tidak_layak = \
+            data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('BYPENGAJUAN'))[
                 'BYPENGAJUAN__sum']
             biaya_klaim = data_klaim.aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
         elif instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_REGULER or instance.jenis_klaim.nama == NamaJenisKlaimChoices.OBAT_SUSULAN:
@@ -1211,7 +1318,7 @@ def import_data_klaim_obat(request):
                     messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
                     return redirect('/verifikator/import-data-klaim-obat')
                 except DecryptionError:
-                    messages.warning(request,  'File Excel seharusnya tidak memiliki password!')
+                    messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
                     return redirect('/verifikator/import-data-klaim-obat')
                 except Exception as e:
                     messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
@@ -1220,7 +1327,8 @@ def import_data_klaim_obat(request):
                 try:
                     data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
                 except XLRDError:
-                    messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+                    messages.warning(request,
+                                     f'File yang Anda import memiliki password. Silahkan masukkan password file!')
                     return redirect('/verifikator/import-data-klaim-obat')
                 except Exception as e:
                     messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
@@ -1257,7 +1365,8 @@ def import_data_klaim_obat(request):
                         messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
                         return redirect('/verifikator/import-data-klaim-obat')
                     except Exception as e:
-                        messages.warning(request, f'Kesalahan terjadi pada No SEP Apotek : {data_klaim.NoSEPApotek}. Keterangan error : {e}')
+                        messages.warning(request,
+                                         f'Kesalahan terjadi pada No SEP Apotek : {data_klaim.NoSEPApotek}. Keterangan error : {e}')
                         return redirect('/verifikator/import-data-klaim-obat')
                 # DataKlaimObat.objects.bulk_create(obj_list)
             except IntegrityError:
@@ -1405,7 +1514,8 @@ def import_data_klaim_obat(request):
 @check_device
 @permissions(role=['verifikator'])
 def daftar_data_klaim_obat(request):
-    queryset = DataKlaimObat.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NamaPeserta', 'TglResep')
+    queryset = DataKlaimObat.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NamaPeserta',
+                                                                                                  'TglResep')
 
     # filter
     myFilter = DataKlaimObatFilter(request.GET, queryset=queryset)

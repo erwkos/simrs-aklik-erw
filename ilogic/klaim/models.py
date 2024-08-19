@@ -11,7 +11,7 @@ from .choices import (
     StatusRegisterChoices,
     JenisDisputeChoices,
     JenisPelayananChoices,
-    StatusDataKlaimChoices, NamaJenisKlaimChoices, JenisPendingChoices, StatusSinkronChoices
+    StatusDataKlaimChoices, NamaJenisKlaimChoices, JenisPendingChoices, StatusSinkronChoices, StatusVidiChoices
 )
 from faskes.models import (
     Faskes
@@ -231,7 +231,8 @@ class DataKlaimCBG(models.Model):
     is_hitung = models.BooleanField(default=False)
 
     # cek sinkronisasi dengan vidi
-    status_sinkron = models.CharField(max_length=200, default='Belum Disinkron', choices=StatusSinkronChoices.choices)
+    status_vidi = models.CharField(max_length=200, default='Tidak Disinkron', choices=StatusVidiChoices.choices)
+    status_sinkron = models.CharField(max_length=200, default='Tidak Disinkron', choices=StatusSinkronChoices.choices)
     tgl_sinkron = models.DateTimeField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

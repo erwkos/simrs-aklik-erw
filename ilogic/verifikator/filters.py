@@ -5,7 +5,7 @@ from django_filters import OrderingFilter
 
 from faskes.models import Faskes
 from klaim.choices import JenisPelayananChoices
-from klaim.models import DataKlaimCBG, DataKlaimObat
+from klaim.models import DataKlaimCBG, DataKlaimObat, RegisterKlaim
 from user.models import User
 from django.contrib.auth.models import Group
 
@@ -204,3 +204,9 @@ class DownloadDataKlaimObatFilter(django_filters.FilterSet):
         if request and request.user.is_authenticated:
             # Filter queryset berdasarkan request.user jika pengguna terautentikasi
             self.filters['faskes'].field.queryset = Faskes.objects.filter(kantor_cabang__in=request.user.kantorcabang_set.all())
+
+
+class SinkronisasiVIBIVIDIFilter(django_filters.FilterSet):
+    nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
+    status = django_filters.CharFilter(field_name='status')
+    status_sinkron = django_filters.CharFilter(field_name='status_sinkron')

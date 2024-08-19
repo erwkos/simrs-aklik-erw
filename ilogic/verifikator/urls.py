@@ -18,6 +18,10 @@ urlpatterns = [
     path('detail-register/<int:pk>', views.detail_register, name='detail-register'),
     path('import-data-klaim', views.import_data_klaim, name='import-data-klaim'),
     path('daftar-data-klaim', views.daftar_data_klaim, name='daftar-data-klaim'),
+
+    path('sinkronisasi-vibi-vidi', views.sinkronisasi_vibi_vidi, name='sinkronisasi-vibi-vidi'),
+    path('sinkronisasi-vibi-vidi/download', views.sinkronisasi_vibi_vidi_download, name='sinkronisasi-vibi-vidi-download'),
+
     path('detail-data-klaim/<int:pk>', views.detail_data_klaim, name='detail-data-klaim'),
     path('finalisasi-data-klaim', views.finalisasi_data_klaim, name='finalisasi-data-klaim'),
     path('update/finalisasi-data-klaim/<int:pk>', views.update_finalisasi_data_klaim, name='update-finalisasi-data-klaim'),
