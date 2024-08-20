@@ -55,12 +55,13 @@ class NamaJenisKlaimChoices(models.TextChoices):
 
 
 class StatusSinkronChoices(models.TextChoices):
+    BELUM_SINKRON = 'Tidak Disinkron', _('Tidak Disinkron')
     TIDAK_SINKRON = 'Tidak Sinkron', _('Tidak Sinkron')
     SINKRON = 'Sinkron', _('Sinkron')
 
 
 class StatusVidiChoices(models.TextChoices):
-    TIDAK_SINKRON = 'Tidak Sinkron', _('Tidak Sinkron')
+    BELUM_SINKRON = 'Tidak Disinkron', _('Tidak Disinkron')
     PEMBAHASAN = 'Pembahasan', _('Pembahasan')
     TIDAK_LAYAK = 'Tidak Layak', _('Tidak Layak')
     LAYAK = 'Layak', _('Layak')
