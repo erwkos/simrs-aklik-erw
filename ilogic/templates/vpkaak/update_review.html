@@ -249,16 +249,19 @@
         function toggleKeteranganReview() {
             var status = document.getElementById('id_status').value;
             var keteranganReviewDiv = document.getElementById('div_id_keterangan_review');
+            var jenisFraud = document.getElementById('div_id_jenis_fraud');
             var koreksiDiv = document.getElementById('koreksi');
             var buttonStatus = document.getElementById('button_status');
             if (status === 'Tidak Sesuai') {
                 keteranganReviewDiv.style.display = 'none';
                 koreksiDiv.style.display = 'block';
                 buttonStatus.style.display = 'none';
+                jenisFraud.style.display = 'block';
             } else {
                 keteranganReviewDiv.style.display = 'block';
                 koreksiDiv.style.display = 'none';
                 buttonStatus.style.display = 'block';
+                jenisFraud.style.display = 'none'
             }
         }
 
@@ -267,6 +270,22 @@
             statusSelect.addEventListener('change', toggleKeteranganReview);
             toggleKeteranganReview(); // Initialize visibility on page load
         });
+        
+        $(document).ready(function () {
+            $('#myForm').on('submit', function (event){
+                const jenisFraud = $('#id_jenis_fraud').val();
+                
+                if ($('#myForm input[name="jenis_fraud"]').length === 0) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'jenis_fraud',
+                        value: jenisFraud
+                    }).appendTo('#myForm');
+                } else {
+                    $('#myForm input[name="jenis_fraud"]').val(jenisFraud);
+                }
+            })
+        })
     </script>
     <style>
         .loading-dots::after {
@@ -314,7 +333,7 @@
                     <div class="row">
                         <div class="col-12 mt-3 mx-3">
                             <div class="row">
-                                <form method="POST">
+                                <form method="POST" id="formPertama">
                                     <div class="col-6">
                                         <div class="container">
                                             <input type="hidden" name="next" value="{{ request.GET.next }}">

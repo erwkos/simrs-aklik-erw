@@ -1,11 +1,12 @@
 import django_filters
 from dal import autocomplete
 from django.forms import NumberInput, DateInput
+from django.forms.widgets import SelectMultiple, CheckboxSelectMultiple
 from django_filters import OrderingFilter
 
 from faskes.models import Faskes
 from klaim.choices import JenisPelayananChoices
-from vpkaak.choices import JenisAuditChoices, StatusChoices, StatusReviewChoices
+from vpkaak.choices import JenisAuditChoices, StatusChoices, StatusReviewChoices, StatusKoreksiBoaChoices
 from vpkaak.models import SamplingDataKlaimCBG, RegisterPostKlaim
 
 STATUS_CHOICES_VERIFIKATOR = (
@@ -25,7 +26,8 @@ NMTKP_CHOICES = (
 class RegisterPostKlaimFilter(django_filters.FilterSet):
     nomor_register = django_filters.CharFilter(field_name='nomor_register', lookup_expr='icontains',
                                                label='Nomor Register')
-    created_at = django_filters.DateFilter(field_name='created_at', lookup_expr='date', widget=DateInput(attrs={'type': 'date'}),
+    created_at = django_filters.DateFilter(field_name='created_at', lookup_expr='date',
+                                           widget=DateInput(attrs={'type': 'date'}),
                                            label='Tanggal Register')
     jenis_audit = django_filters.ChoiceFilter(choices=JenisAuditChoices.choices, label='Jenis Audit')
     status = django_filters.ChoiceFilter(choices=StatusChoices.choices, label='Status')
@@ -39,6 +41,18 @@ class RegisterPostKlaimFilter(django_filters.FilterSet):
     #               'status',
     #               'nomor_BA_VPK_AAK',
     #               ]
+
+
+class CBGKoreksiBoaFilter(django_filters.FilterSet):
+    nomor_register = django_filters.CharFilter(field_name='register__nomor_register', label="No Reg")
+    status_koreksi_boa = django_filters.MultipleChoiceFilter(
+        choices=StatusKoreksiBoaChoices.choices,
+        label='Status Koreksi BOA',
+        widget=CheckboxSelectMultiple,
+        initial=[choice[0] for choice in StatusKoreksiBoaChoices.choices]  # Set semua opsi sebagai default
+    )
+    Nosjp = django_filters.CharFilter(field_name='Nosjp', label="No SEP")
+    Nmtkp = django_filters.ChoiceFilter(choices=NMTKP_CHOICES, label="Tingkat Pelayanan")
 
 
 class SamplingDataKlaimCBGFilter(django_filters.FilterSet):

@@ -1,0 +1,494 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load my_tags %}
+{% load static %}
+{% load humanize %}
+
+{% block scriptheader %}
+    <style>
+        .loading-dots::after {
+            content: " .";
+            animation: dots 1s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% {
+                content: " .";
+            }
+            40% {
+                content: " ..";
+            }
+            60% {
+                content: " ...";
+            }
+            80%, 100% {
+                content: " ..";
+            }
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script>
+        $(document).ready(function () {
+            // Fungsi untuk melakukan AJAX request
+            function checkStatus() {
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/refresh_halaman/boa/',
+                    type: 'GET', // atau 'POST' tergantung pada server Anda
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status_rpa === 200) {
+                            $('#loginBOA').prop('disabled', true);
+                        } else {
+                            $('#loginBOA').prop('disabled', false);
+                        }
+                    },
+                    error: function () {
+                        $('#loginBOA').prop('disabled', false);
+                    }
+                });
+            }
+
+            // Panggil fungsi saat halaman diakses
+            checkStatus();
+        });
+    </script>
+{% endblock %}
+
+{% block data %}
+    <button type="button" class="btn-primary btn" id="loginBOA">Login BOA</button>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="col-12 col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <form class="row row-cols-md-auto g-3 align-items-center" method="GET">
+                    {{ myFilter.form | crispy }}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+
+{#            {% for data_klaim in data_klaim %}#}
+{#                {% if forloop.first %}#}
+{#                    <form method="POST" id="formRPA">#}
+{#                        <input type="hidden" name="ppk_layan" value='{{ data_klaim.Nosjp|slice:":8" }}'>#}
+{#                    </form>#}
+{#                {% endif %}#}
+{#            {% endfor %}#}
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <button type="submit" class="btn btn-primary" id="koreksiboa"><i class="fas fa-recycle"></i> Koreksi CBG BOA
+                </button>
+{#                <input type="text" id="search-input" class="form-control mx-2" style="width: 60%;"#}
+{#                       placeholder="Cari SEP">#}
+                <button type="button" id="download-btn" class="btn btn-primary"><i class="fas fa-file-download"></i>
+                    Download
+                </button>
+            </div>
+{#            </form>#}
+            <div class="table-responsive mt-4">
+                <table class="table table-hover mb-0" id="data-table" style="border: 1px;">
+                    <thead>
+                    <tr>
+                        <th scope="col" data-sort="status_koreksi_boa">
+                            <center>Status Koreksi BOA <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="keterangan_koreksi_boa">
+                            <center>Keterangan Koreksi BOA <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="tgl_koreksi_boa">
+                            <center>Tgl Koreksi BOA <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="Nosjp">
+                            <center>No SEP <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="jenis_audit">
+                            <center>Jenis Audit <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="jenis_fraud">
+                            <center>Jenis Fraud <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="no_ba">
+                            <center>No BA Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="kelas_rawat_koreksi">
+                            <center>Kelas Rawat Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="kdinacbg_koreksi">
+                            <center>Kdinacbg Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="tarif_inacbg_koreksi">
+                            <center>Tarif Inacbg Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+{#                        <th scope="col" data-sort="top_up">#}
+{#                            <center>Top Up Koreksi<i class="fas fa-sort"></i></center>#}
+{#                        </th>#}
+                        <th scope="col" data-sort="keterangan_koreksi">
+                            <center>Keterangan Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="diagnosa_utama_koreksi">
+                            <center>DU Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="diagnosa_sekunder_koreksi">
+                            <center>DS Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="prosedur">
+                            <center>Prosedur Koreksi <i class="fas fa-sort"></i></center>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    {% for data_klaim in data_klaim %}
+                        <tr style="font-weight: bolder">
+                            <td>
+                                <center>{{ data_klaim.status_koreksi_boa }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.keterangan_koreksi_boa }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.tgl_koreksi_boa }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.Nosjp }}</center>
+                            </td>                            
+                            <td>
+                                <center>{{ data_klaim.register.jenis_audit }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.jenis_fraud }}</center>
+                            </td>                            
+                            <td>
+                                <center>{{ data_klaim.register.nomor_BA_VPK_AAK }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.Klsrawat_koreksi }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.Kdinacbgs_koreksi }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.biaya_koreksi }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.keterangan_review }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.Kddiagprimer_koreksi }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.Diagsekunder_koreksi }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.Procedure_koreksi }}</center>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="14" class="text-center">Tidak ada data</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <center>
+                <div id="pagination" class="mt-3" style="display: none;"></div>
+            </center>
+            </center>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Inisialisasi variabel
+        let sortField = 'id'; // Kolom default untuk sorting
+        let sortDirection = 'asc'; // Urutan default
+        let currentPage = 1;
+        const pageSize = 10000000; // Set ukuran halaman sesuai kebutuhan
+
+        // Data tabel dari server
+        const data = [
+            {% for data_klaim in data_klaim %}
+                {
+                    status_koreksi_boa: "{{ data_klaim.status_koreksi_boa }}",
+                    keterangan_koreksi_boa: "{{ data_klaim.keterangan_koreksi_boa }}",
+                    tgl_koreksi_boa: "{{ data_klaim.tgl_koreksi_boa }}",
+                    Nosjp: "{{ data_klaim.Nosjp }}",
+                    jenis_audit: "{{ data_klaim.register.jenis_audit }}",
+                    jenis_fraud: "{{ data_klaim.jenis_fraud }}",
+                    no_ba: "{{ data_klaim.register.nomor_BA_VPK_AAK }}",
+                    kelas_rawat_koreksi: "{{ data_klaim.Klsrawat_koreksi }}",
+                    kdinacbg_koreksi: "{{ data_klaim.Kdinacbgs_koreksi }}",
+                    tarif_inacbg_koreksi: "{{ data_klaim.biaya_koreksi }}",
+                    keterangan_koreksi: "{{ data_klaim.keterangan_review }}",
+                    diagnosa_utama_koreksi: "{{ data_klaim.Kddiagprimer_koreksi }}",
+                    diagnosa_sekunder_koreksi: "{{ data_klaim.Diagsekunder_koreksi }}",
+                    prosedur: "{{ data_klaim.Procedure_koreksi }}",
+                },
+{#            {% empty %}#}
+{#                {#}
+{#                    keterangan_koreksi_boa: "Tidak ada data",#}
+{#                    tgl_koreksi_boa: "Tidak ada data",#}
+{#                    Nosjp: "Tidak ada data",#}
+{#                    jenis_audit: "Tidak ada data",#}
+{#                    jenis_fraud: "Tidak ada data",#}
+{#                    no_ba: "Tidak ada data",#}
+{#                    kelas_rawat_koreksi: "Tidak ada data",#}
+{#                    kdinacbg_koreksi: "Tidak ada data",#}
+{#                    tarif_inacbg_koreksi: "Tidak ada data",#}
+{#                    keterangan_koreksi: "Tidak ada data",#}
+{#                    diagnosa_utama_koreksi: "Tidak ada data",#}
+{#                    diagnosa_sekunder_koreksi: "Tidak ada data",#}
+{#                    prosedur: "Tidak ada data",#}
+{#                },#}
+            {% endfor %}
+        ];
+        
+        function renderTable(dataToRender) {
+            $('#table-body').empty();
+
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+
+            const sortedData = dataToRender.sort((a, b) => {
+                if (a[sortField] < b[sortField]) return sortDirection === 'asc' ? -1 : 1;
+                if (a[sortField] > b[sortField]) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            sortedData.slice(start, end).forEach(row => {
+                $('#table-body').append(`
+                    <tr style="font-weight: bolder">
+                        <td><center>${row.status_koreksi_boa}</center></td>
+                        <td><center>${row.keterangan_koreksi_boa}</center></td>
+                        <td><center>${row.tgl_koreksi_boa}</center></td>
+                        <td><center>${row.Nosjp}</center></td>
+                        <td><center>${row.jenis_audit}</center></td>
+                        <td><center>${row.jenis_fraud}</center></td>
+                        <td><center>${row.no_ba}</center></td>
+                        <td><center>${row.kelas_rawat_koreksi}</center></td>
+                        <td><center>${row.kdinacbg_koreksi}</center></td>
+                        <td><center>${row.tarif_inacbg_koreksi}</center></td>
+                        <td><center>${row.keterangan_koreksi}</center></td>
+                        <td><center>${row.diagnosa_utama_koreksi}</center></td>
+                        <td><center>${row.diagnosa_sekunder_koreksi}</center></td>
+                        <td><center>${row.prosedur}</center></td>
+                    </tr>
+                `);
+            });
+
+            const totalPages = Math.ceil(dataToRender.length / pageSize);
+            $('#pagination').empty();
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'active' : '';
+                $('#pagination').append(`<button class="btn btn-primary mx-1 ${activeClass}" onclick="goToPage(${i})">${i}</button>`);
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable(data);
+        }
+
+        function updateSortIcons() {
+            $('th[data-sort]').each(function () {
+                const field = $(this).data('sort');
+                if (field === sortField) {
+                    const icon = sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+                    $(this).find('i').removeClass('fa-sort-up fa-sort-down').addClass(icon);
+                } else {
+                    $(this).find('i').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
+                }
+            });
+        }
+
+        // Sorting ketika header diklik
+        $('th[data-sort]').on('click', function () {
+            const field = $(this).data('sort');
+            if (sortField === field) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortDirection = 'asc';
+            }
+            updateSortIcons();
+            renderTable(data);
+        });
+
+        $('#download-btn').on('click', function () {
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+            XLSX.writeFile(wb, 'data_koreksi.xlsx');
+        });
+
+        renderTable(data); // Inisialisasi tabel
+    </script>
+
+    <script>
+        $('#loginBOA').click(function () {
+            const $button = $(this);
+            const originalText = $button.text();
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Silahkan Masukan Username dan password BOA');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/global_session/boa/',
+                type: 'GET',
+                success: function (response) {
+                    console.log('Berhasil Login');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("Login BOA");
+                    alert('Login BOA Berhasil')
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Login BOA");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+    </script>
+
+    <script>
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        }
+
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        document.getElementById('koreksiboa').addEventListener('click', async function () {
+            const $button = $(this);
+            try {
+                // 1. Ambil data dari formRPA dan serialize
+                {#const formData = $('#formRPA').serialize();#}
+                const csrfToken = getCsrfToken();
+                const tglKoreksi = getCurrentDateTime(); // Dapatkan datetime saat ini
+
+                $button.prop('disabled', true).addClass('loading-dots').text('Proses Koreksi BOA');
+
+                // 2. Ambil semua NOSEP dari tabel
+                const noSepElements = Array.from(document.querySelectorAll('#data-table tbody tr'));
+
+                // 3. Fungsi untuk melakukan POST request dan menangani respons
+                async function processNoSep(noSepElement) {
+                    const noSep = noSepElement.querySelector('td:nth-child(4)').textContent.trim();
+                    const jenisAudit = noSepElement.querySelector('td:nth-child(5)').textContent.trim();
+                    const jenisFraud = noSepElement.querySelector('td:nth-child(6)').textContent.trim();
+                    const noBa = noSepElement.querySelector('td:nth-child(7)').textContent.trim();
+                    const kelasRawatKoreksi = noSepElement.querySelector('td:nth-child(8)').textContent.trim();
+                    const kdinacbgKoreksi = noSepElement.querySelector('td:nth-child(9)').textContent.trim();
+                    const tarifInacbgKoreksi = noSepElement.querySelector('td:nth-child(10)').textContent.trim();
+                    const keteranganKoreksi = noSepElement.querySelector('td:nth-child(11)').textContent.trim();
+                    const diagnosaUtamaKoreksi = noSepElement.querySelector('td:nth-child(12)').textContent.trim();
+                    const diagnosaSekunderKoreksi = noSepElement.querySelector('td:nth-child(13)').textContent.trim();
+                    const prosedur = noSepElement.querySelector('td:nth-child(14)').textContent.trim();
+
+                    // POST request ke 'koreksi boa'
+                    const response1 = await fetch('http://127.0.0.1:8000/koreksi_boa/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            no_sep: noSep,
+                            jenis_audit: jenisAudit,
+                            jenis_fraud: jenisFraud,
+                            no_ba: noBa,
+                            kelas_rawat_koreksi: kelasRawatKoreksi,
+                            kdinacbg_koreksi: kdinacbgKoreksi,
+                            tarif_inacbg_koreksi: tarifInacbgKoreksi,
+                            keterangan_koreksi: keteranganKoreksi,
+                            diagnosa_utama_koreksi: diagnosaUtamaKoreksi,
+                            diagnosa_sekunder_koreksi: diagnosaSekunderKoreksi,
+                            prosedur: prosedur,
+                            tglKoreksi: tglKoreksi // Tambahkan datetime koreksi
+                        }),
+                    });
+
+                    if (!response1.ok) {
+                        throw new Error(`Error during POST to koreksi boa for ${noSep}`);
+                    }
+
+                    const result1 = await response1.json();
+                    const status_koreksi_boa = result1.status_koreksi_boa; 
+                    const keterangan_koreksi_boa = result1.keterangan_koreksi_boa; 
+
+                    // POST request ke 'vpaaak/rpa_cbg_vpkaak'
+                    const response2 = await fetch('/vpkaak/rpa/cbg', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': csrfToken  // Menambahkan CSRF token di header
+                        },  
+                        body: new URLSearchParams({
+                            no_sep: noSep,
+                            tglKoreksi: tglKoreksi, // Tambahkan datetime koreksi
+                            status_koreksi_boa: status_koreksi_boa, // Tambahkan status koreksi
+                            keterangan_koreksi_boa: keterangan_koreksi_boa // Tambahkan keterangan koreksi
+                        })
+                    });
+
+                    if (!response2.ok) {
+                        throw new Error(`Error during POST to RPA CBG for ${noSep}`);
+                    }
+
+                    // Update status VIDI dan tgl_sinkron di tabel berdasarkan respons
+                    const statusKoreksiBoa = noSepElement.querySelector('td:nth-child(1)');
+                    const keteranganKoreksiBoa = noSepElement.querySelector('td:nth-child(2)');
+                    const tglKoreksiBOA = noSepElement.querySelector('td:nth-child(3)');
+
+                    if (statusKoreksiBoa) {
+                        statusKoreksiBoa.textContent = status_koreksi_boa;
+                    }
+                    if (keteranganKoreksiBoa) {
+                        keteranganKoreksiBoa.textContent = keterangan_koreksi_boa;
+                    }
+
+                    if (tglKoreksiBOA) {
+                        tglKoreksiBOA.textContent = tglKoreksi; // Update tgl_koreksi di tabel
+                    }
+
+                }
+
+                // 4. Kirimkan setiap NOSEP secara berurutan
+                for (const noSepElement of noSepElements) {
+                    await processNoSep(noSepElement);
+                }
+
+                $button.prop('disabled', false).removeClass('loading-dots').text("Koreksi CBG BOA");
+                alert('Proses Koreksi BOA Selesai');
+
+            } catch (error) {
+                console.error('Error:', error);
+                $button.prop('disabled', false).removeClass('loading-dots').text("Koreksi CBG BOA");
+                alert('Proses Sinkronisasi Gagal: ' + error);
+            }
+        });
+    </script>
+
+{% endblock %}

@@ -151,6 +151,15 @@ class SamplingDataKlaimCBG(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # jenis fraud
+    jenis_fraud = models.CharField(max_length=255, blank=True, null=True)
+    # jenis_fraud = models.CharField(max_length=255, default='Temuan Administrasi yang tidak sesuai atau alasan lain yang bukan potensi fraud')
+
+    # status koreksi BOA
+    keterangan_koreksi_boa = models.CharField(max_length=255, blank=True, null=True)
+    status_koreksi_boa = models.CharField(max_length=255, default='Belum Koreksi BOA')
+    tgl_koreksi_boa = models.DateTimeField(blank=True, null=True)
+
     def __str__(self):
         return f'{self.Nosjp} - {self.register.nomor_register}'
 

@@ -29,7 +29,7 @@ from django.db.models import Max, Sum
 from user.models import User
 from verifikator.storages import TemporaryStorage
 from vpkaak.cekgroupingfix import grouping, pindahrs
-from vpkaak.filters import SamplingDataKlaimCBGFilter, RegisterPostKlaimFilter
+from vpkaak.filters import SamplingDataKlaimCBGFilter, RegisterPostKlaimFilter, CBGKoreksiBoaFilter
 from vpkaak.forms import RegisterPostKlaimForm, ImportSamplingDataKlaimForm, SamplingDataKlaimCBGForm, \
     FinalisasiRegisterPostKlaimForm, InputNomorBAForm, RegisterPostKlaimSupervisorKPForm
 from vpkaak.models import RegisterPostKlaim, SamplingDataKlaimCBG
@@ -890,6 +890,8 @@ def update_review(request, pk):
                 instance.status = StatusReviewChoices.TidakSesuai
                 instance.is_koreksi = True
                 instance.verifikator_review = request.user
+                instance.jenis_fraud = data.get('jenis_fraud')
+                print(request.POST.get('jenis_fraud'))
 
                 if data.get('tipe_rawat') == 'outpatient':
                     tipe_rawat = "RJTL"
@@ -1023,6 +1025,7 @@ def update_review_kp(request, pk):
                 instance.status = StatusReviewChoices.TidakSesuai
                 instance.is_koreksi = True
                 instance.verifikator_review = request.user
+                instance.jenis_fraud = data.get('jenis_fraud')
 
                 if data.get('tipe_rawat') == 'outpatient':
                     tipe_rawat = "RJTL"
@@ -1212,6 +1215,72 @@ def api_json_data_sampling_vpkaak(request):
 def monitoring_data_sampling_vpkaak(request):
     context = {}
     return render(request, 'vpkaak/monitoring_data_sampling_vpkaak.html', context=context)
+
+# robot processing automation with selenium
+@login_required
+@check_device
+@permissions(role=['verifikator', 'stafupk', 'supervisor'])
+def rpa_cbg_vpkaak(request):
+    data = request.POST
+    queryset = None
+    context = {
+        'data_klaim': queryset,
+        # 'register_klaim': register_klaim
+    }
+
+    # if 'register_klaim' in data_get:
+    register_post_klaim = request.GET.get('nomor_register')
+    # status = request.GET.get('status')
+    # status_sinkron = request.GET.get('status_sinkron')
+    kantor_cabang = request.user.kantorcabang_set.all().first().kode_cabang
+    # ganti dengan ini kalo deploy
+    # queryset = SamplingDataKlaimCBG.objects.filter(Kdkclayan=kantor_cabang,
+    #                                                register__nomor_register=register_post_klaim,
+    #                                                is_final=True,
+    #                                                status=StatusReviewChoices.TidakSesuai).order_by('created_at')
+    # untuk sementara
+    queryset = SamplingDataKlaimCBG.objects.filter(Kdkclayan=kantor_cabang,
+                                                   register__nomor_register=register_post_klaim,
+                                                   status=StatusReviewChoices.TidakSesuai).order_by('created_at')
+    # print(queryset)
+
+    # filter
+    myFilter = CBGKoreksiBoaFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+    # print(queryset)
+    context.update({
+        'data_klaim': queryset,
+        'register_post_klaim': register_post_klaim,
+        'myFilter': myFilter,
+    })
+
+    if 'no_sep' in data:
+        nosep = data['no_sep']
+        keterangan_koreksi_boa = data['keterangan_koreksi_boa']
+        status_koreksi_boa = data['status_koreksi_boa']
+        try:
+            klaim = SamplingDataKlaimCBG.objects.get(Nosjp=nosep)
+            klaim.keterangan_koreksi_boa = keterangan_koreksi_boa
+            klaim.tgl_koreksi_boa = datetime.datetime.today()
+            klaim.status_koreksi_boa = status_koreksi_boa
+            klaim.save()
+            context.update({
+                'klaim': klaim,
+            })
+            response_data = {
+                'no_sep': nosep,
+                'keterangan_koreksi_boa': keterangan_koreksi_boa,
+                'status_koreksi_boa': status_koreksi_boa,
+                'message': 'Berhasil Update',
+            }
+            return JsonResponse(response_data)
+        except SamplingDataKlaimCBG.DoesNotExist:
+            response_data = {
+                'no_sep': nosep,
+                'message': 'Data tidak ditemukan',
+            }
+            return JsonResponse(response_data, status=404)
+    return render(request, 'vpkaak/rpa_cbg_vpkaak.html', context=context)
 
 
 #################

@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import DateInput, SelectDateWidget
 
-from vpkaak.choices import StatusReviewChoices, StatusChoices
+from vpkaak.choices import StatusReviewChoices, StatusChoices, JenisFraudChoices
 from vpkaak.models import RegisterPostKlaim, SamplingDataKlaimCBG
 
 STATUS_REVIEW_CHOICES = [
@@ -143,12 +143,14 @@ class ImportSamplingDataKlaimForm(forms.Form):
 
 class SamplingDataKlaimCBGForm(forms.ModelForm):
     status = forms.ChoiceField(choices=STATUS_REVIEW_CHOICES, label='Status')
+    jenis_fraud = forms.ChoiceField(choices=JenisFraudChoices.choices, label='Jenis Fraud')
 
     class Meta:
         model = SamplingDataKlaimCBG
         fields = [
             'status',
             'keterangan_review',
+            'jenis_fraud',
         ]
 
 

@@ -43,4 +43,7 @@ urlpatterns = [
     path('api/json/monitoring/data/sampling/vpkaak/KP', views.api_json_data_sampling_vpkaak_supervisorkp, name='api_json_data_sampling_vpkaak_supervisorkp'),
     path('monitoring/data/sampling/vpkaak/KP', views.monitoring_data_sampling_vpkaak_supervisorkp, name='monitoring_data_sampling_vpkaak_supervisorkp'),
 
+    # rpa
+    path('rpa/cbg', views.rpa_cbg_vpkaak, name='rpa_cbg_vpkaak'),
+
               ] + router.urls
