@@ -235,6 +235,13 @@ class DataKlaimCBG(models.Model):
     status_sinkron = models.CharField(max_length=200, default='Tidak Disinkron', choices=StatusSinkronChoices.choices)
     tgl_sinkron = models.DateTimeField(blank=True, null=True)
 
+    # dari metafisik
+    is_metafisik = models.BooleanField(default=False)
+    id_metafisik = models.CharField(max_length=100, blank=True, null=True)
+    keterangan_aksi = models.CharField(max_length=2000, blank=True, null=True)
+    deskripsi_metafisik = models.CharField(max_length=1000, blank=True, null=True)
+    indikator_metafisik = models.CharField(max_length=100, blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -374,6 +374,9 @@
                                                            href="{% url 'verifikator:import-data-klaim' %}">Import
                                         Data CBG</a>
                                     </li>
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'metafisik:list_no_ba_cbg_metafisik' %}">Metafisik VIBI</a>
+                                    </li>
                                     <li class="pc-item">
                                         <a class="pc-link" href="{% url 'verifikator:daftar-data-klaim' %}"><span
                                                 class="pc-badge bg-danger">{{ request.count_dataclaim }}</span>
@@ -654,6 +657,39 @@
                                 </ul>
                             </li>
 
+                            <!-- Metafisik -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
+                            <span class="pc-micon">
+                              <svg class="pc-icon">
+                                <use xlink:href="#custom-user-square"></use>
+                              </svg>
+                            </span>
+                                    <span class="pc-mtext">Metafisik KP</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'metafisik:list_no_ba_cbg_metafisik_kp' %}">
+                                            List No BA CBG</a>
+                                    </li>                                    
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'metafisik:import_no_ba_cbg_metafisik' %}">
+                                            Import No BA CBG</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link"
+                                           href="{% url 'metafisik:import_data_klaim_cbg_metafisik' %}">
+                                            Import Data Klaim CBG</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            
                             <!-- Register Post Klaim -->
                             <li class="pc-item pc-hasmenu">
                                 <a href="#!" class="pc-link">
@@ -677,7 +713,7 @@
                                     <li class="pc-item">
                                         <a class="pc-link"
                                            href="{% url 'vpkaak:import_sampling_data_klaim_supervisorkp' %}">
-                                            Import Data Klaim</a>
+                                            Import Data Klaim VPK</a>
                                     </li>
                                     <li class="pc-item">
                                         <a class="pc-link"

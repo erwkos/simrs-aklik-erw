@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="col-xl-12 col-md-12 mb-4 mt-4">
+    <div class="card table-card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5>Preview Daftar Sampling Data Klaim</h5>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="file_name" value="{{file_name}}">
+                <input type="hidden" name="register" value="{{register}}">
+                <input type="hidden" name="password" value="{{password}}">
+                <input type="hidden" name="action" value="confirm">
+                <button class="btn btn-primary" {% if total_data_invalid > 0 %}disabled{% endif %}>CONFIRM</button>
+            </form>
+        </div>
+        <div class="card-body">
+            <center><button class="btn btn-primary w-75 mb-2 mt-2" disabled>(DATA VALID: {{total_data_valid}})</button></center>
+            <div class="table-responsive mb-5" style="height:400px; overflow-y:scroll;">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead>
+                    <tr>
+                        {% for column in preview_data_valid.columns %}
+                        <th scope="col">{{column}}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for index,row in preview_data_valid.iterrows %}
+                    <tr>
+                        {% for value in row %}
+                        <td>{{value}}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

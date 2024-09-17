@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load my_tags %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <style>
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select {
+            word-wrap: normal !important;
+        }
+
+        .select2-selection--single {
+            /* Existing options: */
+            background-color: #fff;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            /* HACK: new option to make padding right: */
+            padding-bottom: 36px;
+        }
+
+        /* HACK: make default django-autocomplete-light arrow go away (so bootstrap shows): */
+        .select2-selection__arrow {
+            visibility: hidden;
+        }
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"
+            integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>Daftar List Nomor BA Metafisik</h5>
+            </div>
+
+            <div class="container-fluid">
+                <br>
+                <div class="card-body">
+                    <form class="row row-cols-md-auto g-3 align-items-center">
+                        {{ myFilter.form | crispy }}
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+            {{ myFilter.form.media }}
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col">NO</th>
+                            <th scope="col">TGL UPLOAD</th>
+                            <th scope="col">NO BPK</th>
+                            <th scope="col">TGL BPK</th>
+                            <th scope="col">BUPEL</th>
+                            <th scope="col">NAMA RS</th>
+                            <th scope="col">TOTAL KLAIM</th>
+                            <th scope="col">TOTAL REDFLAG</th>
+                            <th scope="col">PEMBAGIAN</th>
+                            <th scope="col">DOWNLOAD DATA</th>
+                            <th scope="col">STATUS IMPORT</th>
+                            <th scope="col">STATUS BAGI</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for register in list_no_ba %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ register.created_at | date:'d-m-y' }}</td>
+                                <td>{{ register.no_surat_bast }}</td>
+                                <td>{{ register.tgl_bast }}</td>
+                                <td>{{ register.tgl_pelayanan | date:'M-y' }}</td>
+                                <td>{{ register.nmppklayan }}</td>
+                                <td>{{ register.total_klaim }}</td>
+                                <td>{{ register.total_redflag }}</td>
+                                {% if register.is_import %}
+                                    <td>
+                                        <button class="btn btn-sm btn-success" 
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#exampleModalLive" 
+                                                data-no-surat-bast="{{ register.no_surat_bast }}">
+                                            Pembagian
+                                        </button>
+                                    </td>
+                                    <form>
+                                        <input type="hidden" name="no_bast_export" value="{{ register.no_surat_bast }}">
+                                        <td>
+                                            <button type="submit" class="btn btn-sm btn-primary" name="export"
+                                                    value="export">
+                                                <i class="fas fa-file-download">
+                                                    <span style="font-size: 12px"> Download</span>
+                                                </i>
+                                            </button>
+                                        </td>
+                                    </form>
+                                {% else %}
+                                    <td>
+                                        <button class="btn btn-sm btn-success" disabled>Pembagian</button>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-secondary" disabled>Download</button>
+                                    </td>
+                                {% endif %}
+                                <td>{{ register.is_import }}</td>
+                                <td>{{ register.is_bagi }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <form method="POST">
+        {% csrf_token %}
+        <div id="exampleModalLive" class="modal fade" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLiveLabel"
+             aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLiveLabel">Pembagian Tugas Verifikasi CBG</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body"> 
+                        <p>List Verifikator yang akan dibagi:</p>
+                        <ol>
+                            {% for verifikator in verifikator %}
+                                <li>{{ verifikator }}</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="no_surat_bast" value="">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" name="bagi" value="bagi" class="btn btn-primary">Bagi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Pagination -->
+    <div class="pagination justify-content-center">
+    <span class="step-links">
+        {% if list_no_ba.has_previous %}
+            <a href="?{% param_replace page=1 %}">&laquo; First</a>
+            {% if list_no_ba.previous_page_number != 1 %}
+                <a href="?{% param_replace page=list_no_ba.previous_page_number %}">Previous</a>
+            {% endif %}
+        {% endif %}
+
+        Page {{ list_no_ba.number }} of {{ list_no_ba.paginator.num_pages }}
+
+        {% if list_no_ba.has_next %}
+            {% if list_no_ba.next_page_number != paginator.num_pages %}
+                <a href="?{% param_replace page=list_no_ba.next_page_number %}">Next</a>
+            {% endif %}
+            <a href="?{% param_replace page=list_no_ba.paginator.num_pages %}">Last &raquo;</a>
+        {% endif %}
+        <p>List No BPK {{ list_no_ba.start_index }} - {{ list_no_ba.end_index }} </p>
+    </span>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var exampleModalLive = document.getElementById('exampleModalLive');
+        exampleModalLive.addEventListener('show.bs.modal', function (event) {
+            // Tombol yang memicu modal
+            var button = event.relatedTarget;
+
+            // Dapatkan nilai data dari atribut data-no-surat-bast
+            var noSuratBast = button.getAttribute('data-no-surat-bast');
+
+            // Temukan input hidden dalam modal dan set nilai
+            var inputNoSuratBast = exampleModalLive.querySelector('input[name="no_surat_bast"]');
+            if (inputNoSuratBast) {
+                inputNoSuratBast.value = noSuratBast;
+            }
+        });
+    });
+</script>
+
+{% endblock %}

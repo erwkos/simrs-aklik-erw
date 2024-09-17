@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'supervisor',
     'supervisorkp',
     'vpkaak',
+    'metafisik',
 
     # modules
     'import_export',

@@ -43,6 +43,9 @@ urlpatterns = [
     # path('dokumentasi/', include(('dokumentasi.urls', 'dokumentasi'), namespace='dokumentasi')),
     path('supervisorkp/', include(('supervisorkp.urls', 'supervisorkp'), namespace='supervisorkp')),
     path('vpkaak/', include(('vpkaak.urls', 'vpkaak'), namespace='vpkaak')),
+    path('metafisik/', include(('metafisik.urls', 'metafisik'), namespace='metafisik')),
+
+
     path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
     path('static/<path:path>', serve, {'document_root': settings.STATIC_ROOT}),
 ]

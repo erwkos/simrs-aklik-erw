@@ -1,6 +1,5 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
-
 from vpkaak.models import RegisterPostKlaim, SamplingDataKlaimCBG, CookiesICD
 
 
@@ -10,6 +9,9 @@ class RegisterPostKlaimAdmin(ImportExportModelAdmin):
     search_fields = ('nomor_register',)
 
 
-# admin.site.register(RegisterPostKlaim)
-admin.site.register(SamplingDataKlaimCBG)
+@admin.register(SamplingDataKlaimCBG)
+class SamplingDataKlaimCBGAdmin(ImportExportModelAdmin):
+    search_fields = ('Nosjp',)
+
+
 admin.site.register(CookiesICD)

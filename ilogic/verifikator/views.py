@@ -38,6 +38,7 @@ from klaim.models import (
     DataKlaimCBG, KeteranganPendingDispute, SLA, DataKlaimObat
 )
 from klaim.resources import DataKlaimCBGResource, DataKlaimObatResource
+from metafisik.models import DataKlaimCBGMetafisik
 from .filters import DataKlaimCBGFilter, DownloadDataKlaimCBGFilter, DataKlaimObatFilter, DownloadDataKlaimObatFilter, \
     SinkronisasiVIBIVIDIFilter
 from .forms import (
@@ -845,6 +846,8 @@ def detail_data_klaim(request, pk):
     data_klaim_form = DataKlaimVerifikatorForm(instance=instance)
     data_klaim_pending_form = KeteranganPendingForm()
 
+    data_klaim_cbg_metafisik = DataKlaimCBGMetafisik.objects.filter(nosjp=instance.NOSEP).first()
+
     if request.method == 'POST':
         data_klaim_form = DataKlaimVerifikatorForm(instance=instance, data=request.POST)
         keterangan = KeteranganPendingForm(request.POST or None)
@@ -869,6 +872,7 @@ def detail_data_klaim(request, pk):
         'data_klaim': instance,
         'data_klaim_form': data_klaim_form,
         'data_klaim_pending_form': data_klaim_pending_form,
+        'meta': data_klaim_cbg_metafisik
     }
     return render(request, 'verifikator/cbg/detail_data_klaim_cbg.html', context)
 
