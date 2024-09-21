@@ -12,4 +12,4 @@ class NoBAMetafisikAdmin(ImportExportModelAdmin):
 
 @admin.register(DataKlaimCBGMetafisik)
 class DataKlaimCBGMetafisikAdmin(ImportExportModelAdmin):
-    search_fields = ['no_bast__no_surat_bast', 'nosjp']
+    search_fields = ['no_bast__no_surat_bast', 'nosjp', 'no_bast__tgl_bast']

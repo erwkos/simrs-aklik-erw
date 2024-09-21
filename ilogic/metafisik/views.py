@@ -17,7 +17,7 @@ from django.shortcuts import render, redirect
 from msoffcrypto.exceptions import InvalidKeyError, DecryptionError
 from xlrd import XLRDError
 
-from klaim.choices import JenisPelayananChoices, StatusDataKlaimChoices
+from klaim.choices import JenisPelayananChoices, StatusDataKlaimChoices, StatusRegisterChoices
 from klaim.models import RegisterKlaim, DataKlaimCBG, SLA
 from metafisik.filters import ListBAFilter
 from metafisik.forms import ImportDataKlaimCBGMetafisikForm
@@ -82,13 +82,14 @@ def list_no_ba_cbg_metafisik(request):
     bagi = request.POST.get('bagi')
     if request.method == 'POST' and bagi == 'bagi':
         no_surat_bast = request.POST.get('no_surat_bast')
-        cek_register_klaim = RegisterKlaim.objects.filter(no_ba_terima=no_surat_bast).exists()
+        cek_register_klaim = RegisterKlaim.objects.filter(no_ba_terima=no_surat_bast,
+                                                          status=StatusRegisterChoices.VERIFIKASI).exists()
 
         if not no_surat_bast:
             messages.warning(request, 'No Surat BAST tidak ditemukan dalam permintaan.')
             return redirect(request.headers.get('referer'))
         elif cek_register_klaim is False:
-            messages.warning(request, f'No Surat BAST {no_surat_bast} tidak ada pada register klaim.')
+            messages.warning(request, f'No Surat BAST {no_surat_bast} tidak status verifikasi atau tidak terdaftar .')
             return redirect(request.headers.get('referer'))
 
         # Mendapatkan verifikator_list dengan filter yang ditentukan
@@ -227,8 +228,8 @@ def import_data_klaim_cbg_metafisik(request):
                         'Kdinacbgs', 'Nminacbgs', 'Kddiagprimer', 'Nmdiagprimer', 'Diagsekunder', 'Prosedur',
                         'Klsrawat', 'Nmjnspulang', 'politujsep', 'Kddokter', 'Nmdokter', 'Umur Tahun', 'Kdsa',
                         'Kdsd', 'Deskripsisd', 'Kdsi', 'Kdsp', 'Deskripsisp', 'Kdsr', 'Deskripsisr', 'Tarifsa',
-                        'Tarifsd', 'Tarifsi', 'Tarifsp', 'Tarifsr', 'Bytagsep', 'Tarifgrup', 'biayars', 'id_logik', 'redflag',
-                        'deskripsi_redflag', 'keterangan_aksi', 'indikator']
+                        'Tarifsd', 'Tarifsi', 'Tarifsp', 'Tarifsr', 'Bytagsep', 'Tarifgrup', 'biayars', 'id_logik',
+                        'redflag', 'deskripsi_redflag', 'keterangan_aksi', 'indikator']
     if request.method == 'POST' and request.POST.get('action') == 'import':
         import_form = ImportDataKlaimCBGMetafisikForm(files=request.FILES, data=request.POST)
         if import_form.is_valid():
@@ -320,7 +321,7 @@ def import_data_klaim_cbg_metafisik(request):
                 with transaction.atomic():
                     DataKlaimCBGMetafisik.objects.bulk_create(obj_list)
                     valid_data = DataKlaimCBGMetafisik.objects.filter(id__in=[obj.id for obj in obj_list])
-                    df_valid = pd.DataFrame(valid_data.values())
+                    df_valid = pd.DataFrame(valid_data.values()).head()
                     transaction.set_rollback(True)
             except IntegrityError as e:
                 messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
