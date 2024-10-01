@@ -384,11 +384,27 @@ def review(request):
             'tarifsp',
             'tarifsr',
             'Biayaverifikasi',
-            'verifikator',
-            'tglreview',
+            # 'verifikator',
+            # 'tglreview',
             'keterangan',
             'redflag',
             'deskripsi_redflag',
+
+            # koreksi
+            'Kddiagprimer_koreksi',
+            'Nmdiagprimer_koreksi',
+            'Diagsekunder_koreksi',
+            'Procedure_koreksi',
+            'kdsa_koreksi',
+            'kdsd_koreksi',
+            'kdsi_koreksi',
+            'kdsp_koreksi',
+            'kdsr_koreksi',
+            'Nmtkp_koreksi',
+            'Kdinacbgs_koreksi',
+            'Nminacbgs_koreksi',
+            'Klsrawat_koreksi',
+            'biaya_koreksi'
         ]
 
         # Assign the titles for each cell of the header
@@ -444,8 +460,26 @@ def review(request):
                 queryset.tarifsp,
                 queryset.tarifsr,
                 queryset.Biayaverifikasi,
+                # queryset.verifikator_review,
+                queryset.keterangan_review,
                 queryset.redflag,
                 queryset.deskripsi_redflag,
+
+                # koreksi
+                queryset.Kddiagprimer_koreksi,
+                queryset.Nmdiagprimer_koreksi,
+                queryset.Diagsekunder_koreksi,
+                queryset.Procedure_koreksi,
+                queryset.kdsa_koreksi,
+                queryset.kdsd_koreksi,
+                queryset.kdsi_koreksi,
+                queryset.kdsp_koreksi,
+                queryset.kdsr_koreksi,
+                queryset.Nmtkp_koreksi,
+                queryset.Kdinacbgs_koreksi,
+                queryset.Nminacbgs_koreksi,
+                queryset.Klsrawat_koreksi,
+                queryset.biaya_koreksi,
             ]
 
             # Assign the data for each cell of the row
@@ -545,11 +579,26 @@ def reviewkp(request):
             'tarifsp',
             'tarifsr',
             'Biayaverifikasi',
-            'verifikator',
-            'tglreview',
+            # 'verifikator',
             'keterangan',
             'redflag',
             'deskripsi_redflag',
+
+            # koreksi
+            'Kddiagprimer_koreksi',
+            'Nmdiagprimer_koreksi',
+            'Diagsekunder_koreksi',
+            'Procedure_koreksi',
+            'kdsa_koreksi',
+            'kdsd_koreksi',
+            'kdsi_koreksi',
+            'kdsp_koreksi',
+            'kdsr_koreksi',
+            'Nmtkp_koreksi',
+            'Kdinacbgs_koreksi',
+            'Nminacbgs_koreksi',
+            'Klsrawat_koreksi',
+            'biaya_koreksi'
         ]
 
         # Assign the titles for each cell of the header
@@ -605,8 +654,27 @@ def reviewkp(request):
                 queryset.tarifsp,
                 queryset.tarifsr,
                 queryset.Biayaverifikasi,
+                # queryset.verifikator_review,
+                # queryset.tgl_review,
+                queryset.keterangan_review,
                 queryset.redflag,
                 queryset.deskripsi_redflag,
+
+                # koreksi
+                queryset.Kddiagprimer_koreksi,
+                queryset.Nmdiagprimer_koreksi,
+                queryset.Diagsekunder_koreksi,
+                queryset.Procedure_koreksi,
+                queryset.kdsa_koreksi,
+                queryset.kdsd_koreksi,
+                queryset.kdsi_koreksi,
+                queryset.kdsp_koreksi,
+                queryset.kdsr_koreksi,
+                queryset.Nmtkp_koreksi,
+                queryset.Kdinacbgs_koreksi,
+                queryset.Nminacbgs_koreksi,
+                queryset.Klsrawat_koreksi,
+                queryset.biaya_koreksi,
             ]
 
             # Assign the data for each cell of the row
@@ -831,9 +899,9 @@ def update_review(request, pk):
     data_klaim_form = SamplingDataKlaimCBGForm(instance=instance)
     if data:
         next = request.POST.get('next', '/')
-        if data.get('keterangan_review') and data.get('status') == StatusReviewChoices.Sesuai:
+        if data.get('keterangan_review') and (data.get('status') == StatusReviewChoices.Sesuai or data.get('status') == StatusReviewChoices.SudahKoreksi):
             instance.keterangan_review = data['keterangan_review']
-            instance.status = StatusReviewChoices.Sesuai
+            instance.status = data.get('status')
             instance.verifikator_review = request.user
             instance.tgl_review = datetime.datetime.today()
             instance.save()
@@ -966,7 +1034,7 @@ def update_review_kp(request, pk):
     data_klaim_form = SamplingDataKlaimCBGForm(instance=instance)
     if data:
         next = request.POST.get('next', '/')
-        if data.get('keterangan_review') and data.get('status') == StatusReviewChoices.Sesuai:
+        if data.get('keterangan_review') and (data.get('status') == StatusReviewChoices.Sesuai or data.get('Status') == StatusReviewChoices.SudahKoreksi):
             instance.keterangan_review = data['keterangan_review']
             instance.status = StatusReviewChoices.Sesuai
             instance.verifikator_review = request.user

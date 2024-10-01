@@ -80,6 +80,11 @@
                                         <button type="button"
                                                 class="btn btn-warning btn-sm">{{ queryset.status }}</button>
                                     </a>
+                                {% elif queryset.status == 'Sudah Koreksi' %}
+                                    <a href="{% url 'vpkaak:update_review_kp' queryset.id %}?next={{ request.get_full_path|urlencode }}">
+                                        <button type="button"
+                                                class="btn btn-light-success btn-sm">{{ queryset.status }}</button>
+                                    </a>
                                 {% endif %}
                             </td>
                             <td>{{ queryset.register.nomor_register }}</td>

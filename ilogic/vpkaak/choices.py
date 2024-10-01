@@ -24,6 +24,7 @@ class StatusReviewChoices(models.TextChoices):
     Belum = 'Belum Review', _('Belum Review')
     Sesuai = 'Sesuai', _('Sesuai')
     TidakSesuai = 'Tidak Sesuai', _('Tidak Sesuai')
+    SudahKoreksi = 'Sudah Koreksi', _('Sudah Koreksi')
 
 
 class InisiasiChoices(models.TextChoices):

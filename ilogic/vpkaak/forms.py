@@ -10,6 +10,7 @@ from vpkaak.models import RegisterPostKlaim, SamplingDataKlaimCBG
 STATUS_REVIEW_CHOICES = [
     (StatusReviewChoices.Sesuai, StatusReviewChoices.Sesuai),
     (StatusReviewChoices.TidakSesuai, StatusReviewChoices.TidakSesuai),
+    (StatusReviewChoices.SudahKoreksi, StatusReviewChoices.SudahKoreksi),
 ]
 
 STATUS_REGISTER_CHOICES_FINAL = [

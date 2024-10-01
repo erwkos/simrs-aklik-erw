@@ -1368,6 +1368,9 @@
                                 {% elif data_klaim.status == 'Tidak Sesuai' %}
                                     <button type="button"
                                             class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
+                                {% elif data_klaim.status == 'Sudah Koreksi' %}
+                                    <button type="button"
+                                            class="btn btn-light-success btn-sm">{{ data_klaim.status }}</button>
                                 {% endif %}
                             </td>
                         <td><b>Source Simpatik: </b></td>
