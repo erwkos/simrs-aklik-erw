@@ -90,10 +90,6 @@
                 {% if forloop.first %}
                     <form method="POST" id="formRPA">
                         <input type="hidden" name="ppk_layan" value='{{ data_klaim.NOSEP|slice:":8" }}'>
-                        <input type="hidden" name="status_vibi" value='{{ data_klaim.status }}'>
-                        <input type="hidden" name="jenis_pending" value='{{ data_klaim.jenis_pending }}'>
-                        <input type="hidden" name="jenis_dispute" value='{{ data_klaim.jenis_dispute }}'>
-                        <input type="hidden" name="ket_pending_dispute" value='{{ data_klaim.ket_pending_dispute }}'>
                     </form>
                 {% endif %}
             {% endfor %}
@@ -132,6 +128,12 @@
                         <th scope="col" data-sort="verifikator">
                             <center>Verifikator <i class="fas fa-sort"></i></center>
                         </th>
+                        <th scope="col" data-sort="jenis_dispute">
+                            <center>Jenis Dispute <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="ket_pending_dispute">
+                            <center>Ket. Pending/Dispute <i class="fas fa-sort"></i></center>
+                        </th>
                     </tr>
                     </thead>
                     <tbody id="table-body">
@@ -169,6 +171,9 @@
                                     {% elif data_klaim.status == 'Belum Disinkron' %}
                                         <button type="button"
                                                 class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Belum Verifikasi' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
                                     {% endif %}
                                 </center>
                             </td>
@@ -198,6 +203,9 @@
                                     {% elif data_klaim.status_vidi == 'Belum Disinkron' %}
                                         <button type="button"
                                                 class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Belum Verifikasi' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
                                     {% endif %}
                                 </center>
                             </td>
@@ -209,6 +217,16 @@
                             </td>
                             <td>
                                 <center>{{ data_klaim.verifikator }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.jenis_dispute | default_if_none:""}}</center>
+                            </td>
+                            <td>
+                                {% for ket in data_klaim.ket_pending_dispute.all %}
+                                    {% if forloop.last %}
+                                <center>{{ ket.ket_pending_dispute }}</center>
+                                    {% endif %}
+                                {% endfor %}
                             </td>
                         </tr>
                     {% empty %}
@@ -246,7 +264,11 @@
                     status_vidi: "{{ data_klaim.status_vidi }}",
                     status_sinkron: "{{ data_klaim.status_sinkron }}",
                     tgl_sinkron: "{{ data_klaim.tgl_sinkron }}",
-                    verifikator: "{{ data_klaim.verifikator }}"
+                    verifikator: "{{ data_klaim.verifikator }}",
+                    jenis_dispute: "{{ data_klaim.jenis_dispute|default_if_none:"" }}",
+                    {% for ket in data_klaim.ket_pending_dispute.all %}
+                        ket_pending_dispute: "{{ ket.ket_pending_dispute |default:"" }}",
+                    {% endfor %}
                 },
             {% empty %}
                 {
@@ -256,7 +278,9 @@
                     status_vidi: "Tidak Ada Data",
                     status_sinkron: "Tidak Ada Data",
                     tgl_sinkron: "Tidak Ada Data",
-                    verifikator: "Tidak Ada Data"
+                    verifikator: "Tidak Ada Data",
+                    jenis_dispute: "Tidak Ada Data",
+                    ket_pending_dispute: "Tidak Ada Data",
                 },
             {% endfor %}
         ];
@@ -308,6 +332,8 @@
                         <td><center>${row.status_sinkron}</center></td>
                         <td><center>${row.tgl_sinkron}</center></td>
                         <td><center>${row.verifikator}</center></td>
+                        <td><center>${row.jenis_dispute}</center></td>
+                        <td><center>${row.ket_pending_dispute}</center></td>
                     </tr>
                 `);
             });
@@ -432,6 +458,9 @@
                 async function processNoSep(noSepElement) {
                     const noSep = noSepElement.querySelector('td:nth-child(2)').textContent.trim();
                     const ppkLayan = noSep.substring(0, 8);
+                    const statusVibi = noSepElement.querySelector('td:nth-child(3)').textContent.trim();
+                    const jenisDispute = noSepElement.querySelector('td:nth-child(8)').textContent.trim();
+                    const ketPendingDispute = noSepElement.querySelector('td:nth-child(9)').textContent.trim();
 
                     // POST request ke 'sinkronisasi_aksi_vibi_vidi'
                     const response1 = await fetch('http://127.0.0.1:8000/sinkronisasi_aksi_vibi_vidi/', {
@@ -442,7 +471,10 @@
                         body: new URLSearchParams({
                             no_sep: noSep,
                             ppk_layan: ppkLayan,
-                            tgl_sinkron: tglSinkron // Tambahkan datetime sinkron
+                            status_vibi: statusVibi,
+                            tgl_sinkron: tglSinkron, // Tambahkan datetime sinkron
+                            jenis_dispute: jenisDispute, // Tambahkan jenis dispute sinkron
+                            ket_pending_dispute: ketPendingDispute, // Tambahkan ket pending dispute sinkron
                         })
                     });
 
@@ -477,7 +509,6 @@
                     const statusVidiElement = noSepElement.querySelector('td:nth-child(4) button');
                     const tglSinkronElement = noSepElement.querySelector('td:nth-child(6)');
                     const sinkronElement = noSepElement.querySelector('td:nth-child(5)');
-                    const statusVibi = noSepElement.querySelector('td:nth-child(3)').textContent; // Asumsikan status vibi juga ada di response
 
 
                     if (statusVidiElement) {
@@ -540,5 +571,6 @@
                 alert('Proses Sinkronisasi Gagal: ' + error);
             }
         });
+        
     </script>
 {% endblock %}
