@@ -91,9 +91,9 @@
                     <form method="POST" id="formRPA">
                         <input type="hidden" name="ppk_layan" value='{{ data_klaim.NOSEP|slice:":8" }}'>
                         <input type="hidden" name="status_vibi" value='{{ data_klaim.status }}'>
-                        <input type="hidden" name="status_vibi" value='{{ data_klaim.jenis_pending }}'>
-                        <input type="hidden" name="status_vibi" value='{{ data_klaim.jenis_dispute }}'>
-                        <input type="hidden" name="status_vibi" value='{{ data_klaim.ket_pending_dispute }}'>
+                        <input type="hidden" name="jenis_pending" value='{{ data_klaim.jenis_pending }}'>
+                        <input type="hidden" name="jenis_dispute" value='{{ data_klaim.jenis_dispute }}'>
+                        <input type="hidden" name="ket_pending_dispute" value='{{ data_klaim.ket_pending_dispute }}'>
                     </form>
                 {% endif %}
             {% endfor %}
@@ -279,6 +279,8 @@
                     return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
                 case 'Belum Disinkron':
                     return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
+                case 'Belum Verifikasi':
+                    return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
                 default:
                     return '<button type="button" class="btn btn-secondary btn-sm">Unknown</button>';
             }
@@ -431,7 +433,7 @@
                     const noSep = noSepElement.querySelector('td:nth-child(2)').textContent.trim();
                     const ppkLayan = noSep.substring(0, 8);
 
-                    // POST request ke 'sinkronisasi_vibi_vidi'
+                    // POST request ke 'sinkronisasi_aksi_vibi_vidi'
                     const response1 = await fetch('http://127.0.0.1:8000/sinkronisasi_aksi_vibi_vidi/', {
                         method: 'POST',
                         headers: {
@@ -502,6 +504,9 @@
                                 break;
                             case 'Tidak Disinkron':
                             case 'Belum Disinkron':
+                                statusVidiElement.className = 'btn btn-light btn-sm';
+                                break;
+                            case 'Belum Verifikasi':
                                 statusVidiElement.className = 'btn btn-light btn-sm';
                                 break;
                             default:

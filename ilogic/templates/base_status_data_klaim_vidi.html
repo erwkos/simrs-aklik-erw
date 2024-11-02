@@ -30,4 +30,8 @@
         <a href="#">
             <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
         </a>
+    {% elif data_klaim.status_vidi == 'Belum Verifikasi' %} 
+        <a href="#">
+            <button type="button" class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+        </a>
     {% endif %}

@@ -383,7 +383,10 @@
                                             Daftar Tugas Data Klaim CBG</a>
                                     </li>
                                     <li class="pc-item"><a class="pc-link"
-                                                           href="{% url 'verifikator:sinkronisasi-vibi-vidi' %}">Sinkronisasi VIBI VIDI</a>
+                                                           href="{% url 'verifikator:cek-aksi-vibi-vidi' %}">Cek status VIBI VIDI</a>
+                                    </li>
+                                    <li class="pc-item"><a class="pc-link"
+                                                           href="{% url 'verifikator:sinkronisasi-aksi-vibi-vidi' %}">Sinkronisasi Aksi VIBI VIDI</a>
                                     </li>
                                 </ul>
                             </li>
@@ -534,6 +537,9 @@
                                         <a class="pc-link" href="{% url 'supervisor:list_pengaturan_sla' %}">
                                             Pengaturan SLA Verifikasi</a>
                                     </li>
+                                    <li class="pc-item"><a class="pc-link" href="{% url 'metafisik:list_no_ba_cbg_metafisik' %}">
+                                        Metafisik VIBI</a>
+                                    </li>
                                 </ul>
                             </li>
 
@@ -581,7 +587,7 @@
                                 </ul>
                             </li>
 
-                            <!-- Download Data Klaim -->
+                            <!-- Download Data Klaim --> 
                             <li class="pc-item pc-hasmenu">
                                 <a href="#!" class="pc-link">
                             <span class="pc-micon">
@@ -604,6 +610,33 @@
                                     <li class="pc-item">
                                         <a class="pc-link" href="{% url 'supervisor:download_data_obat' %}">
                                             Download Data Obat</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            
+                            <!-- Fitur Audia -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
+                            <span class="pc-micon">
+                              <svg class="pc-icon">
+                                <use xlink:href="#custom-folder-open"></use>
+                              </svg>
+                            </span>
+                                    <span class="pc-mtext">AUDIA</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'audia:register' %}">
+                                            Register Audia</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'audia:monev' %}">
+                                            Monev Audia</a>
                                     </li>
                                 </ul>
                             </li>
@@ -789,6 +822,69 @@
                             </li>
 
                         {% endif %}
+
+
+                        {% if x.name == 'supervisorkepwil' %}
+
+                            <!-- Fitur Audia -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
+                            <span class="pc-micon">
+                              <svg class="pc-icon">
+                                <use xlink:href="#custom-folder-open"></use>
+                              </svg>
+                            </span>
+                                    <span class="pc-mtext">AUDIA KW</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'audia:register' %}">
+                                            Register Audia KW</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'audia:monev' %}">
+                                            Monev Audia KW</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                        
+                        {% if x.name == 'supervisoraudiakp' %}
+
+                            <!-- Fitur Audia -->
+                            <li class="pc-item pc-hasmenu">
+                                <a href="#!" class="pc-link">
+                            <span class="pc-micon">
+                              <svg class="pc-icon">
+                                <use xlink:href="#custom-folder-open"></use>
+                              </svg>
+                            </span>
+                                    <span class="pc-mtext">AUDIA KP</span><span class="pc-arrow"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="feather feather-chevron-right"><polyline
+                                        points="9 18 15 12 9 6"></polyline></svg></span>
+                                </a>
+
+                                <ul class="pc-submenu" style="display: none;">
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'audia:register' %}">
+                                            Register Audia KP</a>
+                                    </li>
+                                    <li class="pc-item">
+                                        <a class="pc-link" href="{% url 'audia:monev' %}">
+                                            Monev Audia KP</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% endif %}
+
+                        
                     {% endfor %}
                 </ul>
             </div>

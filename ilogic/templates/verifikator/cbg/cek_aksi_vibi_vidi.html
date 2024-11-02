@@ -278,6 +278,8 @@
                     return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
                 case 'Belum Disinkron':
                     return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
+                case 'Belum Verifikasi':
+                    return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
                 default:
                     return '<button type="button" class="btn btn-secondary btn-sm">Unknown</button>';
             }
@@ -501,6 +503,9 @@
                                 break;
                             case 'Tidak Disinkron':
                             case 'Belum Disinkron':
+                                statusVidiElement.className = 'btn btn-light btn-sm';
+                                break;
+                            case 'Belum Verifikasi':
                                 statusVidiElement.className = 'btn btn-light btn-sm';
                                 break;
                             default:
