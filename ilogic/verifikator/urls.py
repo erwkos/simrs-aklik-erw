@@ -19,7 +19,8 @@ urlpatterns = [
     path('import-data-klaim', views.import_data_klaim, name='import-data-klaim'),
     path('daftar-data-klaim', views.daftar_data_klaim, name='daftar-data-klaim'),
 
-    path('sinkronisasi-vibi-vidi', views.sinkronisasi_vibi_vidi, name='sinkronisasi-vibi-vidi'),
+    path('cek-aksi-vibi-vidi', views.cek_aksi_vibi_vidi, name='cek-aksi-vibi-vidi'),
+    path('sinkronisasi-aksi-vibi-vidi', views.sinkronisasi_aksi_vibi_vidi, name='sinkronisasi-aksi-vibi-vidi'),
     path('sinkronisasi-vibi-vidi/download', views.sinkronisasi_vibi_vidi_download, name='sinkronisasi-vibi-vidi-download'),
 
     path('detail-data-klaim/<int:pk>', views.detail_data_klaim, name='detail-data-klaim'),

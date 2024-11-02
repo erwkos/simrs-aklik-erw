@@ -698,7 +698,7 @@ def daftar_data_klaim(request):
 @login_required
 @check_device
 @permissions(role=['verifikator'])
-def sinkronisasi_vibi_vidi(request):
+def cek_aksi_vibi_vidi(request):
     data = request.POST
     # data_get = request.GET
     # register_klaim = ""
@@ -765,7 +765,77 @@ def sinkronisasi_vibi_vidi(request):
             }
             return JsonResponse(response_data, status=404)
 
-    return render(request, 'verifikator/cbg/sinkronisasi_vibi_vidi.html', context)
+    return render(request, 'verifikator/cbg/cek_aksi_vibi_vidi.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def sinkronisasi_aksi_vibi_vidi(request):
+    data = request.POST
+    # data_get = request.GET
+    # register_klaim = ""
+    queryset = None
+    context = {
+        'data_klaim': queryset,
+        # 'register_klaim': register_klaim
+    }
+
+    # if 'register_klaim' in data_get:
+    register_klaim = request.GET.get('nomor_register_klaim')
+    # status = request.GET.get('status')
+    # status_sinkron = request.GET.get('status_sinkron')
+    related_kantor_cabang = request.user.kantorcabang_set.all()
+    queryset = DataKlaimCBG.objects.filter(
+        # verifikator=request.user,
+        verifikator__kantorcabang__in=related_kantor_cabang,
+        register_klaim__nomor_register_klaim=register_klaim,
+        verifikator=request.user).order_by('NOSEP', 'TGLSEP')
+    # print(queryset)
+
+    # filter
+    myFilter = SinkronisasiVIBIVIDIFilter(request.GET, queryset=queryset)
+    queryset = myFilter.qs
+
+    context.update({
+        'data_klaim': queryset,
+        'register_klaim': register_klaim,
+        'myFilter': myFilter,
+    })
+
+    if 'no_sep' in data:
+        nosep = data['no_sep']
+        status_vidi = data['status_vidi']
+        try:
+            klaim = DataKlaimCBG.objects.get(NOSEP=nosep)
+            klaim.status_vidi = status_vidi
+            # klaim.status_sinkron = 'Sinkron'
+            if status_vidi == klaim.status:
+                status_sinkron = StatusSinkronChoices.SINKRON
+            elif status_vidi != klaim.status:
+                status_sinkron = StatusSinkronChoices.TIDAK_SINKRON
+            else:
+                status_sinkron = ''
+            klaim.status_sinkron = status_sinkron
+            klaim.tgl_sinkron = datetime.datetime.today()
+            klaim.save()
+            context.update({
+                'klaim': klaim,
+            })
+            response_data = {
+                'no_sep': nosep,
+                'status_vidi': status_vidi,
+                'message': 'Berhasil Update',
+            }
+            return JsonResponse(response_data)
+        except DataKlaimCBG.DoesNotExist:
+            response_data = {
+                'no_sep': nosep,
+                'message': 'Data tidak ditemukan',
+            }
+            return JsonResponse(response_data, status=404)
+
+    return render(request, 'verifikator/cbg/sinkronisasi_aksi_vibi_vidi.html', context)
 
 
 @csrf_exempt
@@ -1098,6 +1168,7 @@ def download_data_cbg(request):
                     'POLI',
                     'KDINACBG',
                     'BYPENGAJUAN',
+                    'ALGORITMA',
                     'verifikator',
                     'jenis_pending',
                     'jenis_dispute',
@@ -1149,6 +1220,7 @@ def download_data_cbg(request):
                         queryset.POLI,
                         queryset.KDINACBG,
                         queryset.BYPENGAJUAN,
+                        queryset.ALGORITMA,
                         queryset.verifikator.username,
                         queryset.jenis_pending,
                         queryset.jenis_dispute,
@@ -1191,6 +1263,7 @@ def download_data_cbg(request):
                     'POLI',
                     'KDINACBG',
                     'BYPENGAJUAN',
+                    'ALGORITMA',
                     'verifikator',
                     'jenis_pending',
                     'jenis_dispute',
@@ -1242,6 +1315,7 @@ def download_data_cbg(request):
                         queryset.POLI,
                         queryset.KDINACBG,
                         queryset.BYPENGAJUAN,
+                        queryset.ALGORITMA,
                         queryset.verifikator.username,
                         queryset.jenis_pending,
                         queryset.jenis_dispute,
@@ -1373,6 +1447,26 @@ def import_data_klaim_obat(request):
                                          f'Kesalahan terjadi pada No SEP Apotek : {data_klaim.NoSEPApotek}. Keterangan error : {e}')
                         return redirect('/verifikator/import-data-klaim-obat')
                 # DataKlaimObat.objects.bulk_create(obj_list)
+
+                with transaction.atomic():
+                    DataKlaimObat.objects.bulk_create(obj_list)
+                    valid_data = DataKlaimObat.objects.filter(id__in=[obj.id for obj in obj_list
+                                                                      if
+                                                                      obj.NoSEPAsalResep[:8] == register.faskes.kode_ppk and
+                                                                      obj.bupel.month == register.bulan_pelayanan.month and
+                                                                      obj.bupel.year == register.bulan_pelayanan.year])
+                    invalid_data = DataKlaimObat.objects.filter(id__in=[obj.id for obj in obj_list
+                                                                        if obj.NoSEPAsalResep[
+                                                                           :8] != register.faskes.kode_ppk or
+                                                                        obj.bupel.month != register.bulan_pelayanan.month or
+                                                                        obj.bupel.year != register.bulan_pelayanan.year])
+
+                    df_valid = pd.DataFrame.from_records(valid_data.values())
+                    total_data_valid = len(df_valid)
+                    df_invalid = pd.DataFrame.from_records(invalid_data.values())
+                    total_data_invalid = len(df_invalid)
+                    transaction.set_rollback(True)
+
             except IntegrityError:
                 messages.info(request, 'Terjadi kesalahan saat mencoba menyimpan data.')
                 return redirect('/verifikator/import-data-klaim-obat')
@@ -1380,24 +1474,6 @@ def import_data_klaim_obat(request):
                 messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')
                 return redirect('/verifikator/import-data-klaim-obat')
 
-            with transaction.atomic():
-                DataKlaimObat.objects.bulk_create(obj_list)
-                valid_data = DataKlaimObat.objects.filter(id__in=[obj.id for obj in obj_list
-                                                                  if
-                                                                  obj.NoSEPAsalResep[:8] == register.faskes.kode_ppk and
-                                                                  obj.bupel.month == register.bulan_pelayanan.month and
-                                                                  obj.bupel.year == register.bulan_pelayanan.year])
-                invalid_data = DataKlaimObat.objects.filter(id__in=[obj.id for obj in obj_list
-                                                                    if obj.NoSEPAsalResep[
-                                                                       :8] != register.faskes.kode_ppk or
-                                                                    obj.bupel.month != register.bulan_pelayanan.month or
-                                                                    obj.bupel.year != register.bulan_pelayanan.year])
-
-                df_valid = pd.DataFrame.from_records(valid_data.values())
-                total_data_valid = len(df_valid)
-                df_invalid = pd.DataFrame.from_records(invalid_data.values())
-                total_data_invalid = len(df_invalid)
-                transaction.set_rollback(True)
             return render(request, 'verifikator/obat/preview_data_import_obat.html',
                           {'preview_data_valid': df_valid,
                            'total_data_valid': total_data_valid,
@@ -1470,39 +1546,51 @@ def import_data_klaim_obat(request):
 
             index = random.randrange(verifikator.count())
 
-            # Obat PRB
             with transaction.atomic():
-                for obj in queryset.filter(KdJenis=1):
-                    obj.verifikator = verifikator[index]
-                    obj.status = StatusDataKlaimChoices.PROSES
-                    obj.save()
-                    if index == verifikator.count() - 1:
-                        index = 0
-                    else:
-                        index += 1
-
-            # Obat Kronis
-            with transaction.atomic():
-                for obj in queryset.filter(KdJenis=2):
-                    obj.verifikator = verifikator[index]
-                    obj.status = StatusDataKlaimChoices.PROSES
-                    obj.save()
-                    if index == verifikator.count() - 1:
-                        index = 0
-                    else:
-                        index += 1
-
-            # obat kemoterapi
-            with transaction.atomic():
-                for obj in queryset.filter(KdJenis=3):
-                    obj.verifikator = verifikator[index]
-                    obj.status = StatusDataKlaimChoices.PROSES
-                    obj.save()
-                    if index == verifikator.count() - 1:
-                        index = 0
-                    else:
-                        index += 1
+                objs_to_update = []
+                for kd_jenis in [1, 2, 3]:
+                    objs = queryset.filter(KdJenis=kd_jenis)
+                    if objs.exists():
+                        for obj in objs:
+                            obj.verifikator = verifikator[index]
+                            obj.status = StatusDataKlaimChoices.PROSES
+                            objs_to_update.append(obj)
+                            index = (index + 1) % verifikator.count()
+                if objs_to_update:
+                    DataKlaimObat.objects.bulk_update(objs_to_update, ['verifikator', 'status'])
             messages.success(request, "Data Obat Berhasil Di-import")
+            # # Obat PRB
+            # with transaction.atomic():
+            #     for obj in queryset.filter(KdJenis=1):
+            #         obj.verifikator = verifikator[index]
+            #         obj.status = StatusDataKlaimChoices.PROSES
+            #         obj.save()
+            #         if index == verifikator.count() - 1:
+            #             index = 0
+            #         else:
+            #             index += 1
+            #
+            # # Obat Kronis
+            # with transaction.atomic():
+            #     for obj in queryset.filter(KdJenis=2):
+            #         obj.verifikator = verifikator[index]
+            #         obj.status = StatusDataKlaimChoices.PROSES
+            #         obj.save()
+            #         if index == verifikator.count() - 1:
+            #             index = 0
+            #         else:
+            #             index += 1
+            #
+            # # obat kemoterapi
+            # with transaction.atomic():
+            #     for obj in queryset.filter(KdJenis=3):
+            #         obj.verifikator = verifikator[index]
+            #         obj.status = StatusDataKlaimChoices.PROSES
+            #         obj.save()
+            #         if index == verifikator.count() - 1:
+            #             index = 0
+            #         else:
+            #             index += 1
         except Exception as e:
             messages.error(request, f"Terjadi kesalahan pada saat import data. Keterangan error : {e}")
             return redirect('/verifikator/import-data-klaim-obat')

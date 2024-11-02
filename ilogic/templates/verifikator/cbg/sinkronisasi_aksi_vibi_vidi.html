@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load my_tags %}
+{% load static %}
+{% load humanize %}
+
+{% block scriptheader %}
+    <style>
+        .loading-dots::after {
+            content: " .";
+            animation: dots 1s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% {
+                content: " .";
+            }
+            40% {
+                content: " ..";
+            }
+            60% {
+                content: " ...";
+            }
+            80%, 100% {
+                content: " ..";
+            }
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script>
+        $(document).ready(function () {
+            // Fungsi untuk melakukan AJAX request
+            function checkStatus() {
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/refresh_halaman',
+                    type: 'GET', // atau 'POST' tergantung pada server Anda
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status_rpa === 200) {
+                            $('#loginVIDI').prop('disabled', true);
+                        } else {
+                            $('#loginVIDI').prop('disabled', false);
+                        }
+                    },
+                    error: function () {
+                        $('#loginVIDI').prop('disabled', false);
+                    }
+                });
+            }
+
+            // Panggil fungsi saat halaman diakses
+            checkStatus();
+        });
+    </script>
+{% endblock %}
+
+{% block data %}
+    <button type="button" class="btn-primary btn" id="loginVIDI">Login VIDI</button>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="col-12 col-md-12 mb-4">
+    <div class="card">
+            <div class="card-header">
+                <h5>Sinkronisasi Aksi VIBI VIDI</h5>
+            </div>
+            <div class="card-body">
+                <form class="row row-cols-md-auto g-3 align-items-center" method="GET">
+                    {{ myFilter.form | crispy }}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+
+            {% for data_klaim in data_klaim %}
+                {% if forloop.first %}
+                    <form method="POST" id="formRPA">
+                        <input type="hidden" name="ppk_layan" value='{{ data_klaim.NOSEP|slice:":8" }}'>
+                        <input type="hidden" name="status_vibi" value='{{ data_klaim.status }}'>
+                        <input type="hidden" name="status_vibi" value='{{ data_klaim.jenis_pending }}'>
+                        <input type="hidden" name="status_vibi" value='{{ data_klaim.jenis_dispute }}'>
+                        <input type="hidden" name="status_vibi" value='{{ data_klaim.ket_pending_dispute }}'>
+                    </form>
+                {% endif %}
+            {% endfor %}
+            <div class="card-header d-flex align-items-center justify-content-between">
+
+                <button type="submit" class="btn btn-primary" id="sinkronkan"><i class="fas fa-recycle"></i> Sinkronkan
+                </button>
+                <input type="text" id="search-input" class="form-control mx-2" style="width: 60%;"
+                       placeholder="Cari SEP">
+                <button type="button" id="download-btn" class="btn btn-primary"><i class="fas fa-file-download"></i>
+                    Download
+                </button>
+            </div>
+            </form>
+            <div class="table-responsive mt-4">
+                <table class="table table-hover mb-0" id="data-table" style="border: 1px;">
+                    <thead>
+                    <tr>
+                        <th scope="col" data-sort="id">
+                            <center>ID <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="NOSEP">
+                            <center>No SEP <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="status">
+                            <center>Status VIBI <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="status_vidi">
+                            <center>Status VIDI <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="status_sinkron">
+                            <center>Sinkron <i class="fas fa-sort"></i></center>
+                        </th>
+                        <th scope="col" data-sort="tgl_sinkron">
+                            <center>Waktu sinkron <i class="fas fa-sort"></i></center>
+                        <th scope="col" data-sort="verifikator">
+                            <center>Verifikator <i class="fas fa-sort"></i></center>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    {% for data_klaim in data_klaim %}
+                        <tr style="font-weight: bolder">
+                            <td>
+                                <center>{{ data_klaim.id }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.NOSEP }}</center>
+                            </td>
+                            <td>
+                                <center>
+                                    {% if data_klaim.status == 'Proses' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Pending' %}
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Tidak Layak' %}
+                                        <button type="button"
+                                                class="btn btn-danger btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Layak' %}
+                                        <button type="button"
+                                                class="btn btn-success btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Dispute' %}
+                                        <button type="button"
+                                                class="btn btn-dark btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Klaim' %}
+                                        <button type="button"
+                                                class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Tidak Disinkron' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+                                    {% elif data_klaim.status == 'Belum Disinkron' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status }}</button>
+                                    {% endif %}
+                                </center>
+                            </td>
+                            <td>
+                                <center>
+                                    {% if data_klaim.status_vidi == 'Proses' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Pending' %}
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Tidak Layak' %}
+                                        <button type="button"
+                                                class="btn btn-danger btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Layak' %}
+                                        <button type="button"
+                                                class="btn btn-success btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Dispute' %}
+                                        <button type="button"
+                                                class="btn btn-dark btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Klaim' %}
+                                        <button type="button"
+                                                class="btn btn-info btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Tidak Disinkron' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% elif data_klaim.status_vidi == 'Belum Disinkron' %}
+                                        <button type="button"
+                                                class="btn btn-light btn-sm">{{ data_klaim.status_vidi }}</button>
+                                    {% endif %}
+                                </center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.status_sinkron }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.tgl_sinkron }}</center>
+                            </td>
+                            <td>
+                                <center>{{ data_klaim.verifikator }}</center>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Tidak ada data</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <center>
+                <div id="pagination" class="mt-3" style="display: none;"></div>
+            </center>
+            </center>
+        </div>
+    </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Inisialisasi variabel
+        let sortField = 'id'; // Kolom default untuk sorting
+        let sortDirection = 'asc'; // Urutan default
+        let currentPage = 1;
+        const pageSize = 10000000; // Set ukuran halaman sesuai kebutuhan
+
+        // Data tabel dari server
+        const data = [
+            {% for data_klaim in data_klaim %}
+                {
+                    id: "{{ data_klaim.id }}",
+                    NOSEP: "{{ data_klaim.NOSEP }}",
+                    status: "{{ data_klaim.status }}",
+                    status_vidi: "{{ data_klaim.status_vidi }}",
+                    status_sinkron: "{{ data_klaim.status_sinkron }}",
+                    tgl_sinkron: "{{ data_klaim.tgl_sinkron }}",
+                    verifikator: "{{ data_klaim.verifikator }}"
+                },
+            {% empty %}
+                {
+                    id: "Tidak Ada Data",
+                    NOSEP: "Tidak Ada Data",
+                    status: "Tidak Ada Data",
+                    status_vidi: "Tidak Ada Data",
+                    status_sinkron: "Tidak Ada Data",
+                    tgl_sinkron: "Tidak Ada Data",
+                    verifikator: "Tidak Ada Data"
+                },
+            {% endfor %}
+        ];
+
+        function getStatusButton(status) {
+            switch (status) {
+                case 'Proses':
+                    return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
+                case 'Pending':
+                    return '<button type="button" class="btn btn-warning btn-sm">' + status + '</button>';
+                case 'Tidak Layak':
+                    return '<button type="button" class="btn btn-danger btn-sm">' + status + '</button>';
+                case 'Layak':
+                    return '<button type="button" class="btn btn-success btn-sm">' + status + '</button>';
+                case 'Dispute':
+                    return '<button type="button" class="btn btn-dark btn-sm">' + status + '</button>';
+                case 'Klaim':
+                    return '<button type="button" class="btn btn-info btn-sm">' + status + '</button>';
+                case 'Tidak Disinkron':
+                    return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
+                case 'Belum Disinkron':
+                    return '<button type="button" class="btn btn-light btn-sm">' + status + '</button>';
+                default:
+                    return '<button type="button" class="btn btn-secondary btn-sm">Unknown</button>';
+            }
+        }
+
+        function renderTable(dataToRender) {
+            $('#table-body').empty();
+
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+
+            const sortedData = dataToRender.sort((a, b) => {
+                if (a[sortField] < b[sortField]) return sortDirection === 'asc' ? -1 : 1;
+                if (a[sortField] > b[sortField]) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            sortedData.slice(start, end).forEach(row => {
+                $('#table-body').append(`
+                    <tr style="font-weight: bolder">
+                        <td><center>${row.id}</center></td>
+                        <td><center>${row.NOSEP}</center></td>
+                        <td><center>${getStatusButton(row.status)}</center></td>
+                        <td><center>${getStatusButton(row.status_vidi)}</center></td>
+                        <td><center>${row.status_sinkron}</center></td>
+                        <td><center>${row.tgl_sinkron}</center></td>
+                        <td><center>${row.verifikator}</center></td>
+                    </tr>
+                `);
+            });
+
+            const totalPages = Math.ceil(dataToRender.length / pageSize);
+            $('#pagination').empty();
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'active' : '';
+                $('#pagination').append(`<button class="btn btn-primary mx-1 ${activeClass}" onclick="goToPage(${i})">${i}</button>`);
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable(data);
+        }
+
+        function updateSortIcons() {
+            $('th[data-sort]').each(function () {
+                const field = $(this).data('sort');
+                if (field === sortField) {
+                    const icon = sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+                    $(this).find('i').removeClass('fa-sort-up fa-sort-down').addClass(icon);
+                } else {
+                    $(this).find('i').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
+                }
+            });
+        }
+
+        // Sorting ketika header diklik
+        $('th[data-sort]').on('click', function () {
+            const field = $(this).data('sort');
+            if (sortField === field) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortDirection = 'asc';
+            }
+            updateSortIcons();
+            renderTable(data);
+        });
+
+        $('#search-input').on('keyup', function () {
+            const searchValue = $(this).val().toLowerCase();
+            const filteredData = data.filter(row => row.NOSEP.toLowerCase().includes(searchValue));
+            renderTable(filteredData);
+        });
+
+        $('#download-btn').on('click', function () {
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+            XLSX.writeFile(wb, 'data.xlsx');
+        });
+
+        renderTable(data); // Inisialisasi tabel
+    </script>
+
+    <script>
+        $('#loginVIDI').click(function () {
+            const $button = $(this);
+            const originalText = $button.text();
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Silahkan Masukan Username dan password VIDI');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/global_session/',
+                type: 'GET',
+                success: function (response) {
+                    console.log('Berhasil Login');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("Login VIDI");
+                    alert('Login VIDI Berhasil')
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Login VIDI");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+    </script>
+
+    <script>
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        }
+
+        function getCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Bulan dimulai dari 0
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        document.getElementById('sinkronkan').addEventListener('click', async function () {
+            const $button = $(this);
+            try {
+                // 1. Ambil data dari formRPA dan serialize
+                const formData = $('#formRPA').serialize();
+                const csrfToken = getCsrfToken();
+                const tglSinkron = getCurrentDateTime(); // Dapatkan datetime saat ini
+
+                $button.prop('disabled', true).addClass('loading-dots').text('Proses Cek Sinkron di VIDI');
+
+                // 2. Lakukan POST request untuk 'close_pop_up' dengan formData
+                await fetch('http://127.0.0.1:8000/close_pop_up/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData // Gunakan serialized form data sebagai body
+                });
+
+                // 2. Ambil semua NOSEP dari tabel
+                const noSepElements = Array.from(document.querySelectorAll('#data-table tbody tr'));
+
+                // 3. Fungsi untuk melakukan POST request dan menangani respons
+                async function processNoSep(noSepElement) {
+                    const noSep = noSepElement.querySelector('td:nth-child(2)').textContent.trim();
+                    const ppkLayan = noSep.substring(0, 8);
+
+                    // POST request ke 'sinkronisasi_vibi_vidi'
+                    const response1 = await fetch('http://127.0.0.1:8000/sinkronisasi_aksi_vibi_vidi/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            no_sep: noSep,
+                            ppk_layan: ppkLayan,
+                            tgl_sinkron: tglSinkron // Tambahkan datetime sinkron
+                        })
+                    });
+
+                    if (!response1.ok) {
+                        throw new Error(`Error during POST to sinkronisasi_aksi_vibi_vidi for ${noSep}`);
+                    }
+
+                    const result1 = await response1.json();
+                    const statusVidi = result1.status_vidi; // Asumsikan status_vidi ada di response
+                    const status_sinkron = result1.status_sinkron; // Asumsikan status vibi juga ada di response
+
+                    // POST request ke 'verifikator/sinkronisasi-vibi-vidi'
+                    const response2 = await fetch('/verifikator/sinkronisasi-aksi-vibi-vidi', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': csrfToken  // Menambahkan CSRF token di header
+                        },
+                        body: new URLSearchParams({
+                            no_sep: noSep,
+                            status_vidi: statusVidi,
+                            tgl_sinkron: tglSinkron, // Tambahkan datetime sinkron
+                            status_sinkron: status_sinkron // Tambahkan status sinkron
+                        })
+                    });
+
+                    if (!response2.ok) {
+                        throw new Error(`Error during POST to verifikator/sinkronisasi-aksi-vibi-vidi for ${noSep}`);
+                    }
+
+                    // Update status VIDI dan tgl_sinkron di tabel berdasarkan respons
+                    const statusVidiElement = noSepElement.querySelector('td:nth-child(4) button');
+                    const tglSinkronElement = noSepElement.querySelector('td:nth-child(6)');
+                    const sinkronElement = noSepElement.querySelector('td:nth-child(5)');
+                    const statusVibi = noSepElement.querySelector('td:nth-child(3)').textContent; // Asumsikan status vibi juga ada di response
+
+
+                    if (statusVidiElement) {
+                        statusVidiElement.textContent = statusVidi;
+                        // Mengubah class button sesuai status
+                        switch (statusVidi) {
+                            case 'Proses':
+                                statusVidiElement.className = 'btn btn-light btn-sm';
+                                break;
+                            case 'Pending':
+                                statusVidiElement.className = 'btn btn-warning btn-sm';
+                                break;
+                            case 'Tidak Layak':
+                                statusVidiElement.className = 'btn btn-danger btn-sm';
+                                break;
+                            case 'Layak':
+                                statusVidiElement.className = 'btn btn-success btn-sm';
+                                break;
+                            case 'Dispute':
+                                statusVidiElement.className = 'btn btn-dark btn-sm';
+                                break;
+                            case 'Klaim':
+                                statusVidiElement.className = 'btn btn-info btn-sm';
+                                break;
+                            case 'Tidak Disinkron':
+                            case 'Belum Disinkron':
+                                statusVidiElement.className = 'btn btn-light btn-sm';
+                                break;
+                            default:
+                                statusVidiElement.className = 'btn btn-light btn-sm';
+                        }
+                    }
+                    if (tglSinkronElement) {
+                        tglSinkronElement.textContent = tglSinkron; // Update tgl_sinkron di tabel
+                    }
+
+                    // Tentukan apakah status VIBI sama dengan VIDI
+                    if (statusVidi === statusVibi) {
+                        sinkronElement.textContent = 'Sinkron';
+                    } else {
+                        sinkronElement.textContent = 'Tidak Sinkron';
+                    }
+
+                }
+
+                // 4. Kirimkan setiap NOSEP secara berurutan dan update status VIDI
+                for (const noSepElement of noSepElements) {
+                    await processNoSep(noSepElement);
+                }
+
+                $button.prop('disabled', false).removeClass('loading-dots').text("Sinkronkan");
+                alert('Proses Cek Sinkronisasi Selesai');
+
+            } catch (error) {
+                console.error('Error:', error);
+                $button.prop('disabled', false).removeClass('loading-dots').text("Sinkronkan");
+                alert('Proses Sinkronisasi Gagal: ' + error);
+            }
+        });
+    </script>
+{% endblock %}
