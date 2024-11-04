@@ -1,0 +1,560 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+{% block scriptheader %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Fungsi untuk melakukan AJAX request
+            function checkStatus() {
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/refresh_halaman',
+                    type: 'GET', // atau 'POST' tergantung pada server Anda
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status_rpa === 200) {
+                            $('#loginVIDI').prop('disabled', true);
+                        } else {
+                            $('#loginVIDI').prop('disabled', false);
+                        }
+                    },
+                    error: function () {
+                        $('#loginVIDI').prop('disabled', false);
+                    }
+                });
+            }
+
+            // Panggil fungsi saat halaman diakses
+            checkStatus();
+        });
+    </script>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #e3e3e3;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .modal-dialog {
+            width: 95%;
+            height: 95%;
+            max-width: 95%;
+        }
+
+        .modal-content {
+            height: 95%;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+        }
+
+        .table td, .table th {
+            word-wrap: break-word;
+            white-space: normal;
+            max-width: 200px;
+        }
+
+    </style>
+
+{% endblock %}
+{% block data %}
+    <button type="button" class="btn-primary btn" id="loginVIDI">Login VIDI</button>
+{% endblock %}
+
+{% block content %}
+    <style>
+        .OLevelResult {
+            display: none;
+        }
+
+        .OLevelResult.active {
+            display: block;
+        }
+
+        .loading-dots::after {
+            content: " .";
+            animation: dots 1s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% {
+                content: " .";
+            }
+            40% {
+                content: " ..";
+            }
+            60% {
+                content: " ...";
+            }
+            80%, 100% {
+                content: " ..";
+            }
+        }
+
+        /* Ensure the content fits the screen */
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .card {
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            table-layout: auto;
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Add media queries for better responsiveness */
+        @media (max-width: 768px) {
+            .table th, .table td {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+
+    <div class="container mb-2 mt-2">
+        <div class="card">
+            <div class="card-header">
+                <h5>Detail - Data Klaim
+                    {% if data_klaim.is_metafisik %}
+                        <button type="button" class="btn-primary btn btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#sepModal" style="font-size: 11px">Data
+                            Metafisik {{ meta.nosjp }}</button>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <form id="formSEP">
+                            <table>
+                                <tbody>
+                                <tr>
+                                    <td><b>NO SEP :</b></td>
+                                    <td>{{ data_klaim.NOSEP }}
+                                        <button type="submit" class="btn btn-sm btn-secondary" id="cariSEP"
+                                                style="font-size: 11px;">Ambil Data Klaim
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="dataKlaim">
+                                    {# Data Klaim #}
+                                </tr>
+                                <tr>
+                                    <td><b>NAMA PPKLAYAN</b></td>
+                                    <td>{{ data_klaim.faskes.nama }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>BULAN PELAYANAN : </b></td>
+                                    <td>{{ data_klaim.bupel | date:'M-y' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>KDINACBG : </b></td>
+                                    <td>{{ data_klaim.KDINACBG }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>BIAYA : </b></td>
+                                    <td>{{ data_klaim.BYPENGAJUAN }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>ALGORITMA : </b></td>
+                                    <td>{{ data_klaim.ALGORITMA }}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Cek Double Klaim (jika ada) : </b></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-secondary" id="cekDouble"
+                                                style="font-size: 11px;">History
+                                            Double Klaim
+                                        </button>
+                                        <div id="doubleKlaim">
+                                            {# data doublel klaim #}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>KETERANGAN PENDING/DISPUTE : </b></td>
+                                    <td>
+                                        <table>
+                                            <tr>
+                                                <th>Tanggal</th>
+                                                <th>Verifikator</th>
+                                                <th>Keterangan Pending/Dispute</th>
+                                            </tr>
+                                            {% for data_klaim in data_klaim.ket_pending_dispute.all %}
+                                                <tr>
+                                                    <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                    <td>{{ data_klaim.verifikator }} </td>
+                                                    <td><textarea class="form-control" rows="3"
+                                                                  disabled>{{ data_klaim.ket_pending_dispute }}</textarea>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>PEMBAHASAN : </b></td>
+                                    <td>
+                                        <table>
+                                            <tr>
+                                                <th>Tanggal</th>
+                                                <th>User Faskes</th>
+                                                <th>Jawaban</th>
+                                            </tr>
+                                            {% for data_klaim in data_klaim.ket_jawaban_pending.all %}
+                                                <tr>
+                                                    <td>{{ data_klaim.created_at | date:'d-m-Y' }}</td>
+                                                    <td>{{ data_klaim.user_faskes }} </td>
+                                                    <td><textarea class="form-control" rows="3"
+                                                                  disabled>{{ data_klaim.ket_jawaban_pending }}</textarea>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Status Data Klaim : </b></td>
+                                    <td>{% include 'base_status_data_klaim.html' %}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Status Data Klaim VIDI: </b></td>
+                                    <td id="status_vidi">Silahkan Klik Button Ambil Data Klaim</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <input type="hidden" name="kode_ppk" id="id_kode_ppk"
+                                   value="{{ data_klaim.faskes.kode_ppk }}">
+                            <input type="hidden" name="month_tanggal_pengajuan" id="id_month_tanggal_pengajuan"
+                                   value="{{ data_klaim.register_klaim.tgl_terima|date:'m' }}">
+                            <input type="hidden" name="year_tanggal_pengajuan" id="id_year_tanggal_pengajuan"
+                                   value="{{ data_klaim.register_klaim.tgl_terima|date:'Y' }}">
+                            <input type="hidden" name="no_ba_terima" id="id_no_ba"
+                                   value="{{ data_klaim.register_klaim.no_ba_terima }}">
+                            <input type="hidden" name="no_sep" id="id_no_sep" value="{{ data_klaim.NOSEP }}">
+                            <input type="hidden" name="algoritma" id="id_algoritma" value="{{ data_klaim.ALGORITMA }}">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="sepModal" tabindex="-1" aria-labelledby="sepModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sepModalLabel">Detail - Data Klaim CBG Metafisik</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered">
+                        <tbody>
+                        <tr>
+                            <td><b>NO SEP :</b></td>
+                            <td>{{ meta.nosjp }}</td>
+                            <td><b>Nmjnspulang :</b></td>
+                            <td>{{ meta.Nmjnspulang }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tgldtgsjp :</b></td>
+                            <td>{{ meta.tgldtgsep|date:'d/m/Y' }}</td>
+                            <td><b>Kddokter :</b></td>
+                            <td>{{ meta.kddokter }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tglplgsjp :</b></td>
+                            <td>{{ meta.tglplgsep|date:'d/m/Y' }}</td>
+                            <td><b>Nmdokter :</b></td>
+                            <td>{{ meta.nmdokter }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nokapst :</b></td>
+                            <td>{{ meta.nokapst }}</td>
+                            <td><b>Umur :</b></td>
+                            <td>{{ meta.umur_tahun }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tglpelayanan :</b></td>
+                            <td>{{ meta.no_bast.tgl_pelayanan|date:'M-y' }}</td>
+                            <td><b>Kdsa :</b></td>
+                            <td>{{ meta.kdsa }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kdkclayan :</b></td>
+                            <td>{{ meta.no_bast.kdkclayan }}</td>
+                            <td><b>Deskripsisd :</b></td>
+                            <td>{{ meta.deskripsisd }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmkclayan :</b></td>
+                            <td>-</td>
+                            <td><b>Kdsi :</b></td>
+                            <td>{{ meta.kdsi }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kddati2Layan :</b></td>
+                            <td>-</td>
+                            <td><b>Deskripsisi :</b></td>
+                            <td>{{ meta.deskripsisi }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmdati2Layan :</b></td>
+                            <td>-</td>
+                            <td><b>Kdsp :</b></td>
+                            <td>{{ meta.kdsp }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kdppklayan :</b></td>
+                            <td>{{ meta.no_bast.kdppklayan }}</td>
+                            <td><b>Deskripsisp :</b></td>
+                            <td>{{ meta.deskripsisp }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmppklayan :</b></td>
+                            <td>{{ meta.no_bast.nmppklayan }}</td>
+                            <td><b>Kdsr :</b></td>
+                            <td>{{ meta.kdsr }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmtkp :</b></td>
+                            <td>{{ meta.nmtkp }}</td>
+                            <td><b>Deskripsisr :</b></td>
+                            <td>{{ meta.deskripsisr }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kdinacbgs :</b></td>
+                            <td>{{ meta.kdinacbgs }}</td>
+                            <td><b>Tarifgroup :</b></td>
+                            <td>{{ meta.tarifgroup|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nminacbgs :</b></td>
+                            <td>{{ meta.nminacbgs }}</td>
+                            <td><b>Tarifsa :</b></td>
+                            <td>{{ meta.tarifsa|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Kddiagprimer :</b></td>
+                            <td>{{ meta.kddiagprimer }}</td>
+                            <td><b>Tarifsd :</b></td>
+                            <td>{{ meta.tarifsd|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Nmdiagprimer :</b></td>
+                            <td>{{ meta.nmdiagprimer }}</td>
+                            <td><b>Tarifsi :</b></td>
+                            <td>{{ meta.tarifsi|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Diagsekunder :</b></td>
+                            <td>{{ meta.diagsekunder }}</td>
+                            <td><b>Tarifsp :</b></td>
+                            <td>{{ meta.tarifsp|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Procedure :</b></td>
+                            <td style="word-wrap: break-word">{{ meta.prosedur }}</td>
+                            <td><b>Tarifsr :</b></td>
+                            <td>{{ meta.tarifsr|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Klsrawat :</b></td>
+                            <td>{{ meta.klsrawat }}</td>
+                            <td><b>Biaya Tagihan :</b></td>
+                            <td>{{ meta.bytagsep|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Red Flag</b></td>
+                            <td style="word-wrap: break-word">{{ meta.redflag }}</td>
+                            <td><b>Deskripsi Red Flag</b></td>
+                            <td style="word-wrap: break-word">{{ meta.deskripsi_redflag }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Saran Keterangan Aksi : </b></td>
+                            <td>{{ meta.keterangan_aksi }}</td>
+                            <td><b>ID Logik: </b></td>
+                            <td>{{ meta.id_logik }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        function changeOptions(selectEl) {
+            let subForms = document.getElementsByClassName('OLevelResult')
+            if (selectEl === 'Pending') {
+                document.getElementById("div_id_jenis_pending").classList.add("active");
+                document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+                document.getElementById("id_jenis_pending").setAttribute("required", "");
+                document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+
+                document.getElementById("div_id_jenis_dispute").classList.remove("active");
+                document.getElementById("id_jenis_dispute").removeAttribute("required");
+            } else if (selectEl === 'Dispute') {
+                document.getElementById("div_id_jenis_pending").classList.add("active");
+                document.getElementById("div_id_jenis_dispute").classList.add("active");
+                document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+                document.getElementById("id_jenis_pending").setAttribute("required", "");
+                document.getElementById("id_jenis_dispute").setAttribute("required", "");
+                document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+            } else if (selectEl === 'Tidak Layak') {
+                document.getElementById("div_id_ket_pending_dispute").classList.add("active");
+                document.getElementById("id_ket_pending_dispute").setAttribute("required", "");
+
+                document.getElementById("div_id_jenis_pending").classList.remove("active");
+                document.getElementById("div_id_jenis_dispute").classList.remove("active");
+                document.getElementById("id_jenis_pending").removeAttribute("required");
+                document.getElementById("id_jenis_dispute").removeAttribute("required");
+            } else {
+                document.getElementById("div_id_jenis_pending").classList.remove("active");
+                document.getElementById("div_id_jenis_dispute").classList.remove("active");
+                document.getElementById("div_id_ket_pending_dispute").classList.remove("active");
+                document.getElementById("id_jenis_pending").removeAttribute("required");
+                document.getElementById("id_jenis_dispute").removeAttribute("required");
+                document.getElementById("id_ket_pending_dispute").removeAttribute("required");
+            }
+        }
+
+        document.getElementById("id_status").setAttribute("onchange", "changeOptions(this.value)");
+        document.getElementById("div_id_jenis_pending").classList.add("OLevelResult");
+        document.getElementById("div_id_jenis_dispute").classList.add("OLevelResult");
+        document.getElementById("div_id_ket_pending_dispute").classList.add("OLevelResult");
+
+        $('#loginVIDI').click(function () {
+            const $button = $(this);
+            const originalText = $button.text()
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Silahkan Masukan Username dan password VIDI');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/global_session/',
+                type: 'GET',
+                success: function (response) {
+                    console.log('Berhasil Login');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("Login VIDI");
+                    alert('Login VIDI Berhasil')
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Login VIDI");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+
+        $('#cariSEP').click(function (e) {
+            e.preventDefault()
+
+            const formData = $('#formSEP').serialize()
+            const $button = $(this);
+            const originalText = $button.text()
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Cari Data Klaim');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/ambil_data_klaim/',
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    console.log('Berhasil ambil data');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("Data Klaim Berhasil Diambil");
+                    $('#dataKlaim').html(response.data_klaim);
+                    $('#status_vidi').html(response.button_html);
+
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("Ambil Data Klaim");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+
+        $('#cekDouble').click(function (e) {
+            e.preventDefault()
+
+            const formData = $('#formSEP').serialize()
+            const $button = $(this);
+            const originalText = $button.text()
+
+            $button.prop('disabled', true).addClass('loading-dots').text('Cari History Double Klaim');
+            $.ajax({
+                url: 'http://127.0.0.1:8000/ambil_data_double_klaim/',
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    console.log('Berhasil ambil data double klaim');
+                    $button.prop('disabled', true).removeClass('loading-dots').text("History Double Klaim Berhasil Diambil");
+                    $('#doubleKlaim').html(response.table_html);
+                },
+                error: function (xhr) {
+                    console.log('Request failed with status: ' + xhr.status);
+                    $button.prop('disabled', false).removeClass('loading-dots').text("History Double Klaim");
+                    alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                }
+            });
+        });
+
+        $('#submitVerif').click(function (e) {
+            e.preventDefault(); // Prevent the default form submission behavior
+
+            // Show confirmation dialog
+            if (confirm('Apakah Anda yakin ingin menyimpan data?')) {
+                const formData = $('#formSEP').serializeArray();
+                const verifData = $('#verifDataKlaim').serializeArray();
+
+                // Convert serialized arrays to a single object
+                const combineData = {};
+                formData.concat(verifData).forEach(({name, value}) => {
+                    combineData[name] = value;
+                });
+
+                const $button = $(this);
+                const originalText = $button.text();
+
+                $button.prop('disabled', true).addClass('loading-dots').text('Posting data ke VIDI');
+
+                $.ajax({
+                    url: 'http://127.0.0.1:8000/verifikasi_data_klaim/',
+                    type: 'POST',
+                    data: combineData,
+                    success: function (response) {
+                        console.log('Berhasil ambil data');
+                        $button.prop('disabled', true).removeClass('loading-dots').text("Data Klaim Berhasil Diambil");
+                        $('#simpanHidden').click();
+                    },
+                    error: function (xhr) {
+                        console.log('Permintaan gagal dengan kode status: ' + xhr.status);
+                        $button.prop('disabled', false).removeClass('loading-dots').text("Posting data ke VIDI");
+                        alert('Terjadi kesalahan: ' + xhr.status + ' ' + xhr.statusText + ' , Coba Kembali');
+                    }
+                });
+            } else {
+                // User canceled, do nothing
+                console.log('Submit digagalkan');
+            }
+        });
+
+    </script>
+{% endblock %}

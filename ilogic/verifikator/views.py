@@ -1544,11 +1544,11 @@ def import_data_klaim_obat(request):
                     [DataKlaimObat(**dict(row[1])) for row in data_frame.iterrows()]
                 )
 
-            queryset = DataKlaimObat.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.BELUM_VER)
+                queryset = DataKlaimObat.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.BELUM_VER)
 
-            index = random.randrange(verifikator.count())
+                index = random.randrange(verifikator.count())
 
-            with transaction.atomic():
+                # with transaction.atomic():
                 objs_to_update = []
                 for kd_jenis in [1, 2, 3]:
                     objs = queryset.filter(KdJenis=kd_jenis)

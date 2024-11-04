@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'supervisorkp',
     'vpkaak',
     'metafisik',
+    'audia',
 
     # modules
     'import_export',
@@ -67,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'dal',
     'dal_select2',
+    'django_select2',
 
     # session
     # 'django.contrib.sessions',

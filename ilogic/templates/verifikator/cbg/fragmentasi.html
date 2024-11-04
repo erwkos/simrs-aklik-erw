@@ -128,7 +128,7 @@
   <div class="card">
       <div class="card-header">
           <div class="card-title">
-                <h3>Fitur Sikat (verifika<span style="color: red"><b>SI</b></span> <span style="color: red"><b>K</b></span>laim cep<span style="color: red"><b>AT</b></span>) Fragmentasi</h3>
+                <h3>Fitur SIKAT (verifika<span style="color: red"><b>SI</b></span> <span style="color: red"><b>K</b></span>laim cep<span style="color: red"><b>AT</b></span>) Fragmentasi</h3>
           </div>
       </div>
     <div class="card-body">
@@ -224,24 +224,6 @@
 <!-- Container untuk detail akan ditambahkan secara dinamis -->
 
 <script>
-  // Fungsi untuk mendapatkan CSRF token dari cookie
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  const csrftoken = getCookie('csrftoken');
-
   // Data detail No Reg diambil dari context
   const dataDetail = {{ data_detail_json|safe }};
 
@@ -249,11 +231,11 @@
 
   // Fungsi untuk mengirim status ke server
   function kirimStatus(nokartu, nmpeserta, no_sep, status) {
-    fetch(`/verifikator/simpan-status-fragmentasi/`, {  // Perbarui URL di sini
+    fetch(`{% url 'verifikator:simpan_status_fragmentasi' %}`, {  // Perbarui URL di sini
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': csrftoken  // Gunakan CSRF token dari cookie
+        'X-CSRFToken': '{{ csrf_token }}'  // Gunakan CSRF token
       },
       body: JSON.stringify({
         nokartu: nokartu,
