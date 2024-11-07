@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Sum, Count, Max
+from django.db.models import Sum, Count, Max, Q
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -18,7 +18,7 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from msoffcrypto.exceptions import InvalidKeyError, DecryptionError
 from openpyxl import Workbook
 import pandas as pd
@@ -1560,6 +1560,24 @@ def import_data_klaim_obat(request):
                             index = (index + 1) % verifikator.count()
                 if objs_to_update:
                     DataKlaimObat.objects.bulk_update(objs_to_update, ['verifikator', 'status'])
+
+                queryset_proses = DataKlaimObat.objects.filter(register_klaim=register,
+                                                        status=StatusDataKlaimChoices.PROSES)
+
+                # penentuan SLA
+                sla = SLA.objects.filter(jenis_klaim=register.jenis_klaim,
+                                         kantor_cabang=register.faskes.kantor_cabang).first()
+                if sla:
+                    if register.tgl_ba_lengkap:
+                        queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla))
+                    elif register.tgl_terima:
+                        queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+                else:
+                    if register.tgl_ba_lengkap:
+                        queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=6))
+                    elif register.tgl_terima:
+                        queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+
             messages.success(request, "Data Obat Berhasil Di-import")
             # # Obat PRB
             # with transaction.atomic():
@@ -2121,63 +2139,6 @@ def download_data_obat(request):
     return render(request, 'verifikator/obat/download_data_obat.html', context)
 
 
-@login_required
-@check_device
-@permissions(role=['verifikator'])
-def fragmentasi(request):
-    queryset = DataKlaimCBG.objects.filter(
-        verifikator=request.user,
-        prosesklaim=False,
-        JNSPEL=JenisPelayananChoices.RAWAT_JALAN  # Sesuaikan jika perlu
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
-
-    # Terapkan filter dengan menambahkan parameter 'user'
-    myFilter = FragmentasiFilter(request.GET, queryset=queryset, user=request.user)
-    queryset = myFilter.qs
-
-    # Kelompokkan data berdasarkan kombinasi unik NOKARTU dan NMPESERTA
-    grouped_queryset = queryset.values(
-        'NOKARTU',
-        'NMPESERTA'
-    ).annotate(
-        jumlah_kunjungan=Count('NOSEP'),
-        jumlah_biaya=Sum('BYPENGAJUAN'),
-        nama_rs=Max('faskes__nama'),
-        nomor_register_klaim=Max('register_klaim__nomor_register_klaim')
-    ).filter(jumlah_kunjungan__gt=1).order_by('-jumlah_kunjungan')  # Sesuaikan pengurutan jika diperlukan
-
-    # Persiapkan data detail NOSEP per grup
-    data_detail_dict = defaultdict(list)
-    for data in queryset:
-        key = f"{data.NOKARTU} {data.NMPESERTA}"
-        data_detail_dict[key].append({
-            "rs": data.faskes.nama,
-            "no_sep": data.NOSEP,
-            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
-            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
-            "poli": data.POLI,
-            "cbg": data.KDINACBG,
-            "tarif": data.BYPENGAJUAN,  # Gunakan 'BYPENGAJUAN' di sini
-            "current_status": data.status,
-            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        })
-
-    # Serialisasi data_detail_dict ke JSON
-    data_detail_json = json.dumps(data_detail_dict)
-
-    # Pagination: ubah jumlah item per halaman menjadi 20
-    paginator = Paginator(grouped_queryset, 20)
-    page_number = request.GET.get('page')
-    grouped_queryset = paginator.get_page(page_number)
-
-    context = {
-        'data_klaim': grouped_queryset,
-        'myFilter': myFilter,
-        'data_detail_json': data_detail_json,
-    }
-    return render(request, 'verifikator/cbg/fragmentasi.html', context)
-
-
 @csrf_protect
 @require_POST
 @login_required
@@ -2267,63 +2228,6 @@ def detail_data_klaim_verifkhusus(request, no_sep):
     return render(request, 'verifikator/cbg/detail_data_klaim_verifkhusus.html', context)
 
 
-@login_required
-@check_device
-@permissions(role=['verifikator'])
-def readmisi(request):
-    queryset = DataKlaimCBG.objects.filter(
-        verifikator=request.user,
-        prosesklaim=False,
-        JNSPEL='Rawat Inap'  # Sesuaikan jika perlu
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
-
-    # Terapkan filter dengan menambahkan parameter 'user'
-    myFilter = ReadmisiFilter(request.GET, queryset=queryset, user=request.user)
-    queryset = myFilter.qs
-
-    # Kelompokkan data berdasarkan kombinasi unik NOKARTU dan NMPESERTA
-    grouped_queryset = queryset.values(
-        'NOKARTU',
-        'NMPESERTA'
-    ).annotate(
-        jumlah_kunjungan=Count('NOSEP'),
-        jumlah_biaya=Sum('BYPENGAJUAN'),
-        nama_rs=Max('faskes__nama'),
-        nomor_register_klaim=Max('register_klaim__nomor_register_klaim')
-    ).filter(jumlah_kunjungan__gt=1).order_by('-jumlah_kunjungan')  # Sesuaikan pengurutan jika diperlukan
-
-    # Persiapkan data detail NOSEP per grup
-    data_detail_dict = defaultdict(list)
-    for data in queryset:
-        key = f"{data.NOKARTU} {data.NMPESERTA}"
-        data_detail_dict[key].append({
-            "rs": data.faskes.nama,
-            "no_sep": data.NOSEP,
-            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
-            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
-            "poli": data.POLI,
-            "cbg": data.KDINACBG,
-            "tarif": data.BYPENGAJUAN,  # Gunakan 'BYPENGAJUAN' di sini
-            "current_status": data.status,
-            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        })
-
-    # Serialisasi data_detail_dict ke JSON
-    data_detail_json = json.dumps(data_detail_dict)
-
-    # Pagination: ubah jumlah item per halaman menjadi 20
-    paginator = Paginator(grouped_queryset, 20)
-    page_number = request.GET.get('page')
-    grouped_queryset = paginator.get_page(page_number)
-
-    context = {
-        'data_klaim': grouped_queryset,
-        'myFilter': myFilter,
-        'data_detail_json': data_detail_json,
-    }
-    return render(request, 'verifikator/cbg/readmisi.html', context)
-
-
 @csrf_protect
 @require_POST
 @login_required
@@ -2390,64 +2294,6 @@ def simpan_status_readmisi(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-@login_required
-@check_device
-@permissions(role=['verifikator'])
-def rehabilitasi(request):
-    queryset = DataKlaimCBG.objects.filter(
-        verifikator=request.user,
-        prosesklaim=False,
-        POLI='IRM',
-        KDINACBG__in=['Z-3-12-0', 'M-3-16-0']# Sesuaikan jika perlu
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
-
-    # Terapkan filter dengan menambahkan parameter 'user'
-    myFilter = ReadmisiFilter(request.GET, queryset=queryset, user=request.user)
-    queryset = myFilter.qs
-
-    # Kelompokkan data berdasarkan kombinasi unik NOKARTU dan NMPESERTA
-    grouped_queryset = queryset.values(
-        'NOKARTU',
-        'NMPESERTA'
-    ).annotate(
-        jumlah_kunjungan=Count('NOSEP'),
-        jumlah_biaya=Sum('BYPENGAJUAN'),
-        nama_rs=Max('faskes__nama'),
-        nomor_register_klaim=Max('register_klaim__nomor_register_klaim')
-    ).order_by('NMPESERTA')  # Sesuaikan pengurutan jika diperlukan
-
-    # Persiapkan data detail NOSEP per grup
-    data_detail_dict = defaultdict(list)
-    for data in queryset:
-        key = f"{data.NOKARTU} {data.NMPESERTA}"
-        data_detail_dict[key].append({
-            "rs": data.faskes.nama,
-            "no_sep": data.NOSEP,
-            "in": data.TGLSEP.strftime('%B %d, %Y') if data.TGLSEP else '',
-            "out": data.TGLPULANG.strftime('%B %d, %Y') if data.TGLPULANG else '',
-            "poli": data.POLI,
-            "cbg": data.KDINACBG,
-            "tarif": data.BYPENGAJUAN,  # Gunakan 'BYPENGAJUAN' di sini
-            "current_status": data.status,
-            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        })
-
-    # Serialisasi data_detail_dict ke JSON
-    data_detail_json = json.dumps(data_detail_dict)
-
-    # Pagination: ubah jumlah item per halaman menjadi 20
-    paginator = Paginator(grouped_queryset, 20)
-    page_number = request.GET.get('page')
-    grouped_queryset = paginator.get_page(page_number)
-
-    context = {
-        'data_klaim': grouped_queryset,
-        'myFilter': myFilter,
-        'data_detail_json': data_detail_json,
-    }
-    return render(request, 'verifikator/cbg/rehabilitasi.html', context)
-
-
 @csrf_protect
 @require_POST
 @login_required
@@ -2512,3 +2358,276 @@ def simpan_status_rehabilitasi(request):
         return JsonResponse({'error': 'JSON tidak valid.'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def fragmentasi(request):
+    queryset = DataKlaimCBG.objects.filter(
+        verifikator=request.user,
+        prosesklaim=False,
+        JNSPEL=JenisPelayananChoices.RAWAT_JALAN
+    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+
+    # Terapkan filter dengan menambahkan parameter 'user'
+    myFilter = FragmentasiFilter(request.GET, queryset=queryset, user=request.user)
+    queryset = myFilter.qs
+
+    # Kelompokkan data berdasarkan kombinasi unik NOKARTU dan NMPESERTA
+    grouped_queryset = queryset.values(
+        'NOKARTU',
+        'NMPESERTA',
+        'register_klaim__nomor_register_klaim',
+        'faskes__nama'
+    ).annotate(
+        jumlah_kunjungan=Count('NOSEP'),
+        jumlah_biaya=Sum('BYPENGAJUAN'),
+    ).filter(jumlah_kunjungan__gt=1).order_by('-jumlah_kunjungan')
+
+    # Pagination: ubah jumlah item per halaman menjadi 10
+    paginator = Paginator(grouped_queryset, 10)
+    page_number = request.GET.get('page')
+    grouped_queryset = paginator.get_page(page_number)
+
+    context = {
+        'data_klaim': grouped_queryset,
+        'myFilter': myFilter,
+    }
+    return render(request, 'verifikator/cbg/fragmentasi.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def readmisi(request):
+    queryset = DataKlaimCBG.objects.filter(
+        verifikator=request.user,
+        prosesklaim=False,
+        JNSPEL=JenisPelayananChoices.RAWAT_INAP  # Sesuaikan jika perlu
+    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+
+    # Terapkan filter dengan menambahkan parameter 'user'
+    myFilter = FragmentasiFilter(request.GET, queryset=queryset, user=request.user)
+    queryset = myFilter.qs
+
+    # Kelompokkan data berdasarkan kombinasi unik NOKARTU dan NMPESERTA
+    grouped_queryset = queryset.values(
+        'NOKARTU',
+        'NMPESERTA',
+        'register_klaim__nomor_register_klaim',
+        'faskes__nama'
+    ).annotate(
+        jumlah_kunjungan=Count('NOSEP'),
+        jumlah_biaya=Sum('BYPENGAJUAN'),
+    ).filter(jumlah_kunjungan__gt=1).order_by('-jumlah_kunjungan')
+
+    # Pagination: ubah jumlah item per halaman menjadi 10
+    paginator = Paginator(grouped_queryset, 10)
+    page_number = request.GET.get('page')
+    grouped_queryset = paginator.get_page(page_number)
+
+    context = {
+        'data_klaim': grouped_queryset,
+        'myFilter': myFilter,
+    }
+    return render(request, 'verifikator/cbg/readmisi.html', context)
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+def rehabilitasi(request):
+    queryset = DataKlaimCBG.objects.filter(
+        verifikator=request.user,
+        prosesklaim=False
+    ).filter(
+        Q(POLI='IRM') | Q(KDINACBG__in=['Z-3-12-0', 'M-3-16-0'])
+    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+
+    # Terapkan filter dengan menambahkan parameter 'user'
+    myFilter = FragmentasiFilter(request.GET, queryset=queryset, user=request.user)
+    queryset = myFilter.qs
+
+    # Kelompokkan data berdasarkan kombinasi unik NOKARTU dan NMPESERTA
+    grouped_queryset = queryset.values(
+        'NOKARTU',
+        'NMPESERTA',
+        'register_klaim__nomor_register_klaim',
+        'faskes__nama'
+    ).annotate(
+        jumlah_kunjungan=Count('NOSEP'),
+        jumlah_biaya=Sum('BYPENGAJUAN'),
+    ).filter(jumlah_kunjungan__gt=1).order_by('-jumlah_kunjungan')
+
+    # Pagination: ubah jumlah item per halaman menjadi 10
+    paginator = Paginator(grouped_queryset, 10)
+    page_number = request.GET.get('page')
+    grouped_queryset = paginator.get_page(page_number)
+
+    context = {
+        'data_klaim': grouped_queryset,
+        'myFilter': myFilter,
+    }
+    return render(request, 'verifikator/cbg/readmisi.html', context)
+
+
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+@require_GET
+def get_fragmentasi_detail(request):
+    nokartu = request.GET.get('nokartu')
+    nmpeserta = request.GET.get('nmpeserta')
+    page = request.GET.get('page', 1)
+    items_per_page = 10
+
+    if not nokartu or not nmpeserta:
+        return JsonResponse({'error': 'Parameter nokartu dan nmpeserta diperlukan.'}, status=400)
+
+    queryset = DataKlaimCBG.objects.filter(
+        verifikator=request.user,
+        prosesklaim=False,
+        JNSPEL=JenisPelayananChoices.RAWAT_JALAN,
+        NOKARTU=nokartu,
+        NMPESERTA=nmpeserta
+    ).select_related('faskes', 'register_klaim').order_by('TGLSEP')
+
+    paginator = Paginator(queryset, items_per_page)
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    detail_data = []
+    for data in page_obj:
+        detail_data.append({
+            "rs": data.faskes.nama,
+            "no_sep": data.NOSEP,
+            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
+            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
+            "poli": data.POLI,
+            "cbg": data.KDINACBG,
+            "tarif": data.BYPENGAJUAN,
+            "current_status": data.status,
+            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
+        })
+
+    return JsonResponse({
+        'detail_data': detail_data,
+        'has_next': page_obj.has_next(),
+        'has_previous': page_obj.has_previous(),
+        'num_pages': paginator.num_pages,
+        'current_page': page_obj.number,
+    })
+
+
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+@require_GET
+def get_readmisi_detail(request):
+    nokartu = request.GET.get('nokartu')
+    nmpeserta = request.GET.get('nmpeserta')
+    page = request.GET.get('page', 1)
+    items_per_page = 10
+
+    if not nokartu or not nmpeserta:
+        return JsonResponse({'error': 'Parameter nokartu dan nmpeserta diperlukan.'}, status=400)
+
+    queryset = DataKlaimCBG.objects.filter(
+        verifikator=request.user,
+        prosesklaim=False,
+        JNSPEL=JenisPelayananChoices.RAWAT_INAP,
+        NOKARTU=nokartu,
+        NMPESERTA=nmpeserta
+    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+
+    paginator = Paginator(queryset, items_per_page)
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    detail_data = []
+    for data in page_obj:
+        detail_data.append({
+            "rs": data.faskes.nama,
+            "no_sep": data.NOSEP,
+            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
+            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
+            "poli": data.POLI,
+            "cbg": data.KDINACBG,
+            "tarif": data.BYPENGAJUAN,
+            "current_status": data.status,
+            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
+        })
+
+    return JsonResponse({
+        'detail_data': detail_data,
+        'has_next': page_obj.has_next(),
+        'has_previous': page_obj.has_previous(),
+        'num_pages': paginator.num_pages,
+        'current_page': page_obj.number,
+    })
+
+
+@login_required
+@check_device
+@permissions(role=['verifikator'])
+@require_GET
+def get_rehabilitasi_detail(request):
+    nokartu = request.GET.get('nokartu')
+    nmpeserta = request.GET.get('nmpeserta')
+    page = request.GET.get('page', 1)
+    items_per_page = 10
+
+    if not nokartu or not nmpeserta:
+        return JsonResponse({'error': 'Parameter nokartu dan nmpeserta diperlukan.'}, status=400)
+
+    queryset = DataKlaimCBG.objects.filter(
+        verifikator=request.user,
+        prosesklaim=False,
+        NOKARTU=nokartu,
+        NMPESERTA=nmpeserta
+    ).filter(
+        Q(POLI='IRM') | Q(KDINACBG__in=['Z-3-12-0', 'M-3-16-0'])
+    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+
+    paginator = Paginator(queryset, items_per_page)
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    detail_data = []
+    for data in page_obj:
+        detail_data.append({
+            "rs": data.faskes.nama,
+            "no_sep": data.NOSEP,
+            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
+            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
+            "poli": data.POLI,
+            "cbg": data.KDINACBG,
+            "tarif": data.BYPENGAJUAN,
+            "current_status": data.status,
+            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
+        })
+
+    return JsonResponse({
+        'detail_data': detail_data,
+        'has_next': page_obj.has_next(),
+        'has_previous': page_obj.has_previous(),
+        'num_pages': paginator.num_pages,
+        'current_page': page_obj.number,
+    })

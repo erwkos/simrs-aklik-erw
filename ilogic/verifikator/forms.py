@@ -72,7 +72,7 @@ class ImportDataKlaimForm(forms.Form):
     # year_tanggal_pengajuan = forms.IntegerField(widget=forms.NumberInput(attrs={'type': 'hidden'}))
     # no_ba_terima = forms.CharField(widget=forms.TextInput(attrs={'type': 'hidden'}))
     file = forms.FileField(label='Upload File Excel', required=True,
-                           help_text='Hanya menerima file dengan ekstensi `.xlsx` dan ukuran maksimal 2MB')
+                           help_text='Hanya menerima file dengan ekstensi `.xlsx` dan ukuran maksimal 4MB')
 
     # def __init__(self, *args, **kwargs):
     #     super().__init__(*args, **kwargs)
@@ -82,8 +82,8 @@ class ImportDataKlaimForm(forms.Form):
         file = self.cleaned_data.get('file')
         if file.name.split('.')[-1] != 'xlsx':
             raise ValidationError('Hanya menerima file dengan ekstensi `.xlsx`')
-        elif file.size >= 1024 * 1024 * 2:
-            raise ValidationError('File harus kurang dari 2MB')
+        elif file.size >= 1024 * 1024 * 4:
+            raise ValidationError('File harus kurang dari 4MB')
         return file
 
 
@@ -93,6 +93,7 @@ class DataKlaimForm(forms.Form):
     month_tanggal_pengajuan = forms.IntegerField(widget=forms.NumberInput(attrs={'type': 'hidden'}))
     year_tanggal_pengajuan = forms.IntegerField(widget=forms.NumberInput(attrs={'type': 'hidden'}))
     no_ba_terima = forms.CharField(widget=forms.TextInput(attrs={'type': 'hidden'}))
+
 
 class ImportUpdateDataKlaimCBGForm(forms.Form):
     register = forms.CharField(required=True, widget=forms.TextInput())
@@ -153,7 +154,7 @@ class HitungDataKlaimForm(forms.ModelForm):
 
 class UploadDataKlaimForm(forms.Form):
     file = forms.FileField(label='Upload File Excel', required=True,
-                           help_text='Hanya menerima file dengan ekstensi `.xlsx` dan ukuran maksimal 2MB')
+                           help_text='Hanya menerima file dengan ekstensi `.xlsx` dan ukuran maksimal 4MB')
 
 
 class PotongKlaimForm(forms.ModelForm):

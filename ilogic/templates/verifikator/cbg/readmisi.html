@@ -1,5 +1,3 @@
-<!-- readmisi.html -->
-
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load my_tags %}
@@ -13,13 +11,14 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<link href="/static/django_select2/django_select2.css" rel="stylesheet" />
-<script src="/static/django_select2/django_select2.js"></script>
+<link href="{% static 'django_select2/django_select2.css' %}" rel="stylesheet" />
+<script src="{% static 'django_select2/django_select2.js' %}"></script>
 
 {% endblock %}
 
 {% block content %}
 <style>
+  /* CSS yang Anda miliki tetap sama */
   .table-header {
     background-color: #d9eaf7;
     text-align: center;
@@ -89,13 +88,38 @@
       transform: scale(1.8); /* Sesuaikan nilai skala sesuai kebutuhan */
       margin: 5px; /* Opsional: tambahkan margin untuk ruang ekstra */
   }
+
+  /* Ensure the Select2 container spans full width */
+  .select2-container {
+      width: 100% !important;
+  }
+
+  /* Adjust the selection rendering to prevent text wrapping */
+  .select2-selection__rendered {
+      white-space: nowrap !important;
+      word-wrap: normal !important;
+  }
+
+  /* Style the single-select input field to match Bootstrap's form-control */
+  .select2-container .select2-selection--single {
+      height: calc(2.25rem + 10px); /* Adjust based on Bootstrap version */
+      padding: .375rem .75rem;
+      background-color: #fff;
+      border: 1px solid #ced4da; /* Match Bootstrap's default border color */
+      border-radius: .25rem;
+  }
+
+  /* Optional: Adjust the placeholder text color */
+  .select2-selection__placeholder {
+      color: #6c757d; /* Bootstrap's placeholder color */
+  }
 </style>
 
 <div class="col-xl-12 col-md-12 mb-4 mt-4">
   <div class="card">
       <div class="card-header">
           <div class="card-title">
-                <h3>Fitur Sikat (verifika<span style="color: red"><b>SI</b></span> <span style="color: red"><b>K</b></span>laim cep<span style="color: red"><b>AT</b></span>) Readmisi</h3>
+                <h3>Fitur SIKAT (verifika<span style="color: red"><b>SI</b></span> <span style="color: red"><b>K</b></span>laim cep<span style="color: red"><b>AT</b></span>) Readmisi</h3>
           </div>
       </div>
     <div class="card-body">
@@ -126,8 +150,8 @@
           <tbody>
             {% for data in data_klaim %}
             <tr>
-              <td>{{ data.nomor_register_klaim }}</td>
-              <td>{{ data.nama_rs }}</td>
+              <td>{{ data.register_klaim__nomor_register_klaim }}</td>
+              <td>{{ data.faskes__nama }}</td>
               <td>{{ data.NOKARTU }}</td>
               <td>
                 <a href="#" class="no-reg-link btn-oval" data-nokartu="{{ data.NOKARTU }}" data-nmpeserta="{{ data.NMPESERTA }}">
@@ -189,20 +213,16 @@
 </div>
 
 <!-- Container untuk detail akan ditambahkan secara dinamis -->
+<!-- Tidak perlu menambahkan container khusus karena akan ditambahkan setelah baris yang diklik -->
 
 <script>
-  // Data detail No Reg diambil dari context
-  const dataDetail = {{ data_detail_json|safe }};
-
-  let lastDetailRow = null; // Menyimpan elemen baris detail terakhir yang ditambahkan
-
   // Fungsi untuk mengirim status ke server
   function kirimStatus(nokartu, nmpeserta, no_sep, status) {
-    fetch(`{% url 'verifikator:simpan_status_readmisi' %}`, {  // Perbarui URL di sini
+    fetch("{% url 'verifikator:simpan_status_readmisi' %}", {  // Pastikan URL ini benar
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'  // Gunakan CSRF token
+        'X-CSRFToken': '{{ csrf_token }}'
       },
       body: JSON.stringify({
         nokartu: nokartu,
@@ -226,208 +246,184 @@
   }
 
   // Event listener untuk link Nama
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('no-reg-link')) {
+  $(document).ready(function() {
+    // Fungsi untuk memuat detail
+    function loadDetail(nokartu, nmpeserta, parentRow, regNumber, page = 1) {
+      $.ajax({
+        url: "{% url 'verifikator:get_readmisi_detail' %}",
+        data: {
+          'nokartu': nokartu,
+          'nmpeserta': nmpeserta,
+          'page': page
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response.error) {
+            alert(response.error);
+            return;
+          }
+
+          // Jika halaman pertama, hapus detail sebelumnya
+          if (page === 1) {
+            // Hapus detail-row sebelumnya jika ada
+            $('tr.detail-row').remove();
+          }
+
+          // Buat atau update baris detail
+          let detailRow = $('<tr class="detail-row"></tr>');
+          let colspan = parentRow.children.length;
+          let detailHtml = `
+            <td colspan="6">
+              <div class="table-responsive">
+                <table class="table table-bordered mt-2">
+                  <thead>
+                    <tr>
+                      <th>RS</th>
+                      <th>No SEP</th>
+                      <th>IN</th>
+                      <th>OUT</th>
+                      <th>Poli</th>
+                      <th>CBG</th>
+                      <th>Tarif</th>
+                      <th>Layak</th>
+                      <th>Pending</th>
+                      <th>Tidak Layak</th>
+                      <th>Dispute</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${response.detail_data.map((data, rowIndex) => `
+                      <tr>
+                        <td>${data.rs}</td>
+                        <td><a href="/verifikator/detail-data-klaim-verifkhusus/${data.no_sep}/" class="sep-link" data-sep="${data.no_sep}" target="_blank">${data.no_sep}</a></td>
+                        <td>${data.in}</td>
+                        <td>${data.out}</td>
+                        <td>${data.poli}</td>
+                        <td>${data.cbg}</td>
+                        <td>${Number(data.tarif).toLocaleString('id-ID')}</td>
+                        ${data.status_options.map(statusOption => `
+                          <td>
+                            <input type="checkbox" class="status-checkbox"
+                              name="status-${regNumber}-${rowIndex}"
+                              data-reg="${regNumber}"
+                              data-row="${rowIndex}"
+                              data-status="${statusOption}"
+                              ${data.current_status === statusOption ? 'checked' : ''}>
+                            ${statusOption}
+                          </td>
+                        `).join('')}
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+                <div class="pagination-detail" id="pagination-detail-${regNumber}">
+                  <ul class="pagination">
+                    ${response.has_previous ? `
+                      <li class="page-item">
+                        <a class="page-link" href="#" data-page="${response.current_page - 1}" data-reg="${regNumber}">Previous</a>
+                      </li>
+                    ` : `
+                      <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                      </li>
+                    `}
+                    <li class="page-item active">
+                      <span class="page-link">Page ${response.current_page} of ${response.num_pages}</span>
+                    </li>
+                    ${response.has_next ? `
+                      <li class="page-item">
+                        <a class="page-link" href="#" data-page="${response.current_page + 1}" data-reg="${regNumber}">Next</a>
+                      </li>
+                    ` : `
+                      <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                      </li>
+                    `}
+                  </ul>
+                </div>
+              </div>
+            </td>
+          `;
+          detailRow.html(detailHtml);
+          // Hapus detail row yang aktif sebelumnya
+          $('tr.detail-row').not(detailRow).remove();
+          // Tambahkan atau ganti detail row setelah parent row
+          parentRow.after(detailRow);
+        },
+        error: function(xhr, status, error) {
+          console.error(error);
+          alert('Terjadi kesalahan saat memuat data detail.');
+        }
+      });
+    }
+
+    // Event listener untuk link Nama
+    $(document).on('click', '.no-reg-link', function(e) {
       e.preventDefault();
 
-      const nokartu = e.target.getAttribute('data-nokartu');
-      const nmpeserta = e.target.getAttribute('data-nmpeserta');
-      const regNumber = `${nokartu} ${nmpeserta}`; // Separator space
+      const nokartu = $(this).data('nokartu');
+      const nmpeserta = $(this).data('nmpeserta');
+      const regNumber = `${nokartu} ${nmpeserta}`;
+      const parentRow = $(this).closest('tr');
 
-      const parentRow = e.target.closest('tr'); // Baris utama yang diklik
-
-      // Jika detail sudah terbuka dan baris yang sama diklik, tutup detail dan hapus warna aktif
-      if (lastDetailRow && lastDetailRow.previousElementSibling === parentRow) {
-        lastDetailRow.remove();
-        lastDetailRow = null; // Reset baris detail
-        parentRow.classList.remove('active-row'); // Hapus kelas aktif
+      // Toggle active class
+      if (parentRow.hasClass('active-row')) {
+        parentRow.removeClass('active-row');
+        parentRow.next('.detail-row').remove();
         return;
       }
 
-      // Hapus baris detail sebelumnya jika ada, dan hapus kelas aktif dari row sebelumnya
-      if (lastDetailRow) {
-        lastDetailRow.previousElementSibling.classList.remove('active-row'); // Hapus kelas aktif dari row sebelumnya
-        lastDetailRow.remove();
-      }
+      // Hapus active class dan detail row dari baris lain
+      $('.active-row').removeClass('active-row');
+      $('tr.detail-row').remove();
 
-      // Tambahkan kelas aktif ke row yang diklik
-      parentRow.classList.add('active-row');
+      // Tambahkan active class ke baris yang diklik
+      parentRow.addClass('active-row');
 
-      // Buat baris baru untuk menampilkan detail
-      lastDetailRow = document.createElement('tr');
-      lastDetailRow.innerHTML = `
-        <td colspan="6">
-          ${generateDetailTable(regNumber)}
-        </td>
-      `;
+      // Load detail halaman pertama
+      loadDetail(nokartu, nmpeserta, parentRow, regNumber, 1);
+    });
 
-      // Sisipkan baris detail di bawah baris yang diklik
-      parentRow.after(lastDetailRow);
+    // Event listener untuk pagination detail
+    $(document).on('click', '.pagination-detail .page-link', function(e) {
+      e.preventDefault();
+      const page = $(this).data('page');
+      const regNumber = $(this).data('reg');
 
-      // Inisialisasi pagination setelah memasukkan tabel detail
-      initializePagination(regNumber);
-    }
-  });
+      if (!page || !regNumber) return;
 
-  // Event listener untuk mencatat perubahan pada checkbox
-  document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('status-checkbox')) {
-      const regNumber = e.target.getAttribute('data-reg'); // 'nokartu nmpeserta' with space
-      const row = e.target.getAttribute('data-row');
-      const status = e.target.getAttribute('data-status');
-      const no_sep = e.target.closest('tr').querySelector('.sep-link').getAttribute('data-sep');
+      // Split regNumber menjadi nokartu dan nmpeserta
+      const [nokartu, ...nmpesertaArr] = regNumber.split(' ');
+      const nmpeserta = nmpesertaArr.join(' ');
+
+      // Cari parent row berdasarkan regNumber
+      const parentRow = $(`a.no-reg-link[data-nokartu="${nokartu}"][data-nmpeserta="${nmpeserta}"]`).closest('tr');
+
+      // Load detail halaman yang dipilih
+      loadDetail(nokartu, nmpeserta, parentRow, regNumber, page);
+    });
+
+    // Event listener untuk mencatat perubahan pada checkbox
+    $(document).on('change', '.status-checkbox', function() {
+      const regNumber = $(this).data('reg');
+      const row = $(this).data('row');
+      const status = $(this).data('status');
+      const no_sep = $(this).closest('tr').find('.sep-link').data('sep');
 
       // Split regNumber into nokartu dan nmpeserta
-      const [nokartu, ...nmpesertaArr] = regNumber.split(' '); // Assuming space as separator
-      const nmpeserta = nmpesertaArr.join(' '); // Join in case nmpeserta has spaces
+      const [nokartu, ...nmpesertaArr] = regNumber.split(' ');
+      const nmpeserta = nmpesertaArr.join(' ');
 
-      const rowIndex = row; // Sesuaikan sesuai kebutuhan
-
-      // Jika checkbox dicentang, simpan status
-      if (e.target.checked) {
-        // Uncheck checkbox lain di baris yang sama
-        const checkboxes = document.querySelectorAll(`input[name="status-${regNumber}-${row}"]`);
-        checkboxes.forEach(checkbox => {
-          if (checkbox !== e.target) {
-            checkbox.checked = false;
-          }
-        });
-
-        // Kirim status ke server
+      // Jika checkbox dicentang, uncheck checkbox lain di baris yang sama
+      if ($(this).is(':checked')) {
+        $(`input[name="status-${regNumber}-${row}"]`).not(this).prop('checked', false);
         kirimStatus(nokartu, nmpeserta, no_sep, status);
       } else {
         // Jika checkbox di-uncheck, kirim status kosong atau hapus status
         kirimStatus(nokartu, nmpeserta, no_sep, null);
       }
-    }
-  });
-
-  // Fungsi untuk menghasilkan tabel detail tanpa tombol Simpan dan Submit
-  function generateDetailTable(regNumber) {
-    const detailData = dataDetail[regNumber];
-    if (!detailData || detailData.length === 0) return '<p>Tidak ada data detail tersedia.</p>';
-
-    let tableHtml = `
-      <div class="table-responsive">
-        <table class="table table-bordered mt-2">
-          <thead>
-            <tr>
-              <th>RS</th>
-              <th>No SEP</th>
-              <th>IN</th>
-              <th>OUT</th>
-              <th>Poli</th>
-              <th>CBG</th>
-              <th>Tarif</th>
-              <th>Layak</th>
-              <th>Pending</th>
-              <th>Tidak Layak</th>
-              <th>Dispute</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-detail-${regNumber}">
-    `;
-
-    detailData.forEach((data, rowIndex) => {
-      tableHtml += `
-        <tr>
-          <td>${data.rs}</td>
-          <td><a href="/verifikator/detail-data-klaim-verifkhusus/${data.no_sep}/" class="sep-link" data-sep="${data.no_sep}" target="_blank">${data.no_sep}</a></td>
-          <td>${data.in}</td>
-          <td>${data.out}</td>
-          <td>${data.poli}</td>
-          <td>${data.cbg}</td>
-          <td>${Number(data.tarif).toLocaleString('id-ID')}</td> <!-- Format tarif -->
-          ${data.status_options.map((statusOption) => {
-            // Tentukan apakah statusOption adalah current_status
-            const checkedAttribute = (data.current_status === statusOption) ? 'checked' : '';
-            return `
-              <td>
-                <input type="checkbox" class="status-checkbox"
-                  name="status-${regNumber}-${rowIndex}"
-                  data-reg="${regNumber}"
-                  data-row="${rowIndex}"
-                  data-status="${statusOption}"
-                  ${checkedAttribute}>
-                ${statusOption}
-              </td>`;
-          }).join('')}
-        </tr>
-      `;
     });
-
-    tableHtml += `
-          </tbody>
-        </table>
-      </div>
-      <div class="pagination-detail" id="pagination-detail-${regNumber}">
-        <!-- Pagination buttons akan dihasilkan di sini -->
-      </div>
-    `;
-
-    return tableHtml;
-  }
-
-  // Fungsi untuk menghasilkan tombol pagination dan mengatur tampilan halaman
-  function initializePagination(regNumber) {
-    const itemsPerPage = 20;
-    const tbody = document.getElementById(`tbody-detail-${regNumber}`);
-    const paginationDiv = document.getElementById(`pagination-detail-${regNumber}`);
-    const rows = tbody.querySelectorAll('tr');
-    const totalItems = rows.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    let currentPage = 1;
-
-    function showPage(page) {
-      currentPage = page;
-      rows.forEach((row, index) => {
-        if (index >= (page - 1) * itemsPerPage && index < page * itemsPerPage) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
-      });
-      updatePaginationControls();
-    }
-
-    function updatePaginationControls() {
-      paginationDiv.innerHTML = '';
-
-      // Tombol Previous
-      const prevButton = document.createElement('button');
-      prevButton.innerHTML = 'Previous';
-      prevButton.disabled = currentPage === 1;
-      if (currentPage === 1) {
-        prevButton.classList.add('disabled');
-      }
-      prevButton.onclick = () => showPage(currentPage - 1);
-      paginationDiv.appendChild(prevButton);
-
-      // Tombol halaman
-      for (let i = 1; i <= totalPages; i++) {
-        const pageButton = document.createElement('button');
-        pageButton.innerHTML = i;
-        if (i === currentPage) {
-          pageButton.classList.add('active');
-        }
-        pageButton.onclick = () => showPage(i);
-        paginationDiv.appendChild(pageButton);
-      }
-
-      // Tombol Next
-      const nextButton = document.createElement('button');
-      nextButton.innerHTML = 'Next';
-      nextButton.disabled = currentPage === totalPages;
-      if (currentPage === totalPages) {
-        nextButton.classList.add('disabled');
-      }
-      nextButton.onclick = () => showPage(currentPage + 1);
-      paginationDiv.appendChild(nextButton);
-    }
-
-    // Inisialisasi halaman pertama
-    showPage(1);
-  }
+  });
 </script>
 
 {% endblock %}
