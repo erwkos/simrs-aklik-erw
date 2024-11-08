@@ -12,12 +12,28 @@ from verifikator.models import HitungDataKlaim
 @check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_CBG(request):
-    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                           request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
-               'tgl_SLA')
+    # Get all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset
+    queryset = DataKlaimCBG.objects.select_related(
+        'register_klaim', 'faskes', 'verifikator'
+    ).filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=False
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'JNSPEL',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
+
 
 
 @login_required
@@ -32,11 +48,26 @@ def monitoring_data_klaim_CBG(request):
 @check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_CBG_verifikator(request):
-    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                           request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False,
-                                           verifikator=request.user).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
-               'tgl_SLA')
+    # Get all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset
+    queryset = DataKlaimCBG.objects.select_related(
+        'register_klaim', 'faskes', 'verifikator'
+    ).filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=False,
+        verifikator=request.user
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'JNSPEL',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -54,10 +85,25 @@ def monitoring_data_klaim_CBG_verifikator(request):
 @check_device
 @permissions(role=['supervisor'])
 def api_json_data_klaim_CBG_supervisor(request):
-    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                           request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
-               'tgl_SLA')
+    # Get all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset
+    queryset = DataKlaimCBG.objects.select_related(
+        'register_klaim', 'faskes', 'verifikator'
+    ).filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=False
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'JNSPEL',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -112,12 +158,26 @@ def monitoring_data_klaim_hitung_supervisor(request):
 @permissions(role=['verifikator'])
 def api_json_data_klaim_pending_dispute_CBG(request):
     status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
-    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                           request.user.kantorcabang_set.all().first().kode_cabang,
-                                           prosesklaim=True,
-                                           status__in=status_klaim).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
-               'tgl_SLA')
+    # Get all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset
+    queryset = DataKlaimCBG.objects.select_related(
+        'register_klaim', 'faskes', 'verifikator'
+    ).filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=True,
+        status__in=status_klaim,
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'JNSPEL',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -134,10 +194,24 @@ def monitoring_data_klaim_pending_dispute_CBG(request):
 @check_device
 @permissions(role=['adminAK'])
 def api_json_data_klaim_CBG_stafak(request):
-    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                           request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
-               'tgl_SLA')
+    # Get all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset
+    queryset = DataKlaimCBG.objects.select_related(
+        'register_klaim', 'faskes', 'verifikator'
+    ).filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=False,
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'JNSPEL',
+        'tgl_SLA'
+    )
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -155,12 +229,25 @@ def monitoring_data_klaim_CBG_stafak(request):
 @permissions(role=['adminAK'])
 def api_json_data_klaim_pending_dispute_CBG_stafak(request):
     status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
-    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                           request.user.kantorcabang_set.all().first().kode_cabang,
-                                           prosesklaim=True,
-                                               status__in=status_klaim).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
-               'tgl_SLA')
+    # Get all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset
+    queryset = DataKlaimCBG.objects.select_related(
+        'register_klaim', 'faskes', 'verifikator'
+    ).filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=True,
+        status__in=status_klaim,
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'JNSPEL',
+        'tgl_SLA'
+    )
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -178,12 +265,25 @@ def monitoring_data_klaim_pending_dispute_CBG_stafak(request):
 @permissions(role=['supervisor'])
 def api_json_data_klaim_pending_dispute_CBG_supervisor(request):
     status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
-    queryset = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                           request.user.kantorcabang_set.all().first().kode_cabang,
-                                           prosesklaim=True,
-                                           status__in=status_klaim).\
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status', 'JNSPEL',
-               'tgl_SLA')
+    # Get all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset
+    queryset = DataKlaimCBG.objects.select_related(
+        'register_klaim', 'faskes', 'verifikator'
+    ).filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=True,
+        status__in=status_klaim,
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'JNSPEL',
+        'tgl_SLA'
+    )
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -205,10 +305,23 @@ def monitoring_data_klaim_pending_dispute_CBG_supervisor(request):
 @check_device
 @permissions(role=['verifikator'])
 def api_json_data_klaim_obat_verifikator(request):
-    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False). \
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
-               'KdJenis', 'tgl_SLA')
+    # Retrieve all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset using related fields
+    queryset = DataKlaimObat.objects.select_related('register_klaim', 'faskes', 'verifikator').filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=False,
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'KdJenis',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -225,13 +338,25 @@ def monitoring_data_klaim_obat_verifikator(request):
 @check_device
 @permissions(role=['adminAK'])
 def api_json_data_klaim_obat_stafak(request):
-    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False). \
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
-               'KdJenis', 'tgl_SLA')
+    # Retrieve all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset using related fields
+    queryset = DataKlaimObat.objects.select_related('register_klaim', 'faskes', 'verifikator').filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=False,
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'KdJenis',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
-
 
 @login_required
 @check_device
@@ -245,10 +370,23 @@ def monitoring_data_klaim_obat_stafak(request):
 @check_device
 @permissions(role=['supervisor'])
 def api_json_data_klaim_obat_supervisor(request):
-    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                            request.user.kantorcabang_set.all().first().kode_cabang, prosesklaim=False). \
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
-               'KdJenis', 'tgl_SLA')
+    # Retrieve all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset using related fields
+    queryset = DataKlaimObat.objects.select_related('register_klaim', 'faskes', 'verifikator').filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=False,
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'KdJenis',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -268,12 +406,24 @@ def monitoring_data_klaim_obat_supervisor(request):
 @permissions(role=['verifikator'])
 def api_json_data_klaim_pending_dispute_obat_verifikator(request):
     status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
-    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                            request.user.kantorcabang_set.all().first().kode_cabang,
-                                            prosesklaim=True,
-                                            status__in=status_klaim). \
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
-               'KdJenis', 'tgl_SLA')
+    # Retrieve all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset using related fields
+    queryset = DataKlaimObat.objects.select_related('register_klaim', 'faskes', 'verifikator').filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=True,
+        status__in=status_klaim
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'KdJenis',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
@@ -291,14 +441,27 @@ def monitoring_data_klaim_pending_dispute_obat_verifikator(request):
 @permissions(role=['adminAK'])
 def api_json_data_klaim_pending_dispute_obat_stafak(request):
     status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
-    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                            request.user.kantorcabang_set.all().first().kode_cabang,
-                                            prosesklaim=True,
-                                            status__in=status_klaim). \
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
-               'KdJenis', 'tgl_SLA')
+    # Retrieve all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset using related fields
+    queryset = DataKlaimObat.objects.select_related('register_klaim', 'faskes', 'verifikator').filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=True,
+        status__in=status_klaim
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'KdJenis',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
+
 
 
 @login_required
@@ -314,12 +477,24 @@ def monitoring_data_klaim_pending_dispute_obat_stafak(request):
 @permissions(role=['supervisor'])
 def api_json_data_klaim_pending_dispute_obat_supervisor(request):
     status_klaim = ('Pending', 'Dispute', 'Pembahasan', 'Tidak Layak')
-    queryset = DataKlaimObat.objects.filter(register_klaim__nomor_register_klaim__startswith=
-                                            request.user.kantorcabang_set.all().first().kode_cabang,
-                                            prosesklaim=True,
-                                            status__in=status_klaim). \
-        values('register_klaim__nomor_register_klaim', 'bupel', 'faskes__nama', 'verifikator__username', 'status',
-               'KdJenis', 'tgl_SLA')
+    # Retrieve all KantorCabang associated with the user
+    kantor_cabang_list = request.user.kantorcabang_set.all()
+
+    # Build the queryset using related fields
+    queryset = DataKlaimObat.objects.select_related('register_klaim', 'faskes', 'verifikator').filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        prosesklaim=True,
+        status__in=status_klaim
+    ).values(
+        'register_klaim__nomor_register_klaim',
+        'bupel',
+        'faskes__nama',
+        'verifikator__username',
+        'status',
+        'KdJenis',
+        'tgl_SLA'
+    )
+
     data = list(queryset)
     return JsonResponse(data, safe=False)
 
