@@ -26,4 +26,7 @@ urlpatterns = [
     path('download/cbg/', views.download_data_cbg, name='download_data_cbg'),
     path('download/obat/', views.download_data_obat, name='download_data_obat'),
 
+    # pembagian null
+    path('pembagian-verifikator-cbg-null/', views.pembagian_verifikator_cbg_null, name='pembagian_verifikator_cbg_null')
+
 ]
