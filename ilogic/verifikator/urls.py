@@ -53,5 +53,8 @@ urlpatterns = [
       path('rehabilitasi', views.rehabilitasi, name='rehabilitasi'),
       path('simpan-status-rehabilitasi/', views.simpan_status_rehabilitasi,
            name='simpan_status_rehabilitasi'),
+      path('fragmentasi/detail/', views.get_fragmentasi_detail, name='get_fragmentasi_detail'),
+      path('readmisi/detail/', views.get_readmisi_detail, name='get_readmisi_detail'),
+      path('rehabilitasi/detail/', views.get_rehabilitasi_detail, name='get_rehabilitasi_detail'),
 
               ] + router.urls

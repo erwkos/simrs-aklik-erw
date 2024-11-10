@@ -2147,27 +2147,21 @@ def download_data_obat(request):
 def simpan_status_fragmentasi(request):
     try:
         data = json.loads(request.body)
-        nokartu = data.get('nokartu')
-        nmpeserta = data.get('nmpeserta')
         no_sep = data.get('no_sep')
         status = data.get('status')  # Bisa 'Layak', 'Pending', 'Tidak Layak', 'Dispute' atau null
 
         # Validasi data yang diterima
-        if not nokartu or not nmpeserta or not no_sep:
-            return JsonResponse({'error': 'Data tidak lengkap.'}, status=400)
+        if not no_sep:
+            return JsonResponse({'error': 'Parameter no_sep diperlukan.'}, status=400)
 
         # Validasi status jika diberikan
         valid_status = ["Layak", "Pending", "Tidak Layak", "Dispute"]
         if status and status not in valid_status:
             return JsonResponse({'error': 'Status tidak valid.'}, status=400)
 
-        # Cari objek DataKlaimCBG berdasarkan NOKARTU, NMPESERTA, dan NOSEP
+        # Cari objek DataKlaimCBG berdasarkan NOSEP
         try:
-            data_klaim = DataKlaimCBG.objects.get(
-                NOKARTU=nokartu,
-                NMPESERTA=nmpeserta,
-                NOSEP=no_sep
-            )
+            data_klaim = DataKlaimCBG.objects.get(NOSEP=no_sep)
         except DataKlaimCBG.DoesNotExist:
             return JsonResponse({'error': 'Data Klaim tidak ditemukan.'}, status=404)
 
@@ -2175,24 +2169,20 @@ def simpan_status_fragmentasi(request):
         if status:
             data_klaim.status = status
         else:
-            data_klaim.status = ''  # Atur sesuai kebutuhan, misalnya menghapus status
+            data_klaim.status = ''  # Atur sesuai kebutuhan
 
-        if status == 'Pending':
+        if status in ['Pending', 'Dispute', 'Tidak Layak']:
+            # Tentukan jenis_pending dan jenis_dispute jika perlu
             data_klaim.jenis_pending = JenisPendingChoices.ADMINISTRASI
+            if status == 'Dispute':
+                data_klaim.jenis_dispute = JenisDisputeChoices.KODING
 
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Potensi Fragmentasi',
-                                           verifikator=request.user)
-            data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
-        if status == 'Dispute':
-            data_klaim.jenis_pending = JenisPendingChoices.ADMINISTRASI
-            data_klaim.jenis_dispute = JenisDisputeChoices.KODING
-
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Potensi Fragmentasi',
-                                           verifikator=request.user)
-            data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
-        if status == 'Tidak Layak':
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Potensi Fragmentasi',
-                                           verifikator=request.user)
+            # Cek apakah KeteranganPendingDispute sudah ada
+            ket_pending_dispute_text = 'Potensi Fragmentasi'
+            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(
+                ket_pending_dispute=ket_pending_dispute_text,
+                verifikator=request.user
+            )
             data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
 
         data_klaim.save()
@@ -2217,7 +2207,7 @@ def detail_data_klaim_verifkhusus(request, no_sep):
     data_klaim_pending_form = KeteranganPendingForm()
 
     # Mendapatkan data metafisik terkait NOSEP
-    data_klaim_cbg_metafisik = DataKlaimCBGMetafisik.objects.filter(nosjp=instance.NOSEP).first()
+    data_klaim_cbg_metafisik = DataKlaimCBGMetafisik.objects.filter(nosjp=no_sep).first()
 
     context = {
         'data_klaim': instance,
@@ -2236,52 +2226,33 @@ def detail_data_klaim_verifkhusus(request, no_sep):
 def simpan_status_readmisi(request):
     try:
         data = json.loads(request.body)
-        nokartu = data.get('nokartu')
-        nmpeserta = data.get('nmpeserta')
         no_sep = data.get('no_sep')
-        status = data.get('status')  # Bisa 'Layak', 'Pending', 'Tidak Layak', 'Dispute' atau null
+        status = data.get('status')
 
-        # Validasi data yang diterima
-        if not nokartu or not nmpeserta or not no_sep:
-            return JsonResponse({'error': 'Data tidak lengkap.'}, status=400)
+        if not no_sep:
+            return JsonResponse({'error': 'Parameter no_sep diperlukan.'}, status=400)
 
-        # Validasi status jika diberikan
         valid_status = ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        if status and status not in valid_status:
+        if status not in valid_status:
             return JsonResponse({'error': 'Status tidak valid.'}, status=400)
 
-        # Cari objek DataKlaimCBG berdasarkan NOKARTU, NMPESERTA, dan NOSEP
         try:
-            data_klaim = DataKlaimCBG.objects.get(
-                NOKARTU=nokartu,
-                NMPESERTA=nmpeserta,
-                NOSEP=no_sep
-            )
+            data_klaim = DataKlaimCBG.objects.get(NOSEP=no_sep, verifikator=request.user)
         except DataKlaimCBG.DoesNotExist:
             return JsonResponse({'error': 'Data Klaim tidak ditemukan.'}, status=404)
 
-        # Update status jika diberikan
-        if status:
-            data_klaim.status = status
-        else:
-            data_klaim.status = ''  # Atur sesuai kebutuhan, misalnya menghapus status
+        data_klaim.status = status
 
-        if status == 'Pending':
+        if status in ['Pending', 'Dispute', 'Tidak Layak']:
             data_klaim.jenis_pending = JenisPendingChoices.ADMINISTRASI
+            if status == 'Dispute':
+                data_klaim.jenis_dispute = JenisDisputeChoices.KODING
 
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Potensi Readmisi',
-                                           verifikator=request.user)
-            data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
-        if status == 'Dispute':
-            data_klaim.jenis_pending = JenisPendingChoices.ADMINISTRASI
-            data_klaim.jenis_dispute = JenisDisputeChoices.KODING
-
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Potensi Readmisi',
-                                           verifikator=request.user)
-            data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
-        if status == 'Tidak Layak':
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Potensi Readmisi',
-                                           verifikator=request.user)
+            ket_pending_dispute_text = 'Potensi Readmisi'
+            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(
+                ket_pending_dispute=ket_pending_dispute_text,
+                verifikator=request.user
+            )
             data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
 
         data_klaim.save()
@@ -2302,52 +2273,33 @@ def simpan_status_readmisi(request):
 def simpan_status_rehabilitasi(request):
     try:
         data = json.loads(request.body)
-        nokartu = data.get('nokartu')
-        nmpeserta = data.get('nmpeserta')
         no_sep = data.get('no_sep')
-        status = data.get('status')  # Bisa 'Layak', 'Pending', 'Tidak Layak', 'Dispute' atau null
+        status = data.get('status')
 
-        # Validasi data yang diterima
-        if not nokartu or not nmpeserta or not no_sep:
-            return JsonResponse({'error': 'Data tidak lengkap.'}, status=400)
+        if not no_sep:
+            return JsonResponse({'error': 'Parameter no_sep diperlukan.'}, status=400)
 
-        # Validasi status jika diberikan
         valid_status = ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        if status and status not in valid_status:
+        if status not in valid_status:
             return JsonResponse({'error': 'Status tidak valid.'}, status=400)
 
-        # Cari objek DataKlaimCBG berdasarkan NOKARTU, NMPESERTA, dan NOSEP
         try:
-            data_klaim = DataKlaimCBG.objects.get(
-                NOKARTU=nokartu,
-                NMPESERTA=nmpeserta,
-                NOSEP=no_sep
-            )
+            data_klaim = DataKlaimCBG.objects.get(NOSEP=no_sep, verifikator=request.user)
         except DataKlaimCBG.DoesNotExist:
             return JsonResponse({'error': 'Data Klaim tidak ditemukan.'}, status=404)
 
-        # Update status jika diberikan
-        if status:
-            data_klaim.status = status
-        else:
-            data_klaim.status = ''  # Atur sesuai kebutuhan, misalnya menghapus status
+        data_klaim.status = status
 
-        if status == 'Pending':
+        if status in ['Pending', 'Dispute', 'Tidak Layak']:
             data_klaim.jenis_pending = JenisPendingChoices.ADMINISTRASI
+            if status == 'Dispute':
+                data_klaim.jenis_dispute = JenisDisputeChoices.KODING
 
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Ketidaksesuaian Pengajuan Klaim Rehabilitasi Medis',
-                                           verifikator=request.user)
-            data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
-        if status == 'Dispute':
-            data_klaim.jenis_pending = JenisPendingChoices.ADMINISTRASI
-            data_klaim.jenis_dispute = JenisDisputeChoices.KODING
-
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Ketidaksesuaian Pengajuan Klaim Rehabilitasi Medis',
-                                           verifikator=request.user)
-            data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
-        if status == 'Tidak Layak':
-            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(ket_pending_dispute='Ketidaksesuaian Pengajuan Klaim Rehabilitasi Medis',
-                                           verifikator=request.user)
+            ket_pending_dispute_text = 'Ketidaksesuaian Pengajuan Klaim Rehabilitasi Medis'
+            keterangan_pending_dispute = KeteranganPendingDispute.objects.create(
+                ket_pending_dispute=ket_pending_dispute_text,
+                verifikator=request.user
+            )
             data_klaim.ket_pending_dispute.add(keterangan_pending_dispute)
 
         data_klaim.save()
@@ -2368,7 +2320,7 @@ def fragmentasi(request):
         verifikator=request.user,
         prosesklaim=False,
         JNSPEL=JenisPelayananChoices.RAWAT_JALAN
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+    ).order_by('NMPESERTA', 'TGLSEP')
 
     # Terapkan filter dengan menambahkan parameter 'user'
     myFilter = FragmentasiFilter(request.GET, queryset=queryset, user=request.user)
@@ -2386,7 +2338,7 @@ def fragmentasi(request):
     ).filter(jumlah_kunjungan__gt=1).order_by('-jumlah_kunjungan')
 
     # Pagination: ubah jumlah item per halaman menjadi 10
-    paginator = Paginator(grouped_queryset, 10)
+    paginator = Paginator(grouped_queryset, 2)
     page_number = request.GET.get('page')
     grouped_queryset = paginator.get_page(page_number)
 
@@ -2404,8 +2356,8 @@ def readmisi(request):
     queryset = DataKlaimCBG.objects.filter(
         verifikator=request.user,
         prosesklaim=False,
-        JNSPEL=JenisPelayananChoices.RAWAT_INAP  # Sesuaikan jika perlu
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+        JNSPEL=JenisPelayananChoices.RAWAT_INAP
+    ).order_by('NMPESERTA', 'TGLSEP')
 
     # Terapkan filter dengan menambahkan parameter 'user'
     myFilter = FragmentasiFilter(request.GET, queryset=queryset, user=request.user)
@@ -2443,7 +2395,7 @@ def rehabilitasi(request):
         prosesklaim=False
     ).filter(
         Q(POLI='IRM') | Q(KDINACBG__in=['Z-3-12-0', 'M-3-16-0'])
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+    ).order_by('NMPESERTA', 'TGLSEP')
 
     # Terapkan filter dengan menambahkan parameter 'user'
     myFilter = FragmentasiFilter(request.GET, queryset=queryset, user=request.user)
@@ -2472,8 +2424,6 @@ def rehabilitasi(request):
     return render(request, 'verifikator/cbg/readmisi.html', context)
 
 
-
-
 @login_required
 @check_device
 @permissions(role=['verifikator'])
@@ -2482,7 +2432,7 @@ def get_fragmentasi_detail(request):
     nokartu = request.GET.get('nokartu')
     nmpeserta = request.GET.get('nmpeserta')
     page = request.GET.get('page', 1)
-    items_per_page = 10
+    items_per_page = 26
 
     if not nokartu or not nmpeserta:
         return JsonResponse({'error': 'Parameter nokartu dan nmpeserta diperlukan.'}, status=400)
@@ -2493,29 +2443,25 @@ def get_fragmentasi_detail(request):
         JNSPEL=JenisPelayananChoices.RAWAT_JALAN,
         NOKARTU=nokartu,
         NMPESERTA=nmpeserta
-    ).select_related('faskes', 'register_klaim').order_by('TGLSEP')
+    ).order_by('TGLSEP')
 
     paginator = Paginator(queryset, items_per_page)
     try:
         page_obj = paginator.page(page)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
+    except (PageNotAnInteger, EmptyPage):
+        return JsonResponse({'error': 'Halaman tidak valid.'}, status=400)
 
-    detail_data = []
-    for data in page_obj:
-        detail_data.append({
-            "rs": data.faskes.nama,
-            "no_sep": data.NOSEP,
-            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
-            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
-            "poli": data.POLI,
-            "cbg": data.KDINACBG,
-            "tarif": data.BYPENGAJUAN,
-            "current_status": data.status,
-            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        })
+    detail_data = [{
+        "rs": data.faskes.nama,
+        "no_sep": data.NOSEP,
+        "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
+        "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
+        "poli": data.POLI,
+        "cbg": data.KDINACBG,
+        "tarif": data.BYPENGAJUAN,
+        "current_status": data.status,
+        "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
+    } for data in page_obj]
 
     return JsonResponse({
         'detail_data': detail_data,
@@ -2526,8 +2472,6 @@ def get_fragmentasi_detail(request):
     })
 
 
-
-
 @login_required
 @check_device
 @permissions(role=['verifikator'])
@@ -2536,7 +2480,7 @@ def get_readmisi_detail(request):
     nokartu = request.GET.get('nokartu')
     nmpeserta = request.GET.get('nmpeserta')
     page = request.GET.get('page', 1)
-    items_per_page = 10
+    items_per_page = 26
 
     if not nokartu or not nmpeserta:
         return JsonResponse({'error': 'Parameter nokartu dan nmpeserta diperlukan.'}, status=400)
@@ -2547,29 +2491,25 @@ def get_readmisi_detail(request):
         JNSPEL=JenisPelayananChoices.RAWAT_INAP,
         NOKARTU=nokartu,
         NMPESERTA=nmpeserta
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+    ).order_by('TGLSEP')
 
     paginator = Paginator(queryset, items_per_page)
     try:
         page_obj = paginator.page(page)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
+    except (PageNotAnInteger, EmptyPage):
+        return JsonResponse({'error': 'Halaman tidak valid.'}, status=400)
 
-    detail_data = []
-    for data in page_obj:
-        detail_data.append({
-            "rs": data.faskes.nama,
-            "no_sep": data.NOSEP,
-            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
-            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
-            "poli": data.POLI,
-            "cbg": data.KDINACBG,
-            "tarif": data.BYPENGAJUAN,
-            "current_status": data.status,
-            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        })
+    detail_data = [{
+        "rs": data.faskes.nama,
+        "no_sep": data.NOSEP,
+        "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
+        "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
+        "poli": data.POLI,
+        "cbg": data.KDINACBG,
+        "tarif": data.BYPENGAJUAN,
+        "current_status": data.status,
+        "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
+    } for data in page_obj]
 
     return JsonResponse({
         'detail_data': detail_data,
@@ -2588,7 +2528,7 @@ def get_rehabilitasi_detail(request):
     nokartu = request.GET.get('nokartu')
     nmpeserta = request.GET.get('nmpeserta')
     page = request.GET.get('page', 1)
-    items_per_page = 10
+    items_per_page = 26
 
     if not nokartu or not nmpeserta:
         return JsonResponse({'error': 'Parameter nokartu dan nmpeserta diperlukan.'}, status=400)
@@ -2600,29 +2540,25 @@ def get_rehabilitasi_detail(request):
         NMPESERTA=nmpeserta
     ).filter(
         Q(POLI='IRM') | Q(KDINACBG__in=['Z-3-12-0', 'M-3-16-0'])
-    ).select_related('faskes', 'register_klaim').order_by('NMPESERTA', 'TGLSEP')
+    ).order_by('TGLSEP')
 
     paginator = Paginator(queryset, items_per_page)
     try:
         page_obj = paginator.page(page)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
+    except (PageNotAnInteger, EmptyPage):
+        return JsonResponse({'error': 'Halaman tidak valid.'}, status=400)
 
-    detail_data = []
-    for data in page_obj:
-        detail_data.append({
-            "rs": data.faskes.nama,
-            "no_sep": data.NOSEP,
-            "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
-            "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
-            "poli": data.POLI,
-            "cbg": data.KDINACBG,
-            "tarif": data.BYPENGAJUAN,
-            "current_status": data.status,
-            "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
-        })
+    detail_data = [{
+        "rs": data.faskes.nama,
+        "no_sep": data.NOSEP,
+        "in": data.TGLSEP.strftime('%d-%m-%Y') if data.TGLSEP else '',
+        "out": data.TGLPULANG.strftime('%d-%m-%Y') if data.TGLPULANG else '',
+        "poli": data.POLI,
+        "cbg": data.KDINACBG,
+        "tarif": data.BYPENGAJUAN,
+        "current_status": data.status,
+        "status_options": ["Layak", "Pending", "Tidak Layak", "Dispute"]
+    } for data in page_obj]
 
     return JsonResponse({
         'detail_data': detail_data,
