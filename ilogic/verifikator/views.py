@@ -203,10 +203,13 @@ def import_data_klaim(request):
     storage = TemporaryStorage()
     import_form = ImportDataKlaimForm()
     dataklaim_form = DataKlaimForm()
-    verifikator = User.objects.filter(kantorcabang__in=request.user.kantorcabang_set.all(),
-                                      groups__name='verifikator',
-                                      is_active=True,
-                                      is_staff=True)
+    verifikator = list(User.objects.filter(
+        kantorcabang__in=request.user.kantorcabang_set.all(),
+        groups__name='verifikator',
+        is_active=True,
+        is_staff=True
+    ))
+
     if request.method == 'POST' and request.POST.get('action') == 'import':
         import_form = ImportDataKlaimForm(files=request.FILES, data=request.POST)
         if import_form.is_valid():
@@ -217,96 +220,48 @@ def import_data_klaim(request):
             file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
             storage.save(name=file_name, content=import_form.cleaned_data.get('file'))
             get_password = request.POST.get('password')
-            if get_password != '':
-                unlocked_file = io.BytesIO()
-                try:
+
+            # Load the Excel file
+            try:
+                if get_password:
+                    unlocked_file = io.BytesIO()
                     with open(storage.path(name=file_name), "rb") as file:
                         excel_file = msoffcrypto.OfficeFile(file)
                         excel_file.load_key(password=get_password)
                         excel_file.decrypt(unlocked_file)
                     data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
-                except InvalidKeyError:
-                    messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
-                    return redirect('/verifikator/import-data-klaim')
-                except DecryptionError:
-                    messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
-                    return redirect('/verifikator/import-data-klaim')
-                except Exception as e:
-                    messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
-                    return redirect('/verifikator/import-data-klaim')
-            else:
-                try:
+                else:
                     data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
-                except XLRDError:
-                    messages.warning(request,
-                                     f'File yang Anda import memiliki password. Silahkan masukkan password file!')
-                    return redirect('/verifikator/import-data-klaim')
-                except Exception as e:
-                    messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
-                    return redirect('/verifikator/import-data-klaim')
-                # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import, engine='openpyxl', password='Qwerty1!')
+            except Exception as e:
+                messages.warning(request, f'Terjadi kesalahan saat memuat file: {e}')
+                return redirect('/verifikator/import-data-klaim')
+
             data_frame = data_frame.replace(np.nan, None)
             data_frame['register_klaim'] = register
             data_frame['faskes'] = register.faskes
             data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
-            data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
-            data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
+            data_frame['bupel'] = pd.to_datetime(data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp())
             register.password_file_excel = get_password
             register.save()
 
-            # ini jadi ga semua retrieval dan penulisan di database tidak semua di kasih transaction.atomic
-            # with transaction.atomic():
-            try:
-                obj_list = []
-                for _, row in data_frame.iterrows():
-                    data_klaim = DataKlaimCBG()
-                    try:
-                        data_klaim = DataKlaimCBG(**dict(row))
-                        data_klaim.full_clean()  # Validate the object
-                        obj_list.append(data_klaim)
-                        # ini saya hapus mas jadi ini tiap iterasi buat list bulk jadi bikin space di db ke lock for a while kalo kebanyakan
-                        # DataKlaimCBG.objects.bulk_create(obj_list)
-                    except TypeError as e:
-                        messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
-                        return redirect('/verifikator/import-data-klaim')
-                    except Exception as e:
-                        messages.warning(request,
-                                         f'Kesalahan terjadi pada No SEP : {data_klaim.NOSEP}. Keterangan error : {e}')
-                        return redirect('/verifikator/import-data-klaim')
+            # Data validation
+            valid_data = data_frame[
+                (data_frame['NOSEP'].str[:8] == register.faskes.kode_ppk) &
+                (data_frame['bupel'].dt.month == register.bulan_pelayanan.month) &
+                (data_frame['bupel'].dt.year == register.bulan_pelayanan.year)
+            ]
+            total_data_valid = len(valid_data)
+            invalid_data = data_frame.drop(valid_data.index)
+            total_data_invalid = len(invalid_data)
 
-                # ini data penulisan dipisah mas
-                with transaction.atomic():
-                    DataKlaimCBG.objects.bulk_create(obj_list)
-                    # ini data retrieval
-                    valid_data = DataKlaimCBG.objects.filter(id__in=[obj.id for obj in obj_list
-                                                                     if obj.NOSEP[:8] == register.faskes.kode_ppk and
-                                                                     obj.bupel.month == register.bulan_pelayanan.month and
-                                                                     obj.bupel.year == register.bulan_pelayanan.year])
-                    invalid_data = DataKlaimCBG.objects.filter(id__in=[obj.id for obj in obj_list
-                                                                       if obj.NOSEP[:8] != register.faskes.kode_ppk or
-                                                                       obj.bupel.month != register.bulan_pelayanan.month or
-                                                                       obj.bupel.year != register.bulan_pelayanan.year])
-                    df_valid = pd.DataFrame.from_records(valid_data.values())
-                    total_data_valid = len(df_valid)
-                    df_invalid = pd.DataFrame.from_records(invalid_data.values())
-                    total_data_invalid = len(df_invalid)
-                    transaction.set_rollback(True)
-
-            except IntegrityError as e:
-                messages.info(request, f'Terjadi kesalahan saat mencoba menyimpan data : {e}')
-                return redirect('/verifikator/import-data-klaim')
-            except Exception as e:
-                messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')
-                return redirect('/verifikator/import-data-klaim')
-
-            return render(request, 'verifikator/cbg/preview_data_import_cbg.html',
-                          {'preview_data_valid': df_valid,
-                           'total_data_valid': total_data_valid,
-                           'preview_data_invalid': df_invalid,
-                           'total_data_invalid': total_data_invalid,
-                           'file_name': file_name,
-                           'register': nomor_register_klaim,
-                           'password': get_password})
+            return render(request, 'verifikator/cbg/preview_data_import_cbg.html', {
+                'total_data_valid': total_data_valid,
+                'preview_data_invalid': invalid_data,
+                'total_data_invalid': total_data_invalid,
+                'file_name': file_name,
+                'register': nomor_register_klaim,
+                'password': get_password
+            })
 
     if request.method == 'POST' and request.POST.get('action') == 'confirm':
         list_data_import = ['NOSEP', 'TGLSEP', 'TGLPULANG', 'JNSPEL', 'NOKARTU', 'NMPESERTA',
@@ -315,108 +270,131 @@ def import_data_klaim(request):
         nomor_register_klaim = request.POST.get('register')
         get_password = request.POST.get('password')
         register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
-        if get_password != '':
-            unlocked_file = io.BytesIO()
-            try:
+
+        # Load the Excel file
+        try:
+            if get_password:
+                unlocked_file = io.BytesIO()
                 with open(storage.path(name=file_name), "rb") as file:
                     excel_file = msoffcrypto.OfficeFile(file)
-                    excel_file.load_key(password=request.POST.get('password'))
+                    excel_file.load_key(password=get_password)
                     excel_file.decrypt(unlocked_file)
                 data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
-            except InvalidKeyError:
-                messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
-                return redirect('/verifikator/import-data-klaim')
-            except DecryptionError:
-                messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
-                return redirect('/verifikator/import-data-klaim')
-            except Exception as e:
-                messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
-                return redirect('/verifikator/import-data-klaim')
-        else:
-            try:
+            else:
                 data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
-            except XLRDError:
-                messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
-                return redirect('/verifikator/import-data-klaim')
-            except Exception as e:
-                messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
-                return redirect('/verifikator/import-data-klaim')
+        except Exception as e:
+            messages.warning(request, f'Terjadi kesalahan saat memuat file: {e}')
+            return redirect('/verifikator/import-data-klaim')
 
-        # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
         data_frame = data_frame.replace(np.nan, None)
         data_frame['register_klaim'] = register
         data_frame['faskes'] = register.faskes
         data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
-        data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
-        data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
-        # saya nambahin try and except disini mas jadi ga ngasih 500 tapi ngasih messages error kalo ada kesalahan
+        data_frame['bupel'] = pd.to_datetime(data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp())
+
+        # Filter valid data
+        valid_data = data_frame[
+            (data_frame['NOSEP'].str[:8] == register.faskes.kode_ppk) &
+            (data_frame['bupel'].dt.month == register.bulan_pelayanan.month) &
+            (data_frame['bupel'].dt.year == register.bulan_pelayanan.year)
+        ]
+
         try:
             with transaction.atomic():
                 register.has_import_data = True
                 register.save()
-            with transaction.atomic():
-                obj_list = DataKlaimCBG.objects.bulk_create(
-                    [DataKlaimCBG(**dict(row[1])) for row in data_frame.iterrows()]
-                )
 
+            # Update JNSPEL based on KDINACBG for valid data
+            valid_data['JNSPEL'] = valid_data.apply(
+                lambda row: JenisPelayananChoices.RAWAT_INAP.value if str(row['KDINACBG']).endswith('I') else (
+                    JenisPelayananChoices.RAWAT_JALAN.value if str(row['KDINACBG']).endswith('0') else row['JNSPEL']
+                ), axis=1
+            )
+
+            # Create DataKlaimCBG instances
+            data_records = valid_data.to_dict('records')
+            data_klaim_objects = [DataKlaimCBG(**record) for record in data_records]
+            DataKlaimCBG.objects.bulk_create(data_klaim_objects)
+
+            # Assign verifikators
             queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.BELUM_VER)
+            verifikator_ids = [v.id for v in verifikator]
+            num_verifikators = len(verifikator_ids)
 
-            NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
-            list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for
-                                                    item in
-                                                    [items] * c]
-            list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
-            index = random.randrange(len(verifikator))
+            # Function to assign verifikators
+            def assign_verifikator(queryset, jenis_pelayanan, reverse_order=False):
+                qs_pelayanan = queryset.filter(JNSPEL=jenis_pelayanan.value)
+                if not qs_pelayanan.exists():
+                    return
 
-            with transaction.atomic():
-                for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
-                    queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
-                                    JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
-                        update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                    if index == len(verifikator) - 1:
-                        index = 0
-                    else:
-                        index += 1
+                participants = qs_pelayanan.values_list('NMPESERTA', 'NOKARTU').distinct()
+                participant_list = list(participants)
+                random.shuffle(participant_list)
 
-            NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
-            list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item
-                                                   in
-                                                   [items] * c]
-            list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
-            index = random.randrange(len(verifikator))
+                verifikator_order = verifikator_ids[::-1] if reverse_order else verifikator_ids
 
-            with transaction.atomic():
-                for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
-                    queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
-                                    JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
-                        update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                    if index == len(verifikator) - 1:
-                        index = 0
-                    else:
-                        index += 1
+                total_participants = len(participant_list)
+                base_chunk_size = total_participants // num_verifikators
+                remainder = total_participants % num_verifikators
 
-            queryset_proses = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES)
-            # for q in q:
-            # q.save()
+                chunks = []
+                start = 0
+                for i in range(num_verifikators):
+                    end = start + base_chunk_size + (1 if i < remainder else 0)
+                    chunks.append(participant_list[start:end])
+                    start = end
 
-            # penentuan SLA
-            sla = SLA.objects.filter(jenis_klaim=register.jenis_klaim,
-                                     kantor_cabang=register.faskes.kantor_cabang).first()
-            if sla:
-                if register.tgl_ba_lengkap:
-                    queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla))
-                elif register.tgl_terima:
-                    queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+                verifikator_participant_map = {
+                    verifikator_order[i]: chunks[i] for i in range(len(chunks))
+                }
+
+                with transaction.atomic():
+                    for verifikator_id, participant_chunk in verifikator_participant_map.items():
+                        if not participant_chunk:
+                            continue
+                        nmpeserta_list = [p[0] for p in participant_chunk]
+                        nokartu_list = [p[1] for p in participant_chunk]
+                        qs_pelayanan.filter(
+                            NMPESERTA__in=nmpeserta_list,
+                            NOKARTU__in=nokartu_list
+                        ).update(
+                            verifikator_id=verifikator_id,
+                            status=StatusDataKlaimChoices.PROSES
+                        )
+
+            # Assign for RAWAT_JALAN and RAWAT_INAP
+            assign_verifikator(queryset, JenisPelayananChoices.RAWAT_JALAN, reverse_order=False)
+            assign_verifikator(queryset, JenisPelayananChoices.RAWAT_INAP, reverse_order=True)
+
+            # Update tgl_SLA
+            queryset_proses = DataKlaimCBG.objects.filter(
+                register_klaim=register, status=StatusDataKlaimChoices.PROSES
+            )
+
+            sla = SLA.objects.filter(
+                jenis_klaim=register.jenis_klaim,
+                kantor_cabang=register.faskes.kantor_cabang
+            ).first()
+            sla_days = sla.plus_hari_sla if sla else 6
+
+            if register.tgl_ba_lengkap:
+                tgl_sla = register.tgl_ba_lengkap + timedelta(days=sla_days)
+            elif register.tgl_terima:
+                tgl_sla = register.tgl_terima + timedelta(days=15)
             else:
-                if register.tgl_ba_lengkap:
-                    queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=6))
-                elif register.tgl_terima:
-                    queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+                tgl_sla = None
+
+            if tgl_sla:
+                queryset_proses.update(tgl_SLA=tgl_sla)
+
+            # Save the file to the register
             with transaction.atomic():
                 register.file_data_klaim = storage.open(name=file_name)
                 register.file_data_klaim.name = file_name
                 register.save()
+
             messages.success(request, "Data CBG Berhasil Di-import")
+
         except Exception as e:
             messages.error(request, f"Terjadi kesalahan: {e}")
             return redirect('/verifikator/import-data-klaim')
@@ -427,6 +405,235 @@ def import_data_klaim(request):
         'verifikator': verifikator,
     }
     return render(request, 'verifikator/cbg/import_data_klaim_cbg.html', context)
+
+# def import_data_klaim(request):
+#     storage = TemporaryStorage()
+#     import_form = ImportDataKlaimForm()
+#     dataklaim_form = DataKlaimForm()
+#     verifikator = User.objects.filter(kantorcabang__in=request.user.kantorcabang_set.all(),
+#                                       groups__name='verifikator',
+#                                       is_active=True,
+#                                       is_staff=True)
+#     if request.method == 'POST' and request.POST.get('action') == 'import':
+#         import_form = ImportDataKlaimForm(files=request.FILES, data=request.POST)
+#         if import_form.is_valid():
+#             list_data_import = ['NOSEP', 'TGLSEP', 'TGLPULANG', 'JNSPEL', 'NOKARTU', 'NMPESERTA',
+#                                 'POLI', 'KDINACBG', 'BYPENGAJUAN', 'ALGORITMA']
+#             nomor_register_klaim = import_form.cleaned_data.get('register')
+#             register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
+#             file_name = f'{uuid.uuid4()}-{int(round(time.time() * 1000))}.xlsx'
+#             storage.save(name=file_name, content=import_form.cleaned_data.get('file'))
+#             get_password = request.POST.get('password')
+#             if get_password != '':
+#                 unlocked_file = io.BytesIO()
+#                 try:
+#                     with open(storage.path(name=file_name), "rb") as file:
+#                         excel_file = msoffcrypto.OfficeFile(file)
+#                         excel_file.load_key(password=get_password)
+#                         excel_file.decrypt(unlocked_file)
+#                     data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
+#                 except InvalidKeyError:
+#                     messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
+#                     return redirect('/verifikator/import-data-klaim')
+#                 except DecryptionError:
+#                     messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
+#                     return redirect('/verifikator/import-data-klaim')
+#                 except Exception as e:
+#                     messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
+#                     return redirect('/verifikator/import-data-klaim')
+#             else:
+#                 try:
+#                     data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+#                 except XLRDError:
+#                     messages.warning(request,
+#                                      f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+#                     return redirect('/verifikator/import-data-klaim')
+#                 except Exception as e:
+#                     messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+#                     return redirect('/verifikator/import-data-klaim')
+#                 # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import, engine='openpyxl', password='Qwerty1!')
+#             data_frame = data_frame.replace(np.nan, None)
+#             data_frame['register_klaim'] = register
+#             data_frame['faskes'] = register.faskes
+#             data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
+#             data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
+#             data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
+#             register.password_file_excel = get_password
+#             register.save()
+#
+#             # ini jadi ga semua retrieval dan penulisan di database tidak semua di kasih transaction.atomic
+#             # with transaction.atomic():
+#             try:
+#                 obj_list = []
+#                 for _, row in data_frame.iterrows():
+#                     data_klaim = DataKlaimCBG()
+#                     try:
+#                         data_klaim = DataKlaimCBG(**dict(row))
+#                         data_klaim.full_clean()  # Validate the object
+#                         obj_list.append(data_klaim)
+#                         # ini saya hapus mas jadi ini tiap iterasi buat list bulk jadi bikin space di db ke lock for a while kalo kebanyakan
+#                         # DataKlaimCBG.objects.bulk_create(obj_list)
+#                     except TypeError as e:
+#                         messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+#                         return redirect('/verifikator/import-data-klaim')
+#                     except Exception as e:
+#                         messages.warning(request,
+#                                          f'Kesalahan terjadi pada No SEP : {data_klaim.NOSEP}. Keterangan error : {e}')
+#                         return redirect('/verifikator/import-data-klaim')
+#
+#                 # ini data penulisan dipisah mas
+#                 with transaction.atomic():
+#                     DataKlaimCBG.objects.bulk_create(obj_list)
+#                     # ini data retrieval
+#                     valid_data = DataKlaimCBG.objects.filter(id__in=[obj.id for obj in obj_list
+#                                                                      if obj.NOSEP[:8] == register.faskes.kode_ppk and
+#                                                                      obj.bupel.month == register.bulan_pelayanan.month and
+#                                                                      obj.bupel.year == register.bulan_pelayanan.year])
+#                     invalid_data = DataKlaimCBG.objects.filter(id__in=[obj.id for obj in obj_list
+#                                                                        if obj.NOSEP[:8] != register.faskes.kode_ppk or
+#                                                                        obj.bupel.month != register.bulan_pelayanan.month or
+#                                                                        obj.bupel.year != register.bulan_pelayanan.year])
+#                     df_valid = pd.DataFrame.from_records(valid_data.values())
+#                     total_data_valid = len(df_valid)
+#                     df_invalid = pd.DataFrame.from_records(invalid_data.values())
+#                     total_data_invalid = len(df_invalid)
+#                     transaction.set_rollback(True)
+#
+#             except IntegrityError as e:
+#                 messages.info(request, f'Terjadi kesalahan saat mencoba menyimpan data : {e}')
+#                 return redirect('/verifikator/import-data-klaim')
+#             except Exception as e:
+#                 messages.info(request, f'Kesalahan terjadi pada saat import File. Keterangan error : {e}')
+#                 return redirect('/verifikator/import-data-klaim')
+#
+#             return render(request, 'verifikator/cbg/preview_data_import_cbg.html',
+#                           {'preview_data_valid': df_valid,
+#                            'total_data_valid': total_data_valid,
+#                            'preview_data_invalid': df_invalid,
+#                            'total_data_invalid': total_data_invalid,
+#                            'file_name': file_name,
+#                            'register': nomor_register_klaim,
+#                            'password': get_password})
+#
+#     if request.method == 'POST' and request.POST.get('action') == 'confirm':
+#         list_data_import = ['NOSEP', 'TGLSEP', 'TGLPULANG', 'JNSPEL', 'NOKARTU', 'NMPESERTA',
+#                             'POLI', 'KDINACBG', 'BYPENGAJUAN', 'ALGORITMA']
+#         file_name = request.POST.get('file_name')
+#         nomor_register_klaim = request.POST.get('register')
+#         get_password = request.POST.get('password')
+#         register = RegisterKlaim.objects.get(nomor_register_klaim=nomor_register_klaim)
+#         if get_password != '':
+#             unlocked_file = io.BytesIO()
+#             try:
+#                 with open(storage.path(name=file_name), "rb") as file:
+#                     excel_file = msoffcrypto.OfficeFile(file)
+#                     excel_file.load_key(password=request.POST.get('password'))
+#                     excel_file.decrypt(unlocked_file)
+#                 data_frame = pd.read_excel(unlocked_file, usecols=list_data_import)
+#             except InvalidKeyError:
+#                 messages.warning(request, 'Password File Excel yang Anda masukkan salah!')
+#                 return redirect('/verifikator/import-data-klaim')
+#             except DecryptionError:
+#                 messages.warning(request, 'File Excel seharusnya tidak memiliki password!')
+#                 return redirect('/verifikator/import-data-klaim')
+#             except Exception as e:
+#                 messages.warning(request, f'Terjadi Kesalahan pada saat import File. Keterangan error : {e}')
+#                 return redirect('/verifikator/import-data-klaim')
+#         else:
+#             try:
+#                 data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+#             except XLRDError:
+#                 messages.warning(request, f'File yang Anda import memiliki password. Silahkan masukkan password file!')
+#                 return redirect('/verifikator/import-data-klaim')
+#             except Exception as e:
+#                 messages.warning(request, f'Terjadi kesalahan pada saat import File. Keterangan error : {e}')
+#                 return redirect('/verifikator/import-data-klaim')
+#
+#         # data_frame = pd.read_excel(storage.path(name=file_name), usecols=list_data_import)
+#         data_frame = data_frame.replace(np.nan, None)
+#         data_frame['register_klaim'] = register
+#         data_frame['faskes'] = register.faskes
+#         data_frame['TGLPULANG'] = pd.to_datetime(data_frame['TGLPULANG'])
+#         data_frame['bupel'] = data_frame['TGLPULANG'].dt.to_period('M').dt.to_timestamp()
+#         data_frame['bupel'] = pd.to_datetime(data_frame['bupel'])
+#         # saya nambahin try and except disini mas jadi ga ngasih 500 tapi ngasih messages error kalo ada kesalahan
+#         try:
+#             with transaction.atomic():
+#                 register.has_import_data = True
+#                 register.save()
+#             with transaction.atomic():
+#                 obj_list = DataKlaimCBG.objects.bulk_create(
+#                     [DataKlaimCBG(**dict(row[1])) for row in data_frame.iterrows()]
+#                 )
+#
+#             queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.BELUM_VER)
+#
+#             NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
+#             list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for
+#                                                     item in
+#                                                     [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
+#             index = random.randrange(len(verifikator))
+#
+#             with transaction.atomic():
+#                 for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
+#                     queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
+#                                     JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
+#                         update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                     if index == len(verifikator) - 1:
+#                         index = 0
+#                     else:
+#                         index += 1
+#
+#             NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
+#             list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item
+#                                                    in
+#                                                    [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
+#             index = random.randrange(len(verifikator))
+#
+#             with transaction.atomic():
+#                 for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
+#                     queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
+#                                     JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
+#                         update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                     if index == len(verifikator) - 1:
+#                         index = 0
+#                     else:
+#                         index += 1
+#
+#             queryset_proses = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES)
+#             # for q in q:
+#             # q.save()
+#
+#             # penentuan SLA
+#             sla = SLA.objects.filter(jenis_klaim=register.jenis_klaim,
+#                                      kantor_cabang=register.faskes.kantor_cabang).first()
+#             if sla:
+#                 if register.tgl_ba_lengkap:
+#                     queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla))
+#                 elif register.tgl_terima:
+#                     queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+#             else:
+#                 if register.tgl_ba_lengkap:
+#                     queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=6))
+#                 elif register.tgl_terima:
+#                     queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+#             with transaction.atomic():
+#                 register.file_data_klaim = storage.open(name=file_name)
+#                 register.file_data_klaim.name = file_name
+#                 register.save()
+#             messages.success(request, "Data CBG Berhasil Di-import")
+#         except Exception as e:
+#             messages.error(request, f"Terjadi kesalahan: {e}")
+#             return redirect('/verifikator/import-data-klaim')
+#
+#     context = {
+#         'import_form': import_form,
+#         'dataklaim_form': dataklaim_form,
+#         'verifikator': verifikator,
+#     }
+#     return render(request, 'verifikator/cbg/import_data_klaim_cbg.html', context)
 
 
 @login_required
@@ -2547,6 +2754,7 @@ def get_rehabilitasi_detail(request):
         page_obj = paginator.page(page)
     except (PageNotAnInteger, EmptyPage):
         return JsonResponse({'error': 'Halaman tidak valid.'}, status=400)
+    print(page_obj)
 
     detail_data = [{
         "rs": data.faskes.nama,
