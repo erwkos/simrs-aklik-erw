@@ -141,10 +141,14 @@ def update_pembagian_ulang_verifikasi_cbg(request, pk):
     queryset_awal = RegisterKlaim.objects.filter(nomor_register_klaim__startswith=kantor_cabang.kode_cabang)
     register = queryset_awal.get(id=pk)
     verifikator_awal = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
-    verifikator_bagi_ulang_per_verifikator = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES).values(
-        'verifikator__id', 'verifikator__first_name', 'verifikator__last_name').distinct()
+    verifikator_bagi_ulang_per_verifikator = DataKlaimCBG.objects.filter(
+        register_klaim=register,
+        status=StatusDataKlaimChoices.PROSES
+    ).values(
+        'verifikator__id', 'verifikator__first_name', 'verifikator__last_name'
+    ).distinct()
 
-    # count
+    # Count data klaim
     data_klaim = DataKlaimCBG.objects.filter(register_klaim=register)
     jumlah_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).count()
     jumlah_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).count()
@@ -154,109 +158,198 @@ def update_pembagian_ulang_verifikasi_cbg(request, pk):
     jumlah_klaim = data_klaim.filter(status=StatusDataKlaimChoices.KLAIM).count()
     total_klaim = data_klaim.count()
 
-    # biaya
-    biaya_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
-    biaya_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('BYPENGAJUAN'))[
-        'BYPENGAJUAN__sum']
+    # Calculate biaya
+    biaya_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
+    biaya_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
+    biaya_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
+    biaya_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
+    biaya_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
     biaya_klaim = data_klaim.aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
 
-    # Bagi Ulang semua verifikatoar
+    # Reassign all verifikators
     if request.method == 'POST' and request.POST.get('action') == 'bagi_ulang':
         try:
             verifikator_eksisting = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
-            verifikator = []
-            for i in verifikator_eksisting:
-                get_verifikator = request.POST.get(str(i))
-                if get_verifikator is not None:
-                    verifikator.append(get_verifikator)
+            verifikator_ids = []
+            for v in verifikator_eksisting:
+                if request.POST.get(str(v.id)):
+                    verifikator_ids.append(v.id)
+
+            if not verifikator_ids:
+                messages.error(request, "Tidak ada verifikator yang dipilih.")
+                return redirect(request.path_info)
+
+            num_verifikators = len(verifikator_ids)
             queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES)
 
-            NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
-            list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for item in
-                                                    [items] * c]
-            list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
+            # Update JNSPEL based on KDINACBG if necessary
+            with transaction.atomic():
+                queryset_unknown_jnspel = queryset.filter(
+                    ~Q(JNSPEL=JenisPelayananChoices.RAWAT_JALAN.value) &
+                    ~Q(JNSPEL=JenisPelayananChoices.RAWAT_INAP.value)
+                )
 
-            index = random.randrange(len(verifikator))
-            for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
-                queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
-                                JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
-                    update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                if index == len(verifikator) - 1:
-                    index = 0
-                else:
-                    index += 1
+                if queryset_unknown_jnspel.exists():
+                    queryset_unknown_jnspel.update(
+                        JNSPEL=Case(
+                            When(KDINACBG__endswith='I', then=Value(JenisPelayananChoices.RAWAT_INAP.value)),
+                            When(KDINACBG__endswith='0', then=Value(JenisPelayananChoices.RAWAT_JALAN.value)),
+                            default=Value(JenisPelayananChoices.UNKNOWN.value),
+                            output_field=CharField(),
+                        )
+                    )
 
-            NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
-            list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item in
-                                                   [items] * c]
-            list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
+            # Assign participants per service type
+            def assign_verifikator_per_service_type(jenis_pelayanan, reverse_order=False):
+                qs_pelayanan = queryset.filter(JNSPEL=jenis_pelayanan.value)
+                if not qs_pelayanan.exists():
+                    return
 
-            index = random.randrange(len(verifikator))
-            for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
-                queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
-                                JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
-                    update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                if index == len(verifikator) - 1:
-                    index = 0
-                else:
-                    index += 1
+                participants = qs_pelayanan.values_list('NMPESERTA', 'NOKARTU').distinct()
+                participant_list = list(participants)
+                random.shuffle(participant_list)
+
+                verifikator_order = verifikator_ids[::-1] if reverse_order else verifikator_ids
+
+                total_participants = len(participant_list)
+                base_chunk_size = total_participants // num_verifikators
+                remainder = total_participants % num_verifikators
+
+                chunks = []
+                start = 0
+                for i in range(num_verifikators):
+                    end = start + base_chunk_size + (1 if i < remainder else 0)
+                    chunks.append(participant_list[start:end])
+                    start = end
+
+                verifikator_participant_map = {
+                    verifikator_order[i]: chunks[i] for i in range(len(chunks))
+                }
+
+                with transaction.atomic():
+                    for verifikator_id, participant_chunk in verifikator_participant_map.items():
+                        if not participant_chunk:
+                            continue
+                        nmpeserta_list = [p[0] for p in participant_chunk]
+                        nokartu_list = [p[1] for p in participant_chunk]
+                        qs_pelayanan.filter(
+                            NMPESERTA__in=nmpeserta_list,
+                            NOKARTU__in=nokartu_list
+                        ).update(
+                            verifikator_id=verifikator_id,
+                            status=StatusDataKlaimChoices.PROSES
+                        )
+
+            # Assign for RAWAT_JALAN
+            assign_verifikator_per_service_type(
+                JenisPelayananChoices.RAWAT_JALAN,
+                reverse_order=False  # Assign in normal order
+            )
+
+            # Assign for RAWAT_INAP
+            assign_verifikator_per_service_type(
+                JenisPelayananChoices.RAWAT_INAP,
+                reverse_order=True  # Assign in reverse order
+            )
+
             messages.success(request, "Pembagian Ulang Klaim CBG Berhasil")
         except Exception as e:
-            messages.warning(request, f"Pembagian Ulang Klaim CBG Gagal dengan keterangan : {e}")
+            messages.warning(request, f"Pembagian Ulang Klaim CBG Gagal dengan keterangan: {e}")
 
-    # Bagi Ulang Per Verifikator
+    # Reassign per verifikator
     if request.method == 'POST' and request.POST.get('action') == 'bagi_ulang_per_verifikator':
         try:
             verifikator_eksisting = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
-            verifikator = []
-            for i in verifikator_eksisting:
-                get_verifikator = request.POST.get(str(i))
-                if get_verifikator is not None:
-                    verifikator.append(get_verifikator)
+            verifikator_ids = []
+            for v in verifikator_eksisting:
+                if request.POST.get(str(v.id)):
+                    verifikator_ids.append(v.id)
             verifikator_terpilih = request.POST.get('verifikator_terpilih')
-            queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES,
-                                                   verifikator=verifikator_terpilih)
 
-            NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
-            list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for item in
-                                                    [items] * c]
-            list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
+            if not verifikator_ids:
+                messages.error(request, "Tidak ada verifikator yang dipilih.")
+                return redirect(request.path_info)
 
-            index = random.randrange(len(verifikator))
-            for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
-                queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
-                                JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
-                    update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                if index == len(verifikator) - 1:
-                    index = 0
-                else:
-                    index += 1
+            num_verifikators = len(verifikator_ids)
+            queryset = DataKlaimCBG.objects.filter(
+                register_klaim=register,
+                status=StatusDataKlaimChoices.PROSES,
+                verifikator_id=verifikator_terpilih
+            )
 
-            NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
-            list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item in
-                                                   [items] * c]
-            list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
+            # Update JNSPEL based on KDINACBG if necessary
+            with transaction.atomic():
+                queryset_unknown_jnspel = queryset.filter(
+                    ~Q(JNSPEL=JenisPelayananChoices.RAWAT_JALAN.value) &
+                    ~Q(JNSPEL=JenisPelayananChoices.RAWAT_INAP.value)
+                )
 
-            index = random.randrange(len(verifikator))
-            for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
-                queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
-                                JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
-                    update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                if index == len(verifikator) - 1:
-                    index = 0
-                else:
-                    index += 1
+                if queryset_unknown_jnspel.exists():
+                    queryset_unknown_jnspel.update(
+                        JNSPEL=Case(
+                            When(KDINACBG__endswith='I', then=Value(JenisPelayananChoices.RAWAT_INAP.value)),
+                            When(KDINACBG__endswith='0', then=Value(JenisPelayananChoices.RAWAT_JALAN.value)),
+                            default=Value(JenisPelayananChoices.UNKNOWN.value),
+                            output_field=CharField(),
+                        )
+                    )
+
+            # Assign participants per service type
+            def assign_verifikator_per_service_type(jenis_pelayanan, reverse_order=False):
+                qs_pelayanan = queryset.filter(JNSPEL=jenis_pelayanan.value)
+                if not qs_pelayanan.exists():
+                    return
+
+                participants = qs_pelayanan.values_list('NMPESERTA', 'NOKARTU').distinct()
+                participant_list = list(participants)
+                random.shuffle(participant_list)
+
+                verifikator_order = verifikator_ids[::-1] if reverse_order else verifikator_ids
+
+                total_participants = len(participant_list)
+                base_chunk_size = total_participants // num_verifikators
+                remainder = total_participants % num_verifikators
+
+                chunks = []
+                start = 0
+                for i in range(num_verifikators):
+                    end = start + base_chunk_size + (1 if i < remainder else 0)
+                    chunks.append(participant_list[start:end])
+                    start = end
+
+                verifikator_participant_map = {
+                    verifikator_order[i]: chunks[i] for i in range(len(chunks))
+                }
+
+                with transaction.atomic():
+                    for verifikator_id, participant_chunk in verifikator_participant_map.items():
+                        if not participant_chunk:
+                            continue
+                        nmpeserta_list = [p[0] for p in participant_chunk]
+                        nokartu_list = [p[1] for p in participant_chunk]
+                        qs_pelayanan.filter(
+                            NMPESERTA__in=nmpeserta_list,
+                            NOKARTU__in=nokartu_list
+                        ).update(
+                            verifikator_id=verifikator_id,
+                            status=StatusDataKlaimChoices.PROSES
+                        )
+
+            # Assign for RAWAT_JALAN
+            assign_verifikator_per_service_type(
+                JenisPelayananChoices.RAWAT_JALAN,
+                reverse_order=False
+            )
+
+            # Assign for RAWAT_INAP
+            assign_verifikator_per_service_type(
+                JenisPelayananChoices.RAWAT_INAP,
+                reverse_order=True
+            )
 
             messages.success(request, "Pembagian Ulang Klaim CBG Berhasil")
         except Exception as e:
-            messages.warning(request, f"Pembagian Ulang Klaim CBG Gagal dengan Keterangan : {e}")
+            messages.warning(request, f"Pembagian Ulang Klaim CBG Gagal dengan keterangan: {e}")
 
     context = {
         'register': register,
@@ -277,6 +370,148 @@ def update_pembagian_ulang_verifikasi_cbg(request, pk):
         'biaya_klaim': biaya_klaim,
     }
     return render(request, 'supervisor/update_pembagian_ulang_verifikasi_cbg.html', context)
+
+# def update_pembagian_ulang_verifikasi_cbg(request, pk):
+#     kantor_cabang = request.user.kantorcabang_set.all().first()
+#     queryset_awal = RegisterKlaim.objects.filter(nomor_register_klaim__startswith=kantor_cabang.kode_cabang)
+#     register = queryset_awal.get(id=pk)
+#     verifikator_awal = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
+#     verifikator_bagi_ulang_per_verifikator = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES).values(
+#         'verifikator__id', 'verifikator__first_name', 'verifikator__last_name').distinct()
+#
+#     # count
+#     data_klaim = DataKlaimCBG.objects.filter(register_klaim=register)
+#     jumlah_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).count()
+#     jumlah_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).count()
+#     jumlah_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).count()
+#     jumlah_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).count()
+#     jumlah_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).count()
+#     jumlah_klaim = data_klaim.filter(status=StatusDataKlaimChoices.KLAIM).count()
+#     total_klaim = data_klaim.count()
+#
+#     # biaya
+#     biaya_proses = data_klaim.filter(status=StatusDataKlaimChoices.PROSES).aggregate(Sum('BYPENGAJUAN'))[
+#         'BYPENGAJUAN__sum']
+#     biaya_layak = data_klaim.filter(status=StatusDataKlaimChoices.LAYAK).aggregate(Sum('BYPENGAJUAN'))[
+#         'BYPENGAJUAN__sum']
+#     biaya_pending = data_klaim.filter(status=StatusDataKlaimChoices.PENDING).aggregate(Sum('BYPENGAJUAN'))[
+#         'BYPENGAJUAN__sum']
+#     biaya_dispute = data_klaim.filter(status=StatusDataKlaimChoices.DISPUTE).aggregate(Sum('BYPENGAJUAN'))[
+#         'BYPENGAJUAN__sum']
+#     biaya_tidak_layak = data_klaim.filter(status=StatusDataKlaimChoices.TIDAK_LAYAK).aggregate(Sum('BYPENGAJUAN'))[
+#         'BYPENGAJUAN__sum']
+#     biaya_klaim = data_klaim.aggregate(Sum('BYPENGAJUAN'))['BYPENGAJUAN__sum']
+#
+#     # Bagi Ulang semua verifikatoar
+#     if request.method == 'POST' and request.POST.get('action') == 'bagi_ulang':
+#         try:
+#             verifikator_eksisting = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
+#             verifikator = []
+#             for i in verifikator_eksisting:
+#                 get_verifikator = request.POST.get(str(i))
+#                 if get_verifikator is not None:
+#                     verifikator.append(get_verifikator)
+#             queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES)
+#
+#             NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
+#             list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for item in
+#                                                     [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
+#
+#             index = random.randrange(len(verifikator))
+#             for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
+#                 queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
+#                                 JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
+#                     update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                 if index == len(verifikator) - 1:
+#                     index = 0
+#                 else:
+#                     index += 1
+#
+#             NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
+#             list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item in
+#                                                    [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
+#
+#             index = random.randrange(len(verifikator))
+#             for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
+#                 queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
+#                                 JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
+#                     update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                 if index == len(verifikator) - 1:
+#                     index = 0
+#                 else:
+#                     index += 1
+#             messages.success(request, "Pembagian Ulang Klaim CBG Berhasil")
+#         except Exception as e:
+#             messages.warning(request, f"Pembagian Ulang Klaim CBG Gagal dengan keterangan : {e}")
+#
+#     # Bagi Ulang Per Verifikator
+#     if request.method == 'POST' and request.POST.get('action') == 'bagi_ulang_per_verifikator':
+#         try:
+#             verifikator_eksisting = register.faskes.kantor_cabang.user.filter(groups__name='verifikator')
+#             verifikator = []
+#             for i in verifikator_eksisting:
+#                 get_verifikator = request.POST.get(str(i))
+#                 if get_verifikator is not None:
+#                     verifikator.append(get_verifikator)
+#             verifikator_terpilih = request.POST.get('verifikator_terpilih')
+#             queryset = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES,
+#                                                    verifikator=verifikator_terpilih)
+#
+#             NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
+#             list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for item in
+#                                                     [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
+#
+#             index = random.randrange(len(verifikator))
+#             for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
+#                 queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
+#                                 JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
+#                     update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                 if index == len(verifikator) - 1:
+#                     index = 0
+#                 else:
+#                     index += 1
+#
+#             NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
+#             list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item in
+#                                                    [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
+#
+#             index = random.randrange(len(verifikator))
+#             for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
+#                 queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
+#                                 JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
+#                     update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                 if index == len(verifikator) - 1:
+#                     index = 0
+#                 else:
+#                     index += 1
+#
+#             messages.success(request, "Pembagian Ulang Klaim CBG Berhasil")
+#         except Exception as e:
+#             messages.warning(request, f"Pembagian Ulang Klaim CBG Gagal dengan Keterangan : {e}")
+#
+#     context = {
+#         'register': register,
+#         'verifikator': verifikator_awal,
+#         'verifikator_bagi': verifikator_bagi_ulang_per_verifikator,
+#         'jumlah_proses': jumlah_proses,
+#         'jumlah_layak': jumlah_layak,
+#         'jumlah_pending': jumlah_pending,
+#         'jumlah_dispute': jumlah_dispute,
+#         'jumlah_tidak_layak': jumlah_tidak_layak,
+#         'jumlah_klaim': jumlah_klaim,
+#         'total_klaim': total_klaim,
+#         'biaya_proses': biaya_proses,
+#         'biaya_layak': biaya_layak,
+#         'biaya_pending': biaya_pending,
+#         'biaya_dispute': biaya_dispute,
+#         'biaya_tidak_layak': biaya_tidak_layak,
+#         'biaya_klaim': biaya_klaim,
+#     }
+#     return render(request, 'supervisor/update_pembagian_ulang_verifikasi_cbg.html', context)
 
 
 @login_required
