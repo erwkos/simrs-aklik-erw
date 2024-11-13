@@ -31,7 +31,7 @@
 <div class="col-xl-12 col-md-12 mb-4 mt-4">
     <div class="card table-card">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <h5>Pembagian ULang CBG Verifikator Null</h5>
+            <h5>Pembagian Ulang CBG Verifikator Null</h5>
         </div>
 
         <div class="container-fluid">
@@ -47,7 +47,7 @@
             <div class="card-body">
               <form class="row row-cols-md-auto g-3 align-items-center">
                   <label>Masukan Nomor Register Dengan CBG Verifikator Null</label>
-                  <input class="textinput form-control" type="text" name="nomor_register" value="">
+                  <input class="textinput form-control" type="text" style="width: auto" name="nomor_register" value="">
                   <input name="pembagian_null" type="hidden" value="pembagian_null">
                 <button type="submit" class="btn btn-success">Submit</button>
               </form>
@@ -55,5 +55,36 @@
         </div>
     </div>
 </div>
+
+    <div class="col-xl-12 col-md-12 mb-4 mt-4">
+        <div class="card table-card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5>List Verifikator Active</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col">NO</th>
+                            <th scope="col">NAMA VERIFIKATOR</th>
+                            <th scope="col">Status Active</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for verifikator in verifikator %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ verifikator }}</td>
+                                <td>{{ verifikator.is_active }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 {% endblock %}

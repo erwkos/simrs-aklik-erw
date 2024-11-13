@@ -1,13 +1,12 @@
 import datetime
 import random
 from datetime import timedelta
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q, Case, When, Value, CharField
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
@@ -23,7 +22,7 @@ from user.decorators import permissions, check_device
 from user.models import User
 from verifikator.filters import DownloadDataKlaimCBGFilter, DownloadDataKlaimObatFilter
 from verifikator.forms import StatusRegisterKlaimForm
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 # Create your views here.
@@ -771,6 +770,10 @@ def download_data_cbg(request):
 def list_pengaturan_sla(request):
     queryset = SLA.objects.filter(kantor_cabang=request.user.kantorcabang_set.all().first())
 
+    # # ini harus dihapus
+    # query = DataKlaimCBG.objects.filter(register_klaim__nomor_register_klaim='020123090001')
+    # query.update(verifikator=None, status='Belum Ver', tgl_SLA=None, JNSPEL=None)
+
     context = {
         'queryset': queryset
     }
@@ -1020,81 +1023,246 @@ def download_data_obat(request):
 @check_device
 @permissions(role=['supervisor'])
 def pembagian_verifikator_cbg_null(request):
+    # Get the list of Kantor Cabang associated with the user
     kantor_cabang_list = request.user.kantorcabang_set.all()
     nomor_register = request.GET.get('nomor_register')
     pembagian_null = request.GET.get('pembagian_null')
-    queryset = DataKlaimCBG.objects.filter(register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
-                                           register_klaim__nomor_register_klaim=nomor_register,
-                                           status=StatusDataKlaimChoices.BELUM_VER,
-                                           )
-    register = RegisterKlaim.objects.filter(faskes__kantor_cabang__in=kantor_cabang_list,
-                                            nomor_register_klaim=nomor_register).first()
+
+    # Queryset of DataKlaimCBG with status BELUM_VER
+    queryset = DataKlaimCBG.objects.filter(
+        register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+        register_klaim__nomor_register_klaim=nomor_register,
+        status=StatusDataKlaimChoices.BELUM_VER,
+    )
+
+    # Get the RegisterKlaim instance
+    register = RegisterKlaim.objects.filter(
+        faskes__kantor_cabang__in=kantor_cabang_list,
+        nomor_register_klaim=nomor_register
+    ).first()
+
+    # Get the list of verifikators
+    verifikators = list(User.objects.filter(
+        kantorcabang__in=kantor_cabang_list,
+        groups__name='verifikator',
+        is_active=True,
+        is_staff=True
+    ))
+
+    if not verifikators:
+        messages.error(request, "Tidak ada verifikator yang tersedia.")
+        return redirect(request.headers.get('Referer'))
 
     if request.method == 'GET' and pembagian_null == "pembagian_null" and queryset.exists():
         try:
-            verifikator = User.objects.filter(kantorcabang__in=kantor_cabang_list,
-                                              groups__name='verifikator',
-                                              is_active=True,
-                                              is_staff=True)
+            verifikator_ids = [v.id for v in verifikators]
+            num_verifikators = len(verifikator_ids)
 
-            NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
-            list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for
-                                                    item in
-                                                    [items] * c]
-            list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
-            index = random.randrange(len(verifikator))
-
+            # Update JNSPEL where it's neither 'Rawat Jalan' nor 'Rawat Inap'
             with transaction.atomic():
-                for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
-                    queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
-                                    JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
-                        update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                    if index == len(verifikator) - 1:
-                        index = 0
-                    else:
-                        index += 1
+                queryset_unknown_jnspel = queryset.filter(
+                    ~Q(JNSPEL=JenisPelayananChoices.RAWAT_JALAN.value) &
+                    ~Q(JNSPEL=JenisPelayananChoices.RAWAT_INAP.value)
+                )
 
-            NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
-            list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item
-                                                   in
-                                                   [items] * c]
-            list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
-            index = random.randrange(len(verifikator))
+                if queryset_unknown_jnspel.exists():
+                    queryset_unknown_jnspel.update(
+                        JNSPEL=Case(
+                            When(KDINACBG__endswith='I', then=Value(JenisPelayananChoices.RAWAT_INAP.value)),
+                            When(KDINACBG__endswith='0', then=Value(JenisPelayananChoices.RAWAT_JALAN.value)),
+                            default=Value(None),
+                            output_field=CharField(),
+                        )
+                    )
 
-            with transaction.atomic():
-                for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
-                    queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
-                                    JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
-                        update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
-                    if index == len(verifikator) - 1:
-                        index = 0
-                    else:
-                        index += 1
+            # Dictionary to track total assignments per verifikator
+            verifikator_assignments = {
+                vid: {
+                    JenisPelayananChoices.RAWAT_JALAN.value: 0,
+                    JenisPelayananChoices.RAWAT_INAP.value: 0
+                } for vid in verifikator_ids
+            }
 
-            queryset_proses = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES)
+            # Assign participants per JENIS_PELAYANAN
+            def assign_verifikator_per_service_type(jenis_pelayanan, reverse_order=False):
+                qs_pelayanan = queryset.filter(JNSPEL=jenis_pelayanan.value)
+                if not qs_pelayanan.exists():
+                    return
 
-            # penentuan SLA
-            sla = SLA.objects.filter(jenis_klaim=register.jenis_klaim,
-                                     kantor_cabang=register.faskes.kantor_cabang).first()
+                # Get unique participants
+                participants = qs_pelayanan.values_list('NMPESERTA', 'NOKARTU').distinct()
+                participant_list = list(participants)
+
+                # Shuffle the participant list
+                random.shuffle(participant_list)
+
+                # Determine assignment order
+                if reverse_order:
+                    verifikator_order = verifikator_ids[::-1]
+                else:
+                    verifikator_order = verifikator_ids
+
+                # Calculate chunk sizes
+                total_participants = len(participant_list)
+                base_chunk_size = total_participants // num_verifikators
+                remainder = total_participants % num_verifikators
+
+                # Assign participants to verifikators
+                chunks = []
+                start = 0
+                for i in range(num_verifikators):
+                    end = start + base_chunk_size + (1 if i < remainder else 0)
+                    chunks.append(participant_list[start:end])
+                    start = end
+
+                # Map verifikator IDs to participant chunks
+                verifikator_participant_map = {
+                    verifikator_order[i]: chunks[i] for i in range(num_verifikators)
+                }
+
+                # Perform bulk updates
+                with transaction.atomic():
+                    for verifikator_id, participant_chunk in verifikator_participant_map.items():
+                        if not participant_chunk:
+                            continue
+                        nmpeserta_list = [p[0] for p in participant_chunk]
+                        nokartu_list = [p[1] for p in participant_chunk]
+                        qs_pelayanan.filter(
+                            NMPESERTA__in=nmpeserta_list,
+                            NOKARTU__in=nokartu_list,
+                        ).update(
+                            verifikator_id=verifikator_id,
+                            status=StatusDataKlaimChoices.PROSES
+                        )
+                        # Update assignment counts
+                        verifikator_assignments[verifikator_id][jenis_pelayanan.value] += len(participant_chunk)
+
+            # Assign for RAWAT_JALAN
+            assign_verifikator_per_service_type(
+                JenisPelayananChoices.RAWAT_JALAN,
+                reverse_order=False  # Assign in normal order
+            )
+
+            # Assign for RAWAT_INAP
+            assign_verifikator_per_service_type(
+                JenisPelayananChoices.RAWAT_INAP,
+                reverse_order=True  # Assign in reverse order
+            )
+
+            # Update tgl_SLA for the processed claims
+            queryset_proses = DataKlaimCBG.objects.filter(
+                register_klaim=register,
+                status=StatusDataKlaimChoices.PROSES
+            )
+
+            sla = SLA.objects.filter(
+                jenis_klaim=register.jenis_klaim,
+                kantor_cabang=register.faskes.kantor_cabang
+            ).first()
+
             if sla:
-                if register.tgl_ba_lengkap:
-                    queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla))
-                elif register.tgl_terima:
-                    queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+                sla_days = sla.plus_hari_sla
             else:
-                if register.tgl_ba_lengkap:
-                    queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=6))
-                elif register.tgl_terima:
-                    queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+                sla_days = 6  # Default SLA days
 
-            messages.success(request, "Pembagian Ulang Verifikator Null Berhasil")
+            if register.tgl_ba_lengkap:
+                tgl_sla = register.tgl_ba_lengkap + timedelta(days=sla_days)
+            elif register.tgl_terima:
+                tgl_sla = register.tgl_terima + timedelta(days=15)
+            else:
+                tgl_sla = None
+
+            if tgl_sla:
+                queryset_proses.update(tgl_SLA=tgl_sla)
+
+            messages.success(request, "Pembagian Verifikator Berhasil")
 
         except Exception as e:
-            messages.warning(request, f"Pembagian Ulang Verifikator Null Gagal: {e}")
+            messages.warning(request, f"Pembagian Verifikator Gagal: {e}")
             return redirect(request.headers.get('Referer'))
 
     context = {
-        'data_klaim': queryset
+        'verifikator': verifikators
     }
 
     return render(request, 'supervisor/pembagian_verifikator_null.html', context)
+
+# def pembagian_verifikator_cbg_null(request):
+#     kantor_cabang_list = request.user.kantorcabang_set.all()
+#     nomor_register = request.GET.get('nomor_register')
+#     pembagian_null = request.GET.get('pembagian_null')
+#     queryset = DataKlaimCBG.objects.filter(register_klaim__faskes__kantor_cabang__in=kantor_cabang_list,
+#                                            register_klaim__nomor_register_klaim=nomor_register,
+#                                            status=StatusDataKlaimChoices.BELUM_VER,
+#                                            )
+#     register = RegisterKlaim.objects.filter(faskes__kantor_cabang__in=kantor_cabang_list,
+#                                             nomor_register_klaim=nomor_register).first()
+#
+#     if request.method == 'GET' and pembagian_null == "pembagian_null" and queryset.exists():
+#         try:
+#             verifikator = User.objects.filter(kantorcabang__in=kantor_cabang_list,
+#                                               groups__name='verifikator',
+#                                               is_active=True,
+#                                               is_staff=True)
+#
+#             NMPESERTA_RJ = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_JALAN)]
+#             list_nmpeserta_sort_freq_rawat_jalan = [item for items, c in Counter(NMPESERTA_RJ).most_common() for
+#                                                     item in
+#                                                     [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_jalan = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_jalan))
+#             index = random.randrange(len(verifikator))
+#
+#             with transaction.atomic():
+#                 for i in range(len(list_nmpeserta_no_duplicate_rawat_jalan)):
+#                     queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_jalan[i],
+#                                     JNSPEL=JenisPelayananChoices.RAWAT_JALAN). \
+#                         update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                     if index == len(verifikator) - 1:
+#                         index = 0
+#                     else:
+#                         index += 1
+#
+#             NMPESERTA_RI = [obj.NMPESERTA for obj in queryset.filter(JNSPEL=JenisPelayananChoices.RAWAT_INAP)]
+#             list_nmpeserta_sort_freq_rawat_inap = [item for items, c in Counter(NMPESERTA_RI).most_common() for item
+#                                                    in
+#                                                    [items] * c]
+#             list_nmpeserta_no_duplicate_rawat_inap = list(dict.fromkeys(list_nmpeserta_sort_freq_rawat_inap))
+#             index = random.randrange(len(verifikator))
+#
+#             with transaction.atomic():
+#                 for i in range(len(list_nmpeserta_no_duplicate_rawat_inap)):
+#                     queryset.filter(NMPESERTA=list_nmpeserta_no_duplicate_rawat_inap[i],
+#                                     JNSPEL=JenisPelayananChoices.RAWAT_INAP). \
+#                         update(verifikator=verifikator[index], status=StatusDataKlaimChoices.PROSES)
+#                     if index == len(verifikator) - 1:
+#                         index = 0
+#                     else:
+#                         index += 1
+#
+#             queryset_proses = DataKlaimCBG.objects.filter(register_klaim=register, status=StatusDataKlaimChoices.PROSES)
+#
+#             # penentuan SLA
+#             sla = SLA.objects.filter(jenis_klaim=register.jenis_klaim,
+#                                      kantor_cabang=register.faskes.kantor_cabang).first()
+#             if sla:
+#                 if register.tgl_ba_lengkap:
+#                     queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=sla.plus_hari_sla))
+#                 elif register.tgl_terima:
+#                     queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+#             else:
+#                 if register.tgl_ba_lengkap:
+#                     queryset_proses.update(tgl_SLA=register.tgl_ba_lengkap + timedelta(days=6))
+#                 elif register.tgl_terima:
+#                     queryset_proses.update(tgl_SLA=register.tgl_terima + timedelta(days=15))
+#
+#             messages.success(request, "Pembagian Ulang Verifikator Null Berhasil")
+#
+#         except Exception as e:
+#             messages.warning(request, f"Pembagian Ulang Verifikator Null Gagal: {e}")
+#             return redirect(request.headers.get('Referer'))
+#
+#     context = {
+#         'data_klaim': queryset
+#     }
+#
+#     return render(request, 'supervisor/pembagian_verifikator_null.html', context)
