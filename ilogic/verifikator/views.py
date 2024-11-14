@@ -245,6 +245,32 @@ def import_data_klaim(request):
             register.save()
 
             # Data validation
+            # Check for missing NOKARTU and NMPESERTA
+            missing_nokartu = data_frame['NOKARTU'].isnull() | data_frame['NOKARTU'].eq('')
+            missing_nmpeserta = data_frame['NMPESERTA'].isnull() | data_frame['NMPESERTA'].eq('')
+
+            if missing_nokartu.any() or missing_nmpeserta.any():
+                error_rows = data_frame[missing_nokartu | missing_nmpeserta]
+                error_nosep = error_rows['NOSEP'].tolist()
+                messages.error(request,
+                               f'Terdapat data dengan NOKARTU atau NMPESERTA kosong untuk NOSEP: {", ".join(map(str, error_nosep))}')
+                return redirect('/verifikator/import-data-klaim')
+
+            # Check for duplicate NOSEP in the data_frame
+            duplicate_nosep = data_frame['NOSEP'][data_frame['NOSEP'].duplicated()].tolist()
+            if duplicate_nosep:
+                messages.error(request,
+                               f'Terdapat duplikasi NOSEP dalam file yang diimpor: {", ".join(map(str, duplicate_nosep))}')
+                return redirect('/verifikator/import-data-klaim')
+
+            # Check for NOSEP that already exist in the database
+            existing_nosep = DataKlaimCBG.objects.filter(NOSEP__in=data_frame['NOSEP']).values_list('NOSEP', flat=True)
+            if existing_nosep.exists():
+                messages.error(request,
+                               f'Terdapat NOSEP yang sudah pernah diimpor sebelumnya: {", ".join(existing_nosep)}')
+                return redirect('/verifikator/import-data-klaim')
+
+            # Data validation
             valid_data = data_frame[
                 (data_frame['NOSEP'].str[:8] == register.faskes.kode_ppk) &
                 (data_frame['bupel'].dt.month == register.bulan_pelayanan.month) &
@@ -1932,6 +1958,7 @@ def daftar_data_klaim_obat(request):
         return response
 
     if request.POST.get('import'):
+
         # ambil file excel dan buat menjadi dataframe
         try:
             file = request.FILES['excel']
