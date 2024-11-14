@@ -105,7 +105,7 @@ class RegisterKlaim(models.Model):
 
     @cached_property
     def tgl_hari_ini(self):
-        today = date.today()
+        today = datetime.now()
         return today
 
     @cached_property
