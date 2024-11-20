@@ -668,9 +668,15 @@ def import_data_klaim(request):
 def daftar_data_klaim(request):
     queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NMPESERTA', 'TGLSEP')
 
-    # filter
+    # Apply filter
     myFilter = DataKlaimCBGFilter(request.GET, queryset=queryset)
     queryset = myFilter.qs
+
+    # Optimize queryset with select_related and prefetch_related
+    queryset = queryset.select_related('faskes', 'register_klaim', 'verifikator').prefetch_related(
+        'ket_pending_dispute', 'ket_jawaban_pending'
+    )
+
     export = request.GET.get('export')
     if export == 'export':
         response = HttpResponse(
@@ -714,47 +720,42 @@ def daftar_data_klaim(request):
             cell.value = column_title
 
         # Iterate through all
-        for queryset in queryset:
+        for item in queryset:
             row_num += 1
 
-            if queryset.ket_pending_dispute.last() is None:
+            # Fetch the last ket_pending_dispute and ket_jawaban_pending
+            ket_pending_dispute_last = item.ket_pending_dispute.last()
+            if ket_pending_dispute_last is None:
                 ket_pending_disput_queryset = ''
             else:
-                ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
+                ket_pending_disput_queryset = '{0}, '.format(ket_pending_dispute_last)
                 ket_pending_disput_queryset = replace_illegal_characters(ket_pending_disput_queryset)
 
-            if queryset.ket_jawaban_pending.last() is None:
+            ket_jawaban_pending_last = item.ket_jawaban_pending.last()
+            if ket_jawaban_pending_last is None:
                 ket_jawaban_pending_queryset = ''
             else:
-                ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+                ket_jawaban_pending_queryset = '{0}, '.format(ket_jawaban_pending_last)
                 ket_jawaban_pending_queryset = replace_illegal_characters(ket_jawaban_pending_queryset)
-
-            # ket_pending_disput_queryset = ''
-            # for x in queryset.ket_pending_dispute.all():
-            #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
-
-            # ket_jawaban_pending_queryset = ''
-            # for x in queryset.ket_jawaban_pending.all():
-            #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
 
             # Define the data for each cell in the row
             row = [
-                queryset.faskes.nama,
-                queryset.status,
-                queryset.register_klaim.nomor_register_klaim,
-                queryset.NOSEP,
-                queryset.TGLSEP,
-                queryset.TGLPULANG,
-                queryset.JNSPEL,
-                queryset.NOKARTU,
-                queryset.NMPESERTA,
-                queryset.POLI,
-                queryset.KDINACBG,
-                queryset.BYPENGAJUAN,
-                queryset.verifikator.username,
-                queryset.ALGORITMA,
-                queryset.jenis_pending,
-                queryset.jenis_dispute,
+                item.faskes.nama,
+                item.status,
+                item.register_klaim.nomor_register_klaim,
+                item.NOSEP,
+                item.TGLSEP,
+                item.TGLPULANG,
+                item.JNSPEL,
+                item.NOKARTU,
+                item.NMPESERTA,
+                item.POLI,
+                item.KDINACBG,
+                item.BYPENGAJUAN,
+                item.verifikator.username,
+                item.ALGORITMA,
+                item.jenis_pending,
+                item.jenis_dispute,
                 ket_pending_disput_queryset,
                 ket_jawaban_pending_queryset,
             ]
@@ -766,8 +767,8 @@ def daftar_data_klaim(request):
 
         workbook.save(response)
         return response
+
     if request.POST.get('import'):
-        # ambil file excel dan buat menjadi dataframe
         try:
             file = request.FILES['excel']
             if file.name.split('.')[-1] != 'xlsx':
@@ -778,146 +779,130 @@ def daftar_data_klaim(request):
 
         df_raw = pd.read_excel(file)
 
-        # replace nan dengan kosong
+        # Replace NaN with empty strings
         df = df_raw.replace(np.nan, '')
 
-        # ubah nama kolom menjadi huruf besar
+        # Convert columns to title case
         df['status'] = df['status'].str.title()
-
-        # ubah nama jenis pending menjadi huruf besar
         df['jenis_pending'] = df['jenis_pending'].str.title()
-
-        # ubah nama jenis dispute menjadi huruf besar
         df['jenis_dispute'] = df['jenis_dispute'].str.title()
 
-        # Call the Student Resource Model and make its instance
+        # Call the Resource Model
         data_claim_resource = DataKlaimCBGResource()
 
         # Load the pandas dataframe into a tablib dataset
         dataset = Dataset().load(df)
 
-        # cek column sudah sesuai
+        # Check mandatory columns
         list_kolom_mandatory = ['status', 'NOSEP', 'jenis_pending', 'jenis_dispute', 'ket_pending']
-        list_status_df = df.columns.tolist()
-        for daftar in list_kolom_mandatory:
-            if daftar not in list_status_df:
-                messages.warning(request, f'File yang diimport harus memiliki kolom {list_kolom_mandatory}')
-                return redirect(request.headers.get('Referer'))
-
-        # cek sep tersebut berstatus bukan proses
-        for status in dataset['status']:
-            if status == 'Proses':
-                messages.warning(request, 'File yang diimport harus berstatus "Layak", "Pending, '
-                                          '"Dispute", "Tidak Layak"')
-                return redirect(request.headers.get('Referer'))
-
-        # cek status klaim
-        list_status_mandatory = [StatusDataKlaimChoices.LAYAK, StatusDataKlaimChoices.PENDING,
-                                 StatusDataKlaimChoices.TIDAK_LAYAK, StatusDataKlaimChoices.DISPUTE]
-        list_status_df = list(dict.fromkeys(dataset['status']))
-        for status in list_status_df:
-            if status not in list_status_mandatory:
-                messages.warning(request, f'File yang diimport harus memiliki status yang sesuai. '
-                                          f'Mohon dapat dicek kembali.')
-                return redirect(request.headers.get('Referer'))
-
-        # cek jenis pending
-        list_jenis_mandatory = [JenisPendingChoices.ADMINISTRASI, JenisPendingChoices.KODING,
-                                JenisPendingChoices.STANDAR_PELAYANAN]
-        list_jenis_pending_df = list(dict.fromkeys(dataset['jenis_pending']))
-        for i in list_jenis_pending_df:
-            if i == '':
-                list_jenis_pending_df.remove('')
-
-        for jenis in list_jenis_pending_df:
-            if jenis not in list_jenis_mandatory:
-                messages.warning(request, f'File yang diimport harus memiliki jenis pending yang sesuai. '
-                                          f'Mohon dapat dicek kembali.')
-                return redirect(request.headers.get('Referer'))
-
-        # cek jenis dispute
-        list_jenis_dispute_mandatory = [JenisDisputeChoices.MEDIS, JenisDisputeChoices.KODING, JenisDisputeChoices.COB]
-        list_jenis_dispute_df = list(dict.fromkeys(dataset['jenis_dispute']))
-        for i in list_jenis_dispute_df:
-            if i == '':
-                list_jenis_dispute_df.remove('')
-
-        for jenis in list_jenis_dispute_df:
-            if jenis not in list_jenis_dispute_mandatory:
-                messages.warning(request, f'File yang diimport harus memiliki jenis dispute yang sesuai. '
-                                          f'Mohon dapat dicek kembali.')
-                return redirect(request.headers.get('Referer'))
-
-        # cek jumlah jenis pending dan jenis dispute sama dengan yang distatus
-        jumlah_pending = df['status'].eq(StatusDataKlaimChoices.PENDING).sum()
-        jumlah_dispute = df['status'].eq(StatusDataKlaimChoices.DISPUTE).sum()
-        jumlah_tidak_layak = df['status'].eq(StatusDataKlaimChoices.TIDAK_LAYAK).sum()
-        jumlah_jenis_pending = df['jenis_pending'].apply(lambda x: isinstance(x, str) and len(x) > 0).sum().sum()
-        jumlah_jenis_dispute = df['jenis_dispute'].apply(lambda x: isinstance(x, str) and len(x) > 0).sum().sum()
-        jumlah_ket_pending = df['ket_pending'].apply(lambda x: isinstance(x, str) and len(x) > 0).sum().sum()
-        total_pending_dispute = jumlah_pending + jumlah_dispute
-        total_pending_dispute_tidak_layak = jumlah_pending + jumlah_dispute + jumlah_tidak_layak
-
-        # cek jenis pending
-        if total_pending_dispute > jumlah_jenis_pending:
-            messages.warning(request, f'File yang diimport untuk status "Pending" dan "Dispute" '
-                                      f'harus diisi jenis pending')
-            return redirect(request.headers.get('Referer'))
-        # cek jenis dispute
-        elif jumlah_dispute > jumlah_jenis_dispute:
-            messages.warning(request, f'File yang diimport untuk status "Dispute" harus diisi jenis dispute')
-            return redirect(request.headers.get('Referer'))
-        # cek ket pending
-        elif total_pending_dispute_tidak_layak > jumlah_ket_pending:
-            messages.warning(request, f'File yang diimport untuk status "Pending" dan "Dispute" belum diisi '
-                                      f'keterangan pending')
+        missing_columns = set(list_kolom_mandatory) - set(df.columns)
+        if missing_columns:
+            messages.warning(request, f'File yang diimport harus memiliki kolom {list_kolom_mandatory}')
             return redirect(request.headers.get('Referer'))
 
-        # cek sep tersebut memang milik verifikator dan yang diimport adalah status belum diverif
-        for i in dataset['NOSEP']:
-            queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP=i)
-            if not queryset.exists():
-                messages.warning(request, f'Terdapat NO SEP {i} yang tidak terdapat dalam verifikasi klaim '
-                                          f'verifikator bersangkutan.')
-                return redirect(request.headers.get('Referer'))
-            else:
-                for a in queryset:
-                    if a.status != 'Proses':
-                        messages.warning(request, f'Terdapat NO SEP {a.NOSEP} yang sudah di verifikasi. '
-                                                  f'Status yang diimport tidak boleh dalam keadaan telah diverifikasi.')
-                        return redirect(request.headers.get('Referer'))
+        # Check statuses
+        valid_statuses = [StatusDataKlaimChoices.LAYAK, StatusDataKlaimChoices.PENDING,
+                          StatusDataKlaimChoices.TIDAK_LAYAK, StatusDataKlaimChoices.DISPUTE]
+        invalid_statuses = set(dataset['status']) - set(valid_statuses)
+        if invalid_statuses:
+            messages.warning(request, f'Status tidak valid: {invalid_statuses}')
+            return redirect(request.headers.get('Referer'))
+
+        # Check jenis_pending and jenis_dispute values
+        valid_jenis_pending = [JenisPendingChoices.ADMINISTRASI, JenisPendingChoices.KODING,
+                               JenisPendingChoices.STANDAR_PELAYANAN]
+        invalid_jenis_pending = set(df['jenis_pending'].unique()) - set(valid_jenis_pending + [''])
+        invalid_jenis_pending.discard('')
+        if invalid_jenis_pending:
+            messages.warning(request, f'Jenis pending tidak valid: {invalid_jenis_pending}')
+            return redirect(request.headers.get('Referer'))
+
+        valid_jenis_dispute = [JenisDisputeChoices.MEDIS, JenisDisputeChoices.KODING, JenisDisputeChoices.COB]
+        invalid_jenis_dispute = set(df['jenis_dispute'].unique()) - set(valid_jenis_dispute + [''])
+        invalid_jenis_dispute.discard('')
+        if invalid_jenis_dispute:
+            messages.warning(request, f'Jenis dispute tidak valid: {invalid_jenis_dispute}')
+            return redirect(request.headers.get('Referer'))
+
+        # Validations for Pending and Dispute statuses
+        # When status is 'Pending', 'jenis_pending' must be filled
+        pending_rows = df[df['status'] == StatusDataKlaimChoices.PENDING]
+        if pending_rows['jenis_pending'].eq('').any():
+            messages.warning(request, 'Untuk status "Pending", kolom "jenis_pending" harus diisi.')
+            return redirect(request.headers.get('Referer'))
+
+        # When status is 'Dispute', both 'jenis_pending' and 'jenis_dispute' must be filled
+        dispute_rows = df[df['status'] == StatusDataKlaimChoices.DISPUTE]
+        if dispute_rows['jenis_pending'].eq('').any():
+            messages.warning(request, 'Untuk status "Dispute", kolom "jenis_pending" harus diisi.')
+            return redirect(request.headers.get('Referer'))
+        if dispute_rows['jenis_dispute'].eq('').any():
+            messages.warning(request, 'Untuk status "Dispute", kolom "jenis_dispute" harus diisi.')
+            return redirect(request.headers.get('Referer'))
+
+        # Check ket_pending for Pending, Dispute, and Tidak Layak statuses
+        statuses_requiring_ket_pending = [StatusDataKlaimChoices.PENDING, StatusDataKlaimChoices.DISPUTE,
+                                          StatusDataKlaimChoices.TIDAK_LAYAK]
+        ket_pending_required_rows = df[df['status'].isin(statuses_requiring_ket_pending)]
+        if ket_pending_required_rows['ket_pending'].eq('').any():
+            messages.warning(request, 'Keterangan pending harus diisi untuk status Pending, Dispute, dan Tidak Layak.')
+            return redirect(request.headers.get('Referer'))
+
+        # Get list of NOSEP
+        NOSEP_list = df['NOSEP'].unique().tolist()
+
+        # Query DataKlaimCBG objects
+        data_klaim_qs = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP__in=NOSEP_list)
+        data_klaim_dict = {dk.NOSEP: dk for dk in data_klaim_qs}
+
+        # Check for missing NOSEP
+        missing_NOSEP = set(NOSEP_list) - set(data_klaim_dict.keys())
+        if missing_NOSEP:
+            messages.warning(request,
+                             f'Terdapat NO SEP {missing_NOSEP} yang tidak terdapat dalam verifikasi klaim verifikator bersangkutan.')
+            return redirect(request.headers.get('Referer'))
+
+        # Check for DataKlaimCBG objects with status != 'Proses'
+        not_proses_NOSEP = [dk.NOSEP for dk in data_klaim_qs if dk.status != StatusDataKlaimChoices.PROSES]
+        if not_proses_NOSEP:
+            messages.warning(request,
+                             f'Terdapat NO SEP {not_proses_NOSEP} yang sudah diverifikasi. Status yang diimport tidak boleh dalam keadaan telah diverifikasi.')
+            return redirect(request.headers.get('Referer'))
 
         try:
             with transaction.atomic():
-                dataset_new = Dataset().load(df)
-                list_id = []
-                ket_pending_dispute_excel = dataset['ket_pending']
-                for i in ket_pending_dispute_excel:
-                    obj_ket_pending_dispute = KeteranganPendingDispute(ket_pending_dispute=i, verifikator=request.user)
-                    obj_ket_pending_dispute.save()
-                    list_id.append(obj_ket_pending_dispute.id)
-
-                df['ket_pending_dispute'] = list_id
-
+                # Create KeteranganPendingDispute objects
+                kpd_objects = []
+                kpd_data = []  # List of tuples (NOSEP, KeteranganPendingDispute object)
                 for index, row in df.iterrows():
-                    obj = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False,
-                                                      NOSEP=row['NOSEP']).first()
-                    obj.ket_pending_dispute.add(row['ket_pending_dispute'])
+                    ket_pending = row['ket_pending']
+                    NOSEP = row['NOSEP']
 
-                # import
-                data_claim_resource.import_data(dataset_new, dry_run=False)
+                    # Create KeteranganPendingDispute object
+                    kpd = KeteranganPendingDispute(ket_pending_dispute=ket_pending, verifikator=request.user)
+                    kpd_objects.append(kpd)
+                    kpd_data.append((NOSEP, kpd))
 
-                # delete yang tidak penting
-                ket_pending_kosong = KeteranganPendingDispute.objects.filter(ket_pending_dispute='',
-                                                                             verifikator=request.user)
-                ket_pending_kosong.delete()
-                messages.success(request, 'Data berhasil diimport. {0}'.format(dataset_new))
+                # Bulk create KeteranganPendingDispute
+                KeteranganPendingDispute.objects.bulk_create(kpd_objects)
+
+                # Associate KeteranganPendingDispute with DataKlaimCBG
+                for NOSEP, kpd in kpd_data:
+                    dk = data_klaim_dict[NOSEP]
+                    dk.ket_pending_dispute.add(kpd)
+
+                # Import data using resource
+                data_claim_resource.import_data(dataset, dry_run=False)
+
+                # Delete empty ket_pending_dispute
+                KeteranganPendingDispute.objects.filter(ket_pending_dispute='', verifikator=request.user).delete()
+
+                messages.success(request, 'Data berhasil diimport.')
                 return redirect(request.headers.get('Referer'))
         except Exception as e:
-            # Nampilih error
             messages.info(request, f'Terjadi kesalahan: {str(e)}')
 
-    # pagination
+    # Pagination
     paginator = Paginator(queryset, 10)
     page_number = request.GET.get('page')
     queryset = paginator.get_page(page_number)
@@ -928,6 +913,270 @@ def daftar_data_klaim(request):
     }
 
     return render(request, 'verifikator/cbg/daftar_data_klaim_cbg.html', context)
+
+# def daftar_data_klaim(request):
+#     queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False).order_by('NMPESERTA', 'TGLSEP')
+# 
+#     # filter
+#     myFilter = DataKlaimCBGFilter(request.GET, queryset=queryset)
+#     queryset = myFilter.qs
+#     export = request.GET.get('export')
+#     if export == 'export':
+#         response = HttpResponse(
+#             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+#         )
+#         response['Content-Disposition'] = 'attachment; filename={date}-dataverifikasi.xlsx'.format(
+#             date=datetime.datetime.now().strftime('%Y-%m-%d'),
+#         )
+#         workbook = Workbook()
+# 
+#         # Get active worksheet/tab
+#         worksheet = workbook.active
+#         worksheet.title = 'Data Klaim CBG'
+# 
+#         # Define the titles for columns
+#         columns = [
+#             'namars',
+#             'status',
+#             'NOREG',
+#             'NOSEP',
+#             'TGLSEP',
+#             'TGLPULANG',
+#             'JNSPEL',
+#             'NOKARTU',
+#             'NMPESERTA',
+#             'POLI',
+#             'KDINACBG',
+#             'BYPENGAJUAN',
+#             'verifikator',
+#             'ALGORITMA',
+#             'jenis_pending',
+#             'jenis_dispute',
+#             'ket_pending',
+#             'ket_jawaban',
+#         ]
+#         row_num = 1
+# 
+#         # Assign the titles for each cell of the header
+#         for col_num, column_title in enumerate(columns, 1):
+#             cell = worksheet.cell(row=row_num, column=col_num)
+#             cell.value = column_title
+# 
+#         # Iterate through all
+#         for queryset in queryset:
+#             row_num += 1
+# 
+#             if queryset.ket_pending_dispute.last() is None:
+#                 ket_pending_disput_queryset = ''
+#             else:
+#                 ket_pending_disput_queryset = '{0}, '.format(queryset.ket_pending_dispute.last())
+#                 ket_pending_disput_queryset = replace_illegal_characters(ket_pending_disput_queryset)
+# 
+#             if queryset.ket_jawaban_pending.last() is None:
+#                 ket_jawaban_pending_queryset = ''
+#             else:
+#                 ket_jawaban_pending_queryset = '{0}, '.format(queryset.ket_jawaban_pending.last())
+#                 ket_jawaban_pending_queryset = replace_illegal_characters(ket_jawaban_pending_queryset)
+# 
+#             # ket_pending_disput_queryset = ''
+#             # for x in queryset.ket_pending_dispute.all():
+#             #     ket_pending_disput_queryset += '{0}, '.format(x.ket_pending_dispute)
+# 
+#             # ket_jawaban_pending_queryset = ''
+#             # for x in queryset.ket_jawaban_pending.all():
+#             #     ket_jawaban_pending_queryset += '{0}, '.format(x.ket_jawaban_pending)
+# 
+#             # Define the data for each cell in the row
+#             row = [
+#                 queryset.faskes.nama,
+#                 queryset.status,
+#                 queryset.register_klaim.nomor_register_klaim,
+#                 queryset.NOSEP,
+#                 queryset.TGLSEP,
+#                 queryset.TGLPULANG,
+#                 queryset.JNSPEL,
+#                 queryset.NOKARTU,
+#                 queryset.NMPESERTA,
+#                 queryset.POLI,
+#                 queryset.KDINACBG,
+#                 queryset.BYPENGAJUAN,
+#                 queryset.verifikator.username,
+#                 queryset.ALGORITMA,
+#                 queryset.jenis_pending,
+#                 queryset.jenis_dispute,
+#                 ket_pending_disput_queryset,
+#                 ket_jawaban_pending_queryset,
+#             ]
+# 
+#             # Assign the data for each cell of the row
+#             for col_num, cell_value in enumerate(row, 1):
+#                 cell = worksheet.cell(row=row_num, column=col_num)
+#                 cell.value = cell_value
+# 
+#         workbook.save(response)
+#         return response
+#     if request.POST.get('import'):
+#         # ambil file excel dan buat menjadi dataframe
+#         try:
+#             file = request.FILES['excel']
+#             if file.name.split('.')[-1] != 'xlsx':
+#                 raise ValidationError('Hanya menerima file dengan ekstensi `.xlsx`')
+#         except Exception as e:
+#             messages.warning(request, f'Terdapat Error dalam proses upload dengan keterangan: {e}')
+#             return redirect(request.headers.get('Referer'))
+# 
+#         df_raw = pd.read_excel(file)
+# 
+#         # replace nan dengan kosong
+#         df = df_raw.replace(np.nan, '')
+# 
+#         # ubah nama kolom menjadi huruf besar
+#         df['status'] = df['status'].str.title()
+# 
+#         # ubah nama jenis pending menjadi huruf besar
+#         df['jenis_pending'] = df['jenis_pending'].str.title()
+# 
+#         # ubah nama jenis dispute menjadi huruf besar
+#         df['jenis_dispute'] = df['jenis_dispute'].str.title()
+# 
+#         # Call the Student Resource Model and make its instance
+#         data_claim_resource = DataKlaimCBGResource()
+# 
+#         # Load the pandas dataframe into a tablib dataset
+#         dataset = Dataset().load(df)
+# 
+#         # cek column sudah sesuai
+#         list_kolom_mandatory = ['status', 'NOSEP', 'jenis_pending', 'jenis_dispute', 'ket_pending']
+#         list_status_df = df.columns.tolist()
+#         for daftar in list_kolom_mandatory:
+#             if daftar not in list_status_df:
+#                 messages.warning(request, f'File yang diimport harus memiliki kolom {list_kolom_mandatory}')
+#                 return redirect(request.headers.get('Referer'))
+# 
+#         # cek sep tersebut berstatus bukan proses
+#         for status in dataset['status']:
+#             if status == 'Proses':
+#                 messages.warning(request, 'File yang diimport harus berstatus "Layak", "Pending, '
+#                                           '"Dispute", "Tidak Layak"')
+#                 return redirect(request.headers.get('Referer'))
+# 
+#         # cek status klaim
+#         list_status_mandatory = [StatusDataKlaimChoices.LAYAK, StatusDataKlaimChoices.PENDING,
+#                                  StatusDataKlaimChoices.TIDAK_LAYAK, StatusDataKlaimChoices.DISPUTE]
+#         list_status_df = list(dict.fromkeys(dataset['status']))
+#         for status in list_status_df:
+#             if status not in list_status_mandatory:
+#                 messages.warning(request, f'File yang diimport harus memiliki status yang sesuai. '
+#                                           f'Mohon dapat dicek kembali.')
+#                 return redirect(request.headers.get('Referer'))
+# 
+#         # cek jenis pending
+#         list_jenis_mandatory = [JenisPendingChoices.ADMINISTRASI, JenisPendingChoices.KODING,
+#                                 JenisPendingChoices.STANDAR_PELAYANAN]
+#         list_jenis_pending_df = list(dict.fromkeys(dataset['jenis_pending']))
+#         for i in list_jenis_pending_df:
+#             if i == '':
+#                 list_jenis_pending_df.remove('')
+# 
+#         for jenis in list_jenis_pending_df:
+#             if jenis not in list_jenis_mandatory:
+#                 messages.warning(request, f'File yang diimport harus memiliki jenis pending yang sesuai. '
+#                                           f'Mohon dapat dicek kembali.')
+#                 return redirect(request.headers.get('Referer'))
+# 
+#         # cek jenis dispute
+#         list_jenis_dispute_mandatory = [JenisDisputeChoices.MEDIS, JenisDisputeChoices.KODING, JenisDisputeChoices.COB]
+#         list_jenis_dispute_df = list(dict.fromkeys(dataset['jenis_dispute']))
+#         for i in list_jenis_dispute_df:
+#             if i == '':
+#                 list_jenis_dispute_df.remove('')
+# 
+#         for jenis in list_jenis_dispute_df:
+#             if jenis not in list_jenis_dispute_mandatory:
+#                 messages.warning(request, f'File yang diimport harus memiliki jenis dispute yang sesuai. '
+#                                           f'Mohon dapat dicek kembali.')
+#                 return redirect(request.headers.get('Referer'))
+# 
+#         # cek jumlah jenis pending dan jenis dispute sama dengan yang distatus
+#         jumlah_pending = df['status'].eq(StatusDataKlaimChoices.PENDING).sum()
+#         jumlah_dispute = df['status'].eq(StatusDataKlaimChoices.DISPUTE).sum()
+#         jumlah_tidak_layak = df['status'].eq(StatusDataKlaimChoices.TIDAK_LAYAK).sum()
+#         jumlah_jenis_pending = df['jenis_pending'].apply(lambda x: isinstance(x, str) and len(x) > 0).sum().sum()
+#         jumlah_jenis_dispute = df['jenis_dispute'].apply(lambda x: isinstance(x, str) and len(x) > 0).sum().sum()
+#         jumlah_ket_pending = df['ket_pending'].apply(lambda x: isinstance(x, str) and len(x) > 0).sum().sum()
+#         total_pending_dispute = jumlah_pending + jumlah_dispute
+#         total_pending_dispute_tidak_layak = jumlah_pending + jumlah_dispute + jumlah_tidak_layak
+# 
+#         # cek jenis pending
+#         if total_pending_dispute > jumlah_jenis_pending:
+#             messages.warning(request, f'File yang diimport untuk status "Pending" dan "Dispute" '
+#                                       f'harus diisi jenis pending')
+#             return redirect(request.headers.get('Referer'))
+#         # cek jenis dispute
+#         elif jumlah_dispute > jumlah_jenis_dispute:
+#             messages.warning(request, f'File yang diimport untuk status "Dispute" harus diisi jenis dispute')
+#             return redirect(request.headers.get('Referer'))
+#         # cek ket pending
+#         elif total_pending_dispute_tidak_layak > jumlah_ket_pending:
+#             messages.warning(request, f'File yang diimport untuk status "Pending" dan "Dispute" belum diisi '
+#                                       f'keterangan pending')
+#             return redirect(request.headers.get('Referer'))
+# 
+#         # cek sep tersebut memang milik verifikator dan yang diimport adalah status belum diverif
+#         for i in dataset['NOSEP']:
+#             queryset = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False, NOSEP=i)
+#             if not queryset.exists():
+#                 messages.warning(request, f'Terdapat NO SEP {i} yang tidak terdapat dalam verifikasi klaim '
+#                                           f'verifikator bersangkutan.')
+#                 return redirect(request.headers.get('Referer'))
+#             else:
+#                 for a in queryset:
+#                     if a.status != 'Proses':
+#                         messages.warning(request, f'Terdapat NO SEP {a.NOSEP} yang sudah di verifikasi. '
+#                                                   f'Status yang diimport tidak boleh dalam keadaan telah diverifikasi.')
+#                         return redirect(request.headers.get('Referer'))
+# 
+#         try:
+#             with transaction.atomic():
+#                 dataset_new = Dataset().load(df)
+#                 list_id = []
+#                 ket_pending_dispute_excel = dataset['ket_pending']
+#                 for i in ket_pending_dispute_excel:
+#                     obj_ket_pending_dispute = KeteranganPendingDispute(ket_pending_dispute=i, verifikator=request.user)
+#                     obj_ket_pending_dispute.save()
+#                     list_id.append(obj_ket_pending_dispute.id)
+# 
+#                 df['ket_pending_dispute'] = list_id
+# 
+#                 for index, row in df.iterrows():
+#                     obj = DataKlaimCBG.objects.filter(verifikator=request.user, prosesklaim=False,
+#                                                       NOSEP=row['NOSEP']).first()
+#                     obj.ket_pending_dispute.add(row['ket_pending_dispute'])
+# 
+#                 # import
+#                 data_claim_resource.import_data(dataset_new, dry_run=False)
+# 
+#                 # delete yang tidak penting
+#                 ket_pending_kosong = KeteranganPendingDispute.objects.filter(ket_pending_dispute='',
+#                                                                              verifikator=request.user)
+#                 ket_pending_kosong.delete()
+#                 messages.success(request, 'Data berhasil diimport. {0}'.format(dataset_new))
+#                 return redirect(request.headers.get('Referer'))
+#         except Exception as e:
+#             # Nampilih error
+#             messages.info(request, f'Terjadi kesalahan: {str(e)}')
+# 
+#     # pagination
+#     paginator = Paginator(queryset, 10)
+#     page_number = request.GET.get('page')
+#     queryset = paginator.get_page(page_number)
+# 
+#     context = {
+#         'data_klaim': queryset,
+#         'myFilter': myFilter,
+#     }
+# 
+#     return render(request, 'verifikator/cbg/daftar_data_klaim_cbg.html', context)
 
 
 @login_required
@@ -2572,7 +2821,7 @@ def fragmentasi(request):
     ).filter(jumlah_kunjungan__gt=1).order_by('-jumlah_kunjungan')
 
     # Pagination: ubah jumlah item per halaman menjadi 10
-    paginator = Paginator(grouped_queryset, 2)
+    paginator = Paginator(grouped_queryset, 10)
     page_number = request.GET.get('page')
     grouped_queryset = paginator.get_page(page_number)
 
@@ -2655,7 +2904,7 @@ def rehabilitasi(request):
         'data_klaim': grouped_queryset,
         'myFilter': myFilter,
     }
-    return render(request, 'verifikator/cbg/readmisi.html', context)
+    return render(request, 'verifikator/cbg/rehabilitasi.html', context)
 
 
 @login_required
@@ -2781,7 +3030,6 @@ def get_rehabilitasi_detail(request):
         page_obj = paginator.page(page)
     except (PageNotAnInteger, EmptyPage):
         return JsonResponse({'error': 'Halaman tidak valid.'}, status=400)
-    print(page_obj)
 
     detail_data = [{
         "rs": data.faskes.nama,
