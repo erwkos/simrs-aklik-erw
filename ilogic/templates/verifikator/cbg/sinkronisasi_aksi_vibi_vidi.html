@@ -90,6 +90,11 @@
                 {% if forloop.first %}
                     <form method="POST" id="formRPA">
                         <input type="hidden" name="ppk_layan" value='{{ data_klaim.NOSEP|slice:":8" }}'>
+                        <div class="container">
+                            <label for="delay" class="form-label">Delay</label>
+                            <input class="form-control" style="width: fit-content" type="number" name="delay"
+                                   value="" min="0.5" step="0.1"/>
+                        </div>
                     </form>
                 {% endif %}
             {% endfor %}

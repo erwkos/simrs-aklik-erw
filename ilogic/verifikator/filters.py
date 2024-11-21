@@ -5,7 +5,7 @@ from django_filters import OrderingFilter
 from django_select2.forms import Select2Widget
 
 from faskes.models import Faskes, KantorCabang
-from klaim.choices import JenisPelayananChoices
+from klaim.choices import JenisPelayananChoices, StatusSinkronChoices
 from klaim.models import DataKlaimCBG, DataKlaimObat, RegisterKlaim
 from user.models import User
 from django.contrib.auth.models import Group
@@ -211,7 +211,11 @@ class DownloadDataKlaimObatFilter(django_filters.FilterSet):
 class SinkronisasiVIBIVIDIFilter(django_filters.FilterSet):
     nomor_register_klaim = django_filters.CharFilter(field_name='register_klaim__nomor_register_klaim')
     status = django_filters.CharFilter(field_name='status')
-    status_sinkron = django_filters.CharFilter(field_name='status_sinkron')
+    status_sinkron = django_filters.ChoiceFilter(
+        field_name='status_sinkron',
+        choices=StatusSinkronChoices.choices)
+    JNSPEL = django_filters.ChoiceFilter(field_name='JNSPEL', choices=JenisPelayananChoices.choices,)
+
 
 class FragmentasiFilter(django_filters.FilterSet):
     faskes = django_filters.ModelChoiceFilter(
