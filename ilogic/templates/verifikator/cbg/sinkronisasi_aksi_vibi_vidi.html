@@ -83,18 +83,16 @@
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">Submit</button>
                     </div>
-                </form>
+                </form> 
+                <label for="delay" class="form-label">Delay</label>
+                <input class="form-control" style="width: fit-content" type="number" name="delay"
+                       value="" min="0.5" step="0.1"/>
             </div>
 
             {% for data_klaim in data_klaim %}
                 {% if forloop.first %}
                     <form method="POST" id="formRPA">
                         <input type="hidden" name="ppk_layan" value='{{ data_klaim.NOSEP|slice:":8" }}'>
-                        <div class="container">
-                            <label for="delay" class="form-label">Delay</label>
-                            <input class="form-control" style="width: fit-content" type="number" name="delay"
-                                   value="" min="0.5" step="0.1"/>
-                        </div>
                     </form>
                 {% endif %}
             {% endfor %}
@@ -444,6 +442,12 @@
                 const formData = $('#formRPA').serialize();
                 const csrfToken = getCsrfToken();
                 const tglSinkron = getCurrentDateTime(); // Dapatkan datetime saat ini
+                
+                const delayInput = document.querySelector('input[name="delay"]');
+                let delay = delayInput ? parseFloat(delayInput.value) : 0.5; // Default to 0.5 if not provided
+                if (isNaN(delay) || delay < 0) {
+                    delay = 0.5; // Ensure delay is valid
+                }
 
                 $button.prop('disabled', true).addClass('loading-dots').text('Proses Cek Sinkron di VIDI');
 
@@ -480,6 +484,7 @@
                             tgl_sinkron: tglSinkron, // Tambahkan datetime sinkron
                             jenis_dispute: jenisDispute, // Tambahkan jenis dispute sinkron
                             ket_pending_dispute: ketPendingDispute, // Tambahkan ket pending dispute sinkron
+                            delay: delay.toString()
                         })
                     });
 
@@ -564,7 +569,7 @@
 
                 // 4. Kirimkan setiap NOSEP secara berurutan dan update status VIDI
                 for (const noSepElement of noSepElements) {
-                    await processNoSep(noSepElement);
+                    await processNoSep(noSepElement, delay);
                 }
 
                 $button.prop('disabled', false).removeClass('loading-dots').text("Sinkronkan");

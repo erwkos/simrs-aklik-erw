@@ -22,6 +22,10 @@
     {% elif data_klaim.status == 'Klaim' %}
         <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.path|urlencode }}">
             <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
+        </a>    
+    {% else %}
+        <a href="{% url 'verifikator:detail-data-klaim' data_klaim.id %}?next={{ request.path|urlencode }}">
+            <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
         </a>
     {% endif %}
 
@@ -47,6 +51,10 @@
             <button type="button" class="btn btn-dark btn-sm">{{ data_klaim.status }}</button>
         </a>
     {% elif data_klaim.status == 'Klaim' %}
+        <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.path|urlencode }}">
+            <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
+        </a>
+    {% else %}
         <a href="{% url 'verifikator:detail-data-klaim-obat' data_klaim.id %}?next={{ request.path|urlencode }}">
             <button type="button" class="btn btn-info btn-sm">{{ data_klaim.status }}</button>
         </a>
